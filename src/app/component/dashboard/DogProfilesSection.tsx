@@ -1,0 +1,63 @@
+import { Button } from "@/components/ui/button";
+import DogProfileCard from "./DogProfileCard";
+import { Plus } from "lucide-react";
+import { DogProfile } from ".";
+
+const dogs: DogProfile[] = [
+  {
+    id: "1",
+    name: "Bella",
+    breed: "Golden Retriever",
+    age: 3,
+    imageUrl:
+      "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
+    status: "active",
+    monthlyFee: 45.0,
+    nextBilling: "Nov 12, 2026",
+  },
+  {
+    id: "2",
+    name: "Josh",
+    breed: "Golden Retriever",
+    age: 3,
+    imageUrl:
+      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop",
+    status: "in-progress",
+    monthlyFee: null,
+    nextBilling: null,
+  },
+  {
+    id: "3",
+    name: "Charlie",
+    breed: "Golden Retriever",
+    age: 3,
+    imageUrl:
+      "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=200&h=200&fit=crop",
+    status: "quote-ready",
+    monthlyFee: null,
+    nextBilling: null,
+  },
+];
+
+export default function DogProfilesSection() {
+  return (
+    <section className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-bold text-slate-800">Dog Profiles</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs border-slate-200 text-slate-600 hover:bg-slate-50 gap-1.5"
+        >
+          <Plus size={13} />
+          Apply for a new dog
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {dogs.map((dog) => (
+          <DogProfileCard key={dog.id} dog={dog} />
+        ))}
+      </div>
+    </section>
+  );
+}

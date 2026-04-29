@@ -9,7 +9,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <div className="p-4">
+    <div className="container mx-auto px-4 ">
       <div className="bg-gray-100 p-6 rounded-3xl">
         <h2 className="text-3xl font-bold text-center text-gray-700 mb-12">Features</h2>
 

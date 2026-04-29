@@ -1,64 +1,104 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const menuLinks = [
   { label: "Home", href: "#home" },
-  { label: "How it works", href: "#how-it-works" },
+  { label: "How it Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "FAQ", href: "#faq" },
-  { label: "Contact us", href: "#contact" },
+  { label: "Contact Us", href: "#contact" },
+];
+
+const bottomLinks = [
+  { label: "Terms & Conditions", href: "#" },
+  { label: "Privacy Policy", href: "#" },
+  { label: "Accessibility Statement", href: "#" },
 ];
 
 export default function Footer() {
   return (
-    <footer className="bg-[#D6E4F7] pt-12 pb-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between gap-10 pb-10 border-b border-[#b8cde8]">
-          {/* Logo */}
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-[#7B8FCE] flex items-center justify-center">
-                <span className="text-white text-sm font-bold">E</span>
-              </div>
-              <span className="text-[#3B4A8B] font-bold text-2xl tracking-tight">encore</span>
-            </div>
-            <p className="text-xs text-gray-500 max-w-[180px]">
-              Loving care for your pet when you're no longer there.
-            </p>
-          </div>
+    <div className=" container mx-auto px-4">
+      <footer className="bg-[#8dbce3] rounded-3xl mb-4 overflow-hidden">
 
-          {/* Menu */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Menu</h4>
-            <ul className="flex flex-col gap-2">
-              {menuLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-gray-600 hover:text-[#5B6BBF] transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+      {/* ── Main area ── */}
+      <div className="px-8 sm:px-12 lg:px-20 py-10 sm:py-14
+                      grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 items-start">
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Contact</h4>
-            <p className="text-sm text-gray-600">contact@getancore.com</p>
-          </div>
+        <Image
+          src="/encore-dog.png"
+          alt="Encore dog mascot"
+          width={301}
+          height={267}
+          className="object-contain"
+        />
+
+        {/* Center — Menu */}
+        <div className="flex flex-col items-center sm:items-start gap-1 mt-0 lg:mt-10">
+          <h4
+            className="text-[#3B4A8B] font-semibold mb-2"
+            style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.1rem)" }}
+          >
+            Menu
+          </h4>
+          {menuLinks.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="text-[#3B5070] hover:text-[#3B4A8B] transition-colors"
+              style={{ fontSize: "clamp(0.8rem, 1.1vw, 0.92rem)" }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-3">
-          <p className="text-xs text-gray-500">© 2024 Encore. All rights reserved.</p>
-          <div className="flex gap-5">
-            <Link href="#" className="text-xs text-gray-500 hover:text-[#5B6BBF]">Terms & Conditions</Link>
-            <Link href="#" className="text-xs text-gray-500 hover:text-[#5B6BBF]">Privacy Policy</Link>
-            <Link href="#" className="text-xs text-gray-500 hover:text-[#5B6BBF]">Cookies</Link>
-          </div>
+        {/* Right — Contact */}
+        <div className="flex flex-col items-center justify-center sm:items-start gap-1 mt-0 lg:mt-10">
+          <h4
+            className="text-[#3B4A8B] font-semibold mb-2"
+            style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.1rem)" }}
+          >
+            Contact
+          </h4>
+          <a
+            href="mailto:contact@k9encore.com"
+            className="text-[#3B5070] hover:text-[#3B4A8B] transition-colors"
+            style={{ fontSize: "clamp(0.8rem, 1.1vw, 0.92rem)" }}
+          >
+            contact@k9encore.com
+          </a>
         </div>
       </div>
+
+      {/* ── Bottom bar — darker blue ── */}
+      <div className="bg-[#4e7db6] px-6 sm:px-10 lg:px-16 py-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+
+          {/* Left links */}
+          <div className="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-8">
+            {bottomLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-white/90 hover:text-white transition-colors"
+                style={{ fontSize: "clamp(0.65rem, 0.9vw, 0.78rem)" }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Right — copyright */}
+          <p
+            className="text-white/90"
+            style={{ fontSize: "clamp(0.65rem, 0.9vw, 0.78rem)" }}
+          >
+            ©2025 Encore LLC
+          </p>
+        </div>
+      </div>
+
     </footer>
+    </div>
   );
 }

@@ -19,15 +19,10 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md ">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
+      <div className="container mx-auto px-4 h-24 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Image
-          src={'/encore-nav.png'}
-          alt="encore"
-          height={65}
-          width={228}
-          />
+          <Image src={"/encore-nav.png"} alt="encore" height={65} width={228} />
         </Link>
 
         {/* Desktop Nav */}
@@ -36,7 +31,7 @@ export default function Navbar() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-sm text-gray-600 hover:text-[#5B6BBF] transition-colors font-medium"
+              className="text-gray-600 hover:text-[#5B6BBF] transition-colors font-medium"
             >
               {link.label}
             </Link>
@@ -45,12 +40,19 @@ export default function Navbar() {
 
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" className="text-sm text-gray-700 hover:text-[#5B6BBF]">
-            Log In
-          </Button>
-          <Button className="bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white text-sm rounded-full px-5">
+          <Link href="/login">
+            <Button
+              variant="ghost"
+              className="text-lg text-gray-700 hover:text-[#5B6BBF] hover:px-2 hover:rounded-full cursor-pointer"
+            >
+              Log In
+            </Button>
+          </Link>
+          <Link href={'/signup'}>
+          <Button className="text-lg bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white rounded-full px-5 cursor-pointer">
             Sign Up
           </Button>
+          </Link>
         </div>
 
         {/* Mobile Toggle */}
@@ -76,8 +78,12 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" className="flex-1 rounded-full text-sm">Log In</Button>
-            <Button className="flex-1 bg-[#5B6BBF] text-white rounded-full text-sm">Sign Up</Button>
+            <Button variant="outline" className="flex-1 rounded-full">
+              Log In
+            </Button>
+            <Button className="flex-1 bg-[#5B6BBF] text-white rounded-full">
+              Sign Up
+            </Button>
           </div>
         </div>
       )}

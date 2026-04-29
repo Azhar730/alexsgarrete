@@ -4,7 +4,7 @@ import { Button } from "./button";
 
 export default function HeroSection() {
   return (
-    <div className="p-4 mt-6">
+    <div className="px-4 mt-6 py-2 lg:mt-12 container mx-auto">
       <div className="relative rounded-3xl overflow-hidden">
         <Image
           src="/hero-bg.png"
@@ -14,33 +14,40 @@ export default function HeroSection() {
           className="w-full object-cover object-center"
           priority
         />
+
         {/* Text Overlay — bottom-left */}
-        <div className="absolute bottom-0 left-0 px-8 pb-8 sm:px-10 sm:pb-10 lg:px-12 lg:pb-12">
-          <h1
-            className="text-white leading-[1.06] text-4xl sm:text-6xl lg:text-8xl drop-shadow-lg max-w-[90vw]"
-            
-          >
+        <div className="absolute bottom-0 left-0 px-4 pb-4 sm:px-8 sm:pb-8 lg:px-12 lg:pb-12">
+          <h1 className="text-white leading-[1.06] drop-shadow-lg
+                         text-[clamp(1.1rem,4.5vw,5rem)]">
             Loving Care When
             <br />
             You&apos;re No Longer
             <br />
 
             {/* Last line: "There" + inline CTA */}
-            <span className="inline-flex items-center gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-2 sm:gap-3 flex-wrap">
               <span>There</span>
 
-              <div className="absolute bottom-4 left-65">
-            <div className="flex items-center gap-2">
-              <Button
-                className="bg-primary text-white cursor-pointer transition-all duration-300 rounded-full px-8 py-6 text-xl font-semibold gap-2"
-              >
-                Get started
-              </Button>
-              <span className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">
-                <ArrowRight size={20} />
+              {/* CTA buttons — scale with viewport */}
+              <span className="inline-flex items-center gap-1 sm:gap-2 mt-5">
+                <Button
+                  className="bg-primary text-white cursor-pointer transition-all duration-300
+                             rounded-full font-semibold
+                             px-3 py-2 text-[10px]
+                             sm:px-5 sm:py-3 sm:text-sm
+                             md:px-6 md:py-4 md:text-base
+                             lg:px-8 lg:py-6 lg:text-xl"
+                >
+                  Get started
+                </Button>
+                <span className="rounded-full bg-white text-black flex items-center justify-center flex-shrink-0
+                                 w-6 h-6
+                                 sm:w-8 sm:h-8
+                                 md:w-10 md:h-10
+                                 lg:w-12 lg:h-12">
+                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                </span>
               </span>
-            </div>
-          </div>
             </span>
           </h1>
         </div>

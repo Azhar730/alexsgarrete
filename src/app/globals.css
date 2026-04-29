@@ -8,6 +8,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+   /* 🔥 Inter font apply করার main জায়গা */
+  --font-sans: var(--font-inter);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-jetbrains-mono);
   --color-sidebar-ring: var(--sidebar-ring);

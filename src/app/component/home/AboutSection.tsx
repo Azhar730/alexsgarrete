@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function AboutSection() {
   return (
-    <section className="py-6 bg-white p-4">
+    <section className="py-6 bg-white p-4 container mx-auto px-4">
       <div className="flex items-stretch gap-4">
 
         {/* Left card — dog photo with white text bottom-left */}
