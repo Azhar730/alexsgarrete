@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-50 w-60 bg-white border-r border-slate-100 flex flex-col">
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-slate-100">
+      <div className="h-16 flex items-center px-4">
         <Link href="/" className="flex items-center gap-1">
           <Image
             src={'/dashboard-head.png'}
