@@ -4,7 +4,7 @@ const activities = [
   {
     id: "1",
     icon: CreditCard,
-    iconBg: "bg-blue-100",
+    // iconBg: "bg-blue-100",
     iconColor: "text-blue-600",
     title: "Payment successful for 3 active plans",
     description:
@@ -13,7 +13,7 @@ const activities = [
   {
     id: "2",
     icon: Shield,
-    iconBg: "bg-emerald-100",
+    // iconBg: "bg-emerald-100",
     iconColor: "text-emerald-600",
     title: "Coco's plan activated",
     description:
@@ -22,7 +22,7 @@ const activities = [
   {
     id: "3",
     icon: CheckCircle,
-    iconBg: "bg-violet-100",
+    // iconBg: "bg-violet-100",
     iconColor: "text-violet-600",
     title: "Milo quote accepted",
     description:
@@ -31,7 +31,7 @@ const activities = [
   {
     id: "4",
     icon: Send,
-    iconBg: "bg-amber-100",
+    // iconBg: "bg-amber-100",
     iconColor: "text-amber-600",
     title: "Bella's plan is ready!",
     description:
@@ -44,12 +44,12 @@ export default function RecentActivity() {
     <section>
       <h2 className="text-base font-bold text-slate-800 mb-4">Recent activity</h2>
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
-        {activities.map(({ id, icon: Icon, iconBg, iconColor, title, description }) => (
+        {activities.map(({ id, icon: Icon,  iconColor, title, description }) => (
           <div key={id} className="flex items-start gap-4 p-4">
             <div
-              className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}
+              className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5`}
             >
-              <Icon size={15} className={iconColor} />
+              <Icon size={15} className='text-white' />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-700">{title}</p>

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DogProfile } from ".";
+import Image from "next/image";
 
 const statusConfig: Record<
   DogProfile["status"],
@@ -32,10 +33,12 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
     <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
       {/* Image + Name */}
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-slate-100">
-          <img
+        <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary">
+          <Image
             src={dog.imageUrl}
             alt={dog.name}
+            width={80}
+            height={80}
             className="w-full h-full object-cover"
           />
         </div>
@@ -51,7 +54,7 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
       </div>
 
       {/* Billing info */}
-      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+      <div className="grid grid-cols-2 gap-3 rounded bg-primary/10 px-8 py-4 border border-slate-100">
         <div>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">
             Monthly Fee
@@ -72,8 +75,8 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
 
       <Button
         variant="ghost"
-        size="sm"
-        className="w-full text-slate-500 text-xs hover:text-slate-700 hover:bg-slate-50 mt-auto"
+        size="lg"
+        className="w-full text-primary cursor-pointer hover:text-slate-700 hover:bg-slate-50 mt-auto"
       >
         See Details
       </Button>

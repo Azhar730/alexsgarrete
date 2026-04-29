@@ -43,14 +43,13 @@ export default function DogProfilesSection() {
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-slate-800">Dog Profiles</h2>
+        <h2 className="text-xl font-bold text-primary">Dog Profiles</h2>
         <Button
           variant="outline"
           size="sm"
-          className="text-xs border-slate-200 text-slate-600 hover:bg-slate-50 gap-1.5"
+          className="border-primary text-primary cursor-pointer gap-1.5 "
         >
-          <Plus size={13} />
-          Apply for a new dog
+          Add new dog
         </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

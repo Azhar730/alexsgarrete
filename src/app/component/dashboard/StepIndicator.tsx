@@ -15,7 +15,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
             className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
               step <= currentStep
-                ? "bg-slate-700 border-slate-700 text-white"
+                ? "bg-primary border-primary text-white"
                 : "bg-white border-slate-300 text-slate-400"
             )}
           >
@@ -25,7 +25,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
             <div
               className={cn(
                 "w-16 h-0.5",
-                step < currentStep ? "bg-slate-700" : "bg-slate-200"
+                step < currentStep ? "bg-primary" : "bg-slate-200"
               )}
             />
           )}
