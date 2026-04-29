@@ -2,6 +2,19 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { Inter, Fraunces } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 const faqs = [
   {
@@ -31,18 +44,22 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
   return (
     <div
-      className="border-b border-gray-200 last:border-b-0 py-4 cursor-pointer"
+      className="border-b border-gray-200 last:border-b-0 py-4 md:py-5 lg:py-6 cursor-pointer group"
       onClick={() => setOpen(!open)}
     >
       <div className="flex items-center justify-between gap-4">
-        <span className="text-sm font-medium text-gray-700">{question}</span>
+        <span className={`${inter.className} text-base md:text-lg lg:text-xl font-medium text-gray-800 transition-colors group-hover:text-primary`}>
+          {question}
+        </span>
         <ChevronDown
-          size={18}
-          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          size={20}
+          className={`text-gray-400 shrink-0 transition-all duration-300 ${open ? "rotate-180 text-primary" : "group-hover:text-primary"}`}
         />
       </div>
       {open && (
-        <p className="mt-3 text-sm text-gray-500 leading-relaxed">{answer}</p>
+        <p className={`${inter.className} mt-3 md:mt-4 text-[0.95rem] md:text-base lg:text-lg text-gray-600 leading-relaxed md:pr-10`}>
+          {answer}
+        </p>
       )}
     </div>
   );
@@ -50,12 +67,12 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export default function FAQSection() {
   return (
-    <section id="faq" className="py-16 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center text-primary mb-10">
+    <section id="faq" className="mt-4 sm:mt-20 bg-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 ">
+        <h2 className={`${fraunces.className} text-3xl md:text-4xl lg:text-5xl font-semibold text-center text-primary mb-8 sm:mb-12`}>
           Frequently Asked Questions
         </h2>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 px-5 sm:px-8 md:px-10 mx-auto">
           {faqs.map((faq) => (
             <FAQItem key={faq.question} question={faq.question} answer={faq.answer} />
           ))}

@@ -1,5 +1,18 @@
 import { div } from "framer-motion/m";
 import { PawPrint, Check } from "lucide-react";
+import { Fraunces, Inter } from "next/font/google";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
 
 const plans = [
   {
@@ -9,7 +22,7 @@ const plans = [
     highlight: false,
   },
   {
-    icon: Check ,
+    icon: Check,
     title: "No Pressure Commitment",
     description: "No commitment until you review your plan.",
     highlight: false,
@@ -18,10 +31,10 @@ const plans = [
 
 export default function PricingSection() {
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="container mx-auto px-4 mt-4 sm:mt-20">
       <section id="pricing" className="py-16 bg-primary rounded-3xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center text-white mb-10">Transparent Pricing</h2>
+        <h2 className={`${inter.className} text-3xl md:text-4xl lg:text-5xl font-bold text-center text-white mb-10`}>Transparent Pricing</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {plans.map((plan) => {
@@ -34,8 +47,8 @@ export default function PricingSection() {
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                   <Icon className="text-white" size={22} />
                 </div>
-                <h3 className="text-white font-bold text-lg">{plan.title}</h3>
-                <p className="text-white/80 text-sm leading-relaxed">{plan.description}</p>
+                <h3 className={`${inter.className} text-white font-bold text-lg md:text-xl`}>{plan.title}</h3>
+                <p className={`${inter.className} text-white/80 text-sm md:text-base leading-relaxed`}>{plan.description}</p>
               </div>
             );
           })}
