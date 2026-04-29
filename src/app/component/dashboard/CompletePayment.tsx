@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Lock, CheckCircle2 } from "lucide-react";
 import StepIndicator from "./StepIndicator";
-import Link from "next/link";
 import PaymentHeader from "./PamentHeader";
 
 type StripeStatus = "not-connected" | "connected";
 
 export default function CompletePayment() {
   const router = useRouter();
-  const [stripeStatus, setStripeStatus] = useState<StripeStatus>("not-connected");
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus>("connected");
 
   const connectStripe = () => {
     // Simulate Stripe connection
@@ -29,35 +28,35 @@ export default function CompletePayment() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left - Payment details */}
           <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">
+            <h2 className="text-xl font-bold text-secondary mb-1">
               Complete Payment
             </h2>
-            <p className="text-sm text-slate-400 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Please carefully review the policy documents and sign below to
               proceed with Bella&apos;s coverage.
             </p>
 
             <div className="mb-4">
-              <h3 className="text-sm font-bold text-slate-700 mb-1">
+              <h3 className="text-sm font-bold text-secondary mb-1">
                 Payment Details
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Use Stripe to securely add your payment method and complete
                 activation.
               </p>
             </div>
 
             {/* Stripe card */}
-            <div className="border border-slate-200 rounded-xl p-4">
+            <div className="bg-muted-foreground/10 rounded-xl p-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
                   <span className="text-white font-bold text-sm">S</span>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700">
+                  <p className="text-lg font-bold text-secondary">
                     Stripe Payment
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     Fast, secure checkout powered by Stripe
                   </p>
                 </div>
@@ -72,13 +71,13 @@ export default function CompletePayment() {
                         : "bg-red-400"
                     }`}
                   />
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {stripeStatus === "connected"
                       ? "Connected"
                       : "Not Connected"}
                   </span>
                 </div>
-                <span className="text-xs text-slate-400">Account Status</span>
+                <span className="text-xs text-muted-foreground">Account Status</span>
               </div>
 
               {stripeStatus === "connected" ? (
@@ -106,7 +105,7 @@ export default function CompletePayment() {
               ) : (
                 <Button
                   onClick={connectStripe}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                  className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
                 >
                   Pay with Stripe
                 </Button>
@@ -128,7 +127,7 @@ export default function CompletePayment() {
               <Button
                 variant="ghost"
                 onClick={() => router.back()}
-                className="text-slate-500 hover:text-slate-700"
+                className="text-secondary cursor-pointer rounded border border-muted-foreground/20 bg-white px-4 py-2 text-sm font-medium"
               >
                 Cancel
               </Button>

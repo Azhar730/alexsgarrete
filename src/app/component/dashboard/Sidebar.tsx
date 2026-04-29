@@ -41,13 +41,13 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                 active
-                  ? "bg-slate-100 text-slate-900"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-primary/60 text-secondary"
+                  : "text-muted-foreground hover:text-secondary hover:bg-primary/60"
               )}
             >
               <Icon
                 size={16}
-                className={cn(active ? "text-slate-700" : "text-slate-400")}
+                className={cn(active ? "text-secondary hover:text-secondary" : "text-muted-foreground hover:text-secondary")}
               />
               {label}
             </Link>

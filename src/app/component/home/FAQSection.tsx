@@ -35,14 +35,14 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
       onClick={() => setOpen(!open)}
     >
       <div className="flex items-center justify-between gap-4">
-        <span className="text-sm font-medium text-gray-700">{question}</span>
+        <span className="text-base sm:text-lg font-medium text-gray-800">{question}</span>
         <ChevronDown
           size={18}
-          className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`text-gray-400 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </div>
       {open && (
-        <p className="mt-3 text-sm text-gray-500 leading-relaxed">{answer}</p>
+        <p className="mt-3 text-base text-gray-600 leading-7">{answer}</p>
       )}
     </div>
   );
@@ -51,8 +51,8 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 export default function FAQSection() {
   return (
     <section id="faq" className="py-16 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-center text-primary mb-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl sm:text-4xl font-bold text-center text-primary mb-10">
           Frequently Asked Questions
         </h2>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6">
