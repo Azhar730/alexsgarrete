@@ -1,8 +1,11 @@
 import Image from "next/image";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export default function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="px-4 sm:px-4 py-4 sm:py-6 bg-white container mx-auto">
+    <section id="how-it-works" className={`px-4 sm:px-4 mt-4 sm:mt-20 bg-white container mx-auto ${inter.className}`}>
 
       {/* Row 1 */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">

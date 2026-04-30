@@ -5,23 +5,25 @@ import FeaturesSection from "@/app/component/home/FeaturesSection";
 import Footer from "@/app/component/home/Footer";
 import HeroSection from "@/app/component/home/HeroSection";
 import HowItWorksSection from "@/app/component/home/HowItWorksSection";
-import Navbar from "@/app/component/home/Navbar";
+import { Header } from "@/components/header";
 import PricingSection from "@/app/component/home/PricingSection";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
-      <Navbar />
+      <Header />
 
       {/* Add pt-16 to offset fixed navbar */}
-      <div className="pt-16">
+      <div>
         <HeroSection />
-        <HowItWorksSection />
-        <AboutSection />
-        <FeaturesSection />
-        <PricingSection />
-        <FAQSection />
-        <CTABannerSection />
+        <div >
+          <HowItWorksSection  />
+          <AboutSection />
+          <FeaturesSection />
+          <PricingSection />
+          <FAQSection />
+          <CTABannerSection />
+        </div>
         <Footer />
       </div>
     </main>
