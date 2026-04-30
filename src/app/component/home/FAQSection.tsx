@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 const faqs = [
@@ -30,37 +31,70 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div
+    <motion.div
       className="border-b border-gray-200 last:border-b-0 py-4 cursor-pointer"
       onClick={() => setOpen(!open)}
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.5 }}
     >
       <div className="flex items-center justify-between gap-4">
         <span className="text-base sm:text-lg font-medium text-gray-800">{question}</span>
-        <ChevronDown
-          size={18}
-          className={`text-gray-400 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown size={18} className="text-gray-400 shrink-0" />
+        </motion.span>
       </div>
-      {open && (
-        <p className="mt-3 text-base text-gray-600 leading-7">{answer}</p>
-      )}
-    </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.p
+            key="answer"
+            className="mt-3 text-base text-gray-600 leading-7 overflow-hidden"
+            initial={{ opacity: 0, height: 0, y: -4 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -4 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            {answer}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
 export default function FAQSection() {
   return (
-    <section id="faq" className="py-16 bg-white">
+    <motion.section
+      id="faq"
+      className="py-16 bg-white"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center text-primary mb-10">
+        <motion.h2
+          className="text-3xl sm:text-4xl font-bold text-center text-primary mb-10"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          viewport={{ once: true }}
+        >
           Frequently Asked Questions
-        </h2>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6">
+        </motion.h2>
+        <motion.div
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.55 }}
+          viewport={{ once: true, amount: 0.2 }}
+        >
           {faqs.map((faq) => (
             <FAQItem key={faq.question} question={faq.question} answer={faq.answer} />
           ))}
-        </div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 }

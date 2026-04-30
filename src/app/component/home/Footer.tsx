@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,12 +21,19 @@ const bottomLinks = [
 export default function Footer() {
   return (
     <div className=" container mx-auto px-4">
-      <footer className="bg-[#8dbce3] rounded-3xl mb-4 overflow-hidden">
+      <motion.footer
+        className="bg-[#8dbce3] rounded-3xl mb-4 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        viewport={{ once: true, amount: 0.25 }}
+      >
 
       {/* ── Main area ── */}
-      <div className="px-8 sm:px-12 lg:px-20 py-10 sm:py-14
+      <motion.div className="px-8 sm:px-12 lg:px-20 py-10 sm:py-14
                       grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 items-start">
 
+        <motion.div initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: 0.12, duration: 0.5 }} viewport={{ once: true }}>
         <Image
           src="/encore-dog.png"
           alt="Encore dog mascot"
@@ -31,9 +41,10 @@ export default function Footer() {
           height={267}
           className="object-contain"
         />
+        </motion.div>
 
         {/* Center — Menu */}
-        <div className="flex flex-col items-center sm:items-start gap-1 mt-0 lg:mt-10">
+        <motion.div className="flex flex-col items-center sm:items-start gap-1 mt-0 lg:mt-10" initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.5 }} viewport={{ once: true }}>
           <h4
             className="text-[#3B4A8B] font-semibold mb-2"
             style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.1rem)" }}
@@ -50,10 +61,10 @@ export default function Footer() {
               {link.label}
             </Link>
           ))}
-        </div>
+        </motion.div>
 
         {/* Right — Contact */}
-        <div className="flex flex-col items-center justify-center sm:items-start gap-1 mt-0 lg:mt-10">
+        <motion.div className="flex flex-col items-center justify-center sm:items-start gap-1 mt-0 lg:mt-10" initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.24, duration: 0.5 }} viewport={{ once: true }}>
           <h4
             className="text-[#3B4A8B] font-semibold mb-2"
             style={{ fontSize: "clamp(0.95rem, 1.4vw, 1.1rem)" }}
@@ -67,11 +78,11 @@ export default function Footer() {
           >
             contact@k9encore.com
           </a>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* ── Bottom bar — darker blue ── */}
-      <div className="bg-[#4e7db6] px-6 sm:px-10 lg:px-16 py-3">
+      <motion.div className="bg-[#4e7db6] px-6 sm:px-10 lg:px-16 py-3" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.45 }} viewport={{ once: true }}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
 
           {/* Left links */}
@@ -96,9 +107,9 @@ export default function Footer() {
             ©2025 Encore LLC
           </p>
         </div>
-      </div>
+      </motion.div>
 
-    </footer>
+      </motion.footer>
     </div>
   );
 }

@@ -7,8 +7,8 @@ export default function Messages() {
     <AppLayout>
       <div className="container mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">Messages</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-3xl font-bold text-secondary">Messages</h1>
+          <p className="text-base text-muted-foreground mt-1.5">
             Chat with our support team and review important notifications.
           </p>
         </div>

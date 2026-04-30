@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 
 const features = [
@@ -10,12 +13,34 @@ const features = [
 export default function FeaturesSection() {
   return (
     <div className="container mx-auto px-4 ">
-      <div className="bg-gray-100 p-6 rounded-3xl">
-        <h2 className="text-3xl font-bold text-center text-gray-700 mb-12">Features</h2>
+      <motion.div
+        className="bg-gray-100 p-6 rounded-3xl"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        viewport={{ once: true, amount: 0.25 }}
+      >
+        <motion.h2
+          className="text-3xl font-bold text-center text-secondary mb-12"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          viewport={{ once: true }}
+        >
+          Features
+        </motion.h2>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {features.map((feature) => (
-            <div key={feature.title} className="relative flex-shrink-0">
+            <motion.div
+              key={feature.title}
+              className="relative flex-shrink-0"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+              viewport={{ once: true, amount: 0.3 }}
+              whileHover={{ y: -6 }}
+            >
               <Image
                 src={feature.src}
                 alt={feature.title}
@@ -32,10 +57,10 @@ export default function FeaturesSection() {
               >
                 {feature.title}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

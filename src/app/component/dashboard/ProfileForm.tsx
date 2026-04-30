@@ -43,8 +43,8 @@ export default function ProfileForm() {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
       <div className="mb-5">
-        <h3 className="text-base font-bold text-slate-800">Profile Information</h3>
-        <p className="text-sm text-slate-400 mt-0.5">
+        <h3 className="text-lg font-bold text-secondary">Profile Information</h3>
+        <p className="text-base text-muted-foreground mt-0.5">
           Update your personal details and contact information.
         </p>
       </div>
@@ -57,7 +57,7 @@ export default function ProfileForm() {
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
                     First Name
                   </FormLabel>
                   <FormControl>
@@ -66,8 +66,8 @@ export default function ProfileForm() {
                       disabled={!isEditing}
                       className={
                         isEditing
-                          ? "border-slate-300 focus-visible:ring-slate-400"
-                          : "border-dashed border-slate-200 bg-transparent text-slate-700"
+                          ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                          : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
                       }
                     />
                   </FormControl>
@@ -80,7 +80,7 @@ export default function ProfileForm() {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
                     Last Name
                   </FormLabel>
                   <FormControl>
@@ -89,8 +89,8 @@ export default function ProfileForm() {
                       disabled={!isEditing}
                       className={
                         isEditing
-                          ? "border-slate-300 focus-visible:ring-slate-400"
-                          : "border-dashed border-slate-200 bg-transparent text-slate-700"
+                          ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                          : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
                       }
                     />
                   </FormControl>
@@ -105,7 +105,7 @@ export default function ProfileForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-slate-600">
+                <FormLabel className="text-sm font-medium text-muted-foreground">
                   Email Address
                 </FormLabel>
                 <FormControl>
@@ -115,8 +115,8 @@ export default function ProfileForm() {
                     disabled={!isEditing}
                     className={
                       isEditing
-                        ? "border-slate-300 focus-visible:ring-slate-400"
-                        : "border-dashed border-slate-200 bg-transparent text-slate-700"
+                        ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                        : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
                     }
                   />
                 </FormControl>
@@ -132,7 +132,7 @@ export default function ProfileForm() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditing(true)}
-                className="border-slate-200 text-slate-600"
+                className="border-slate-200 text-muted-foreground"
               >
                 Edit
               </Button>
@@ -146,7 +146,7 @@ export default function ProfileForm() {
                     form.reset();
                     setIsEditing(false);
                   }}
-                  className="border-slate-200 text-slate-600"
+                  className="border-slate-200 text-muted-foreground"
                 >
                   Cancel
                 </Button>

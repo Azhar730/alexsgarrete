@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 
 export default function AboutSection() {
@@ -6,7 +9,13 @@ export default function AboutSection() {
       <div className="flex items-stretch gap-4">
 
         {/* Left card — dog photo with white text bottom-left */}
-        <div className="relative rounded-3xl overflow-hidden flex-[1.53]">
+        <motion.div
+          className="relative rounded-3xl overflow-hidden flex-[1.53]"
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          viewport={{ once: true, amount: 0.4 }}
+        >
           <Image
             src="/dog-1.png"
             alt="Dog"
@@ -19,20 +28,30 @@ export default function AboutSection() {
 
           {/* Overlay text — bottom-left */}
           <div className="absolute bottom-0 left-0 px-6 pb-6 sm:px-8 sm:pb-8">
-            <p
+            <motion.p
               className="text-white font-bold leading-snug text-xl md:text-2xl lg:text-4xl"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              viewport={{ once: true }}
             >
               Approximately 10% of dogs
               <br />
               are in shelters because their
               <br />
               owner passed away without a plan.
-            </p>
+            </motion.p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right card — light blue bg with text top-left + cartoon dog */}
-        <div className="relative rounded-3xl overflow-hidden flex-[1]">
+        <motion.div
+          className="relative rounded-3xl overflow-hidden flex-[1]"
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.08 }}
+          viewport={{ once: true, amount: 0.4 }}
+        >
           <Image
             src="/bg-dog.png"
             alt="Dog"
@@ -43,17 +62,21 @@ export default function AboutSection() {
 
           {/* Overlay text — top-left */}
           <div className="absolute top-0 left-0 px-6 pt-6 sm:px-7 sm:pt-7 max-w-[85%]">
-            <p
+            <motion.p
               className="font-semibold leading-snug text-[#3B7A8F] text-xl md:text-2xl lg:text-4xl"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.24, duration: 0.5 }}
+              viewport={{ once: true }}
             >
               Encore is your solution for permanent
               <br />
               care for your fur baby should you
               <br />
               pass away.
-            </p>
+            </motion.p>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>
