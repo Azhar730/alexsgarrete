@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { Fraunces, Inter } from "next/font/google";
 
@@ -36,7 +39,7 @@ export default function FeaturesSection() {
                 height={849}
                 className="w-full h-auto object-cover transition-transform duration-700 "
               />
-              
+
               <p
                 className={`${inter.className} absolute bottom-6 md:bottom-10 lg:bottom-16 left-0 right-0 text-center text-white px-3 leading-[1.2] text-lg sm:text-xl lg:text-[1.65rem] drop-shadow-md`}
                 style={{

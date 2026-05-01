@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Inter, Fraunces } from "next/font/google";
 
@@ -46,6 +47,10 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
     <div
       className="border-b border-gray-200 last:border-b-0 py-4 md:py-5 lg:py-6 cursor-pointer group"
       onClick={() => setOpen(!open)}
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.5 }}
     >
       <div className="flex items-center justify-between gap-4">
         <span className={`${inter.className} text-base md:text-lg lg:text-xl font-medium text-gray-800 transition-colors group-hover:text-primary`}>

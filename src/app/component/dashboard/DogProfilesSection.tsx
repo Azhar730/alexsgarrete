@@ -1,7 +1,9 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import DogProfileCard from "./DogProfileCard";
-import { Plus } from "lucide-react";
 import { DogProfile } from ".";
+import { useState } from "react";
+import { AddDogModal, DogFormData } from "./AddDogModal";
 
 const dogs: DogProfile[] = [
   {
@@ -40,23 +42,37 @@ const dogs: DogProfile[] = [
 ];
 
 export default function DogProfilesSection() {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleAddDog = (data: DogFormData) => {
+    console.log("New dog data:", data);
+    // তোমার API call বা state update এখানে
+  };
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-primary">Dog Profiles</h2>
+        <h2 className="text-2xl font-bold text-secondary">Dog Profiles</h2>
         <Button
           variant="outline"
           size="sm"
-          className="border-primary text-primary cursor-pointer gap-1.5 "
+          className="border-primary text-primary cursor-pointer gap-1.5 text-base"
+          onClick={() => setModalOpen(true)}
         >
           Add new dog
         </Button>
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {dogs.map((dog) => (
           <DogProfileCard key={dog.id} dog={dog} />
         ))}
       </div>
+
+      <AddDogModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleAddDog}
+      />
     </section>
   );
 }

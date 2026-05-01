@@ -1,5 +1,6 @@
 import { AuthSlide } from "@/app/data/authConfig";
 import Image from "next/image";
+import Link from "next/link";
 
 interface AuthShellProps {
   slide: AuthSlide;
@@ -14,12 +15,12 @@ interface AuthShellProps {
 export function AuthShell({ slide, children }: AuthShellProps) {
   return (
     // Full-screen gray background
-    <div className="min-h-screen w-full bg-[#E8E8E8] flex items-center justify-center p-4 sm:p-6">
-      {/* Card container */}
-      <div className="w-full max-w-[740px] bg-white rounded-[20px] shadow-[0_4px_40px_rgba(0,0,0,0.10)] overflow-hidden flex flex-col md:flex-row min-h-[480px]">
+    <div className="min-h-screen w-full  flex items-center justify-center p-4 sm:p-6">
+
+      <div className="max-w-4xl bg-white rounded-[20px] shadow-[0_4px_40px_rgba(0,0,0,0.10)] overflow-hidden flex flex-col md:flex-row min-h-[480px]">
 
         {/* ── Left: Image panel ──────────────────────────────────────── */}
-        <div className="relative w-full md:w-[340px] md:min-w-[340px] min-h-[220px] md:min-h-0 shrink-0 rounded-[16px] overflow-hidden m-3 md:m-3">
+        <div className="relative w-full md:w-[340px] md:min-w-85 min-h-55 md:min-h-0 shrink-0 rounded-[16px] overflow-hidden m-3 md:m-3">
 
           {/* Background image */}
           <Image
@@ -36,12 +37,14 @@ export function AuthShell({ slide, children }: AuthShellProps) {
 
           {/* Logo badge */}
           <div className="absolute top-4 left-4 z-10">
-            <Image
-              src="/encore.png"
-              alt="Encore logo"
-              width={100}
-              height={32}
-            />
+            <Link href="/">
+              <Image
+                src="/encore.png"
+                alt="Encore logo"
+                width={100}
+                height={32}
+              />
+            </Link>
           </div>
 
           {/* Quote text */}
