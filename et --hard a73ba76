@@ -1,0 +1,14 @@
+[33m8f11c6e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mazhar[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{0}: pull origin dev: Fast-forward
+[33mcec5e0c[m HEAD@{1}: pull origin dev: Fast-forward
+[33ma73ba76[m[33m ([m[1;31morigin/azhar[m[33m)[m HEAD@{2}: commit: fixed
+[33m8feb888[m HEAD@{3}: commit: My Updated Code From Azhar
+[33mb3a4fbc[m HEAD@{4}: commit: faq edited
+[33m97bbbee[m[33m ([m[1;32mdev[m[33m)[m HEAD@{5}: pull origin dev: Fast-forward
+[33mc2e760f[m HEAD@{6}: checkout: moving from dev to azhar
+[33m97bbbee[m[33m ([m[1;32mdev[m[33m)[m HEAD@{7}: commit: payment done
+[33mc2e760f[m HEAD@{8}: checkout: moving from azhar to dev
+[33mc2e760f[m HEAD@{9}: commit: branch created
+[33m06831ee[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{10}: checkout: moving from main to azhar
+[33m06831ee[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{11}: commit: dashboard ongoing
+[33m52aaff3[m HEAD@{12}: Branch: renamed refs/heads/master to refs/heads/main
+[33m52aaff3[m HEAD@{14}: commit (initial): first commit

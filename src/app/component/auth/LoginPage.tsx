@@ -50,10 +50,6 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     } catch (error: any) {
-      console.error("Login error:", error);
-      if (error?.status === 401) {
-        router.push("/verify-email?email=" + encodeURIComponent(values.email));
-      }
       setIsLoading(false);
       toast.error(
         error?.data?.error?.message || "Login failed! Please try again.",
