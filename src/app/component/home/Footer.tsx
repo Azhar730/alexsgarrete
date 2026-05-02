@@ -12,7 +12,6 @@ const inter = Inter({
 });
 
 const menuLinks = [
-  { label: "Home", href: "#home" },
   { label: "How it Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "FAQ", href: "#faq" },
@@ -34,7 +33,7 @@ export default function Footer() {
         <div className="px-8 sm:px-12 lg:px-20 py-10 sm:py-14
                       grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 items-start">
 
-          <div initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: 0.12, duration: 0.5 }} viewport={{ once: true }}>
+          <div >
             <Image
               src="/encore-dog.png"
               alt="Encore dog mascot"

@@ -45,11 +45,7 @@ export default function PricingSection() {
                 <div
                   key={plan.title}
                   className="bg-white/20 backdrop-blur-sm rounded-2xl p-8 flex flex-col items-center text-center gap-4 border border-white/20 hover:bg-white/30 transition-colors"
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.55, ease: "easeOut" }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  whileHover={{ y: -6 }}
+        
                 >
                   <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                     <Icon className="text-white" size={22} />

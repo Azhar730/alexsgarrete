@@ -87,11 +87,11 @@ export default function VerifyEmailPage() {
   return (
     <AuthShell slide={AUTH_SLIDES.verify}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Check your email
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           We&apos;ve sent a 6-digit verification code to{" "}
           <span className="font-semibold text-gray-800">{userEmail}</span>.
           Enter the code below to verify your account.

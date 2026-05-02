@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import ReduxProvider from "@/redux/provider/ReduxProvider";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
+import { inter } from "./fonts";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -22,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <body className="font-sans antialiased">
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
+        <ReduxProvider>
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
+        </ReduxProvider>
       </body>
     </html>
   );

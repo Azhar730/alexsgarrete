@@ -65,11 +65,11 @@ export default function SignupPage() {
   return (
     <AuthShell slide={AUTH_SLIDES.signup}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Create an account
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           Enter your details below to start setting up your custom plan.
         </p>
       </div>

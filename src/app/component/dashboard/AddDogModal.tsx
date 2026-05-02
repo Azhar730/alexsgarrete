@@ -46,24 +46,6 @@ const dogSchema = z
     microchipped: z.string().min(1, "Please select an option"),
     microchipNumber: z.string().optional(),
     microchipId: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.microchipped === "yes") {
-      if (!data.microchipNumber || data.microchipNumber.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Microchip number is required",
-          path: ["microchipNumber"],
-        });
-      }
-      if (!data.microchipId || data.microchipId.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Microchip ID is required",
-          path: ["microchipId"],
-        });
-      }
-    }
   });
 
 export type DogFormData = z.infer<typeof dogSchema> & {
@@ -157,21 +139,24 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl border border-gray-100 shadow-xl">
+      <DialogContent className="sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-hidden">
         {/* ── Header ── */}
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
-          <DialogTitle className="text-lg font-semibold text-gray-900">
+        <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10">
+          <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
             Add a New Dog
           </DialogTitle>
-          <p className="text-sm text-gray-500 mt-0.5 font-normal">
+          <p className="text-sm text-gray-500 mt-1 font-normal leading-relaxed">
             Tell us about your furry friend so we can better accommodate their needs.
           </p>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)}>
-            <div className="px-6 py-5 space-y-6">
-
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
+            {/* ── Scrollable Content Section ── */}
+            <div 
+              className="flex-1 overflow-y-auto px-8 py-7 space-y-8 overscroll-contain custom-scrollbar"
+              data-lenis-prevent
+            >
               {/* ── Photo Upload ── */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium text-gray-700">Photo</p>
@@ -217,11 +202,11 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                         : "border-gray-200 bg-gray-50/60 hover:border-[#5B6BBF] hover:bg-[#5B6BBF]/5"
                       }`}
                   >
-                    <div className="w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center mb-2.5 shadow-sm">
-                      <Camera className="w-5 h-5 text-gray-400" />
+                    <div className="w-14 h-14 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-3 shadow-sm transition-transform group-hover:scale-110">
+                      <Camera className="w-6 h-6 text-[#5B6BBF]" />
                     </div>
-                    <p className="text-sm font-medium text-gray-700">Upload a photo of your dog</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG or GIF · Max size 5MB</p>
+                    <p className="text-sm font-semibold text-gray-700">Upload a photo of your dog</p>
+                    <p className="text-xs text-gray-500 mt-1.5 bg-gray-100 px-2.5 py-1 rounded-full">JPG, PNG or GIF · Max size 5MB</p>
                   </div>
                 )}
 
@@ -242,20 +227,20 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
               </div>
 
               {/* ── Form Grid ── */}
-              <div className="grid grid-cols-1  gap-x-5 gap-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
 
                 {/* Name */}
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Name of Dog</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-sm font-semibold text-gray-700">Name of Dog</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Max"
+                          placeholder="What's your dog's name?"
                           {...field}
-                          className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -269,11 +254,11 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Gender</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">Gender</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="rounded-lg border-gray-200 h-10 focus:ring-[#5B6BBF]/20">
-                            <SelectValue placeholder="Select" />
+                          <SelectTrigger className="w-full rounded-xl border-gray-200 h-12 bg-gray-50/30 px-4 focus:ring-[#5B6BBF]/20">
+                            <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -292,11 +277,11 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="spayedNeutered"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Spayed / Neutered</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">Spayed / Neutered</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="rounded-lg border-gray-200 h-10 focus:ring-[#5B6BBF]/20">
-                            <SelectValue placeholder="Select" />
+                          <SelectTrigger className="w-full rounded-xl border-gray-200 h-12 bg-gray-50/30 px-4 focus:ring-[#5B6BBF]/20">
+                            <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -315,12 +300,12 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="birthday"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Birthday / Age of Pet</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">Birthday / Age of Pet</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="04/12/2020"
+                          placeholder="MM/DD/YYYY"
                           {...field}
-                          className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -334,12 +319,12 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="primaryBreed"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Primary Breed</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">Primary Breed</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Golden Retriever"
+                          placeholder="e.g. Golden Retriever"
                           {...field}
-                          className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -352,16 +337,16 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   control={form.control}
                   name="additionalBreed"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-gray-600">
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
                         Additional Breed(s){" "}
-                        <span className="text-gray-400 font-normal">(optional)</span>
+                        <span className="text-gray-400 font-normal italic">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="N/A"
+                          placeholder="If your dog is a mix, list other breeds here"
                           {...field}
-                          className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -374,13 +359,13 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   control={form.control}
                   name="colorCoat"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Color(s) & Coat description</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-sm font-semibold text-gray-700">Color(s) & Coat description</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Light golden, medium coat"
+                          placeholder="e.g. Light golden, medium-length wavy coat"
                           {...field}
-                          className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
                         />
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -394,11 +379,11 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="microchipped"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm text-gray-600">Microchipped</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">Microchipped</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="rounded-lg border-gray-200 h-10 focus:ring-[#5B6BBF]/20">
-                            <SelectValue placeholder="Select" />
+                          <SelectTrigger className="w-full rounded-xl border-gray-200 h-12 bg-gray-50/30 px-4 focus:ring-[#5B6BBF]/20">
+                            <SelectValue placeholder="Select option" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -411,64 +396,63 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   )}
                 />
 
-                {/* Conditional Microchip Fields */}
-                {microchipped === "yes" && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="microchipNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm text-gray-600">Microchip number</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="1-800-252-7894"
-                              {...field}
-                              className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                {/* Microchip Number */}
+                <FormField
+                  control={form.control}
+                  name="microchipNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold text-gray-700">Microchip number</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={microchipped === "yes" ? "1-800-252-7894" : "Select 'Yes' to enable"}
+                          {...field}
+                          disabled={microchipped !== "yes"}
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="microchipId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm text-gray-600">Microchip ID</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="989879456654964"
-                              {...field}
-                              className="rounded-lg border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-10"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
+                {/* Microchip ID */}
+                <FormField
+                  control={form.control}
+                  name="microchipId"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-sm font-semibold text-gray-700">Microchip ID</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={microchipped === "yes" ? "989879456654964" : "Select 'Yes' to enable"}
+                          {...field}
+                          disabled={microchipped !== "yes"}
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 
             {/* ── Footer ── */}
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white rounded-b-2xl">
+            <div className="px-8 py-5 border-t border-gray-50 flex items-center justify-end gap-3 bg-white shrink-0">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="rounded-full px-5 border-gray-200 text-gray-600 hover:text-gray-900"
+                className="rounded-full px-6 text-gray-500 hover:text-gray-900 hover:bg-gray-100"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full px-6 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white min-w-[100px]"
+                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-[140px]"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
