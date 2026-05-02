@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, CreditCard, MessageSquare, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGetMeQuery } from "@/redux/api/userApi";
 import Image from "next/image";
 
 const navItems = [
@@ -15,6 +16,16 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: user } = useGetMeQuery({});
+
+  const userData = user?.data;
+  const displayName = userData?.fullName || userData?.name || "User";
+  const initials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:z-50 md:w-60 bg-white border-r border-slate-100">
@@ -39,15 +50,15 @@ export default function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-2.5 px-3 py-2.5 rounded text-lg font-medium transition-all",
                 active
-                  ? "bg-slate-100 text-slate-900"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/10"
               )}
             >
               <Icon
                 size={16}
-                className={cn(active ? "text-slate-700" : "text-slate-400")}
+                className={cn(active ? "text-primary hover:text-primary" : "text-muted-foreground hover:text-primary")}
               />
               {label}
             </Link>
@@ -58,12 +69,22 @@ export default function Sidebar() {
       {/* User */}
       <div className="p-3 border-t border-slate-100">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-            <span className="text-xs font-bold text-amber-800">SJ</span>
+          <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center overflow-hidden shrink-0 border border-amber-300">
+             {userData?.profilePicture || userData?.image ? (
+               <Image 
+                 src={userData.profilePicture || userData.image} 
+                 alt={displayName} 
+                 width={32} 
+                 height={32} 
+                 className="object-cover"
+               />
+             ) : (
+               <span className="text-xs font-bold text-amber-800">{initials}</span>
+             )}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-slate-700 truncate">Sarah Jenkins</p>
-            <p className="text-[10px] text-slate-400 truncate">sarah.j@example.com</p>
+            <p className="text-xs font-semibold text-slate-700 truncate">{displayName}</p>
+            <p className="text-[10px] text-slate-400 truncate">{userData?.email}</p>
           </div>
         </div>
       </div>

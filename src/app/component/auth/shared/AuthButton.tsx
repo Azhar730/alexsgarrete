@@ -21,7 +21,7 @@ export function AuthButton({
       type={type}
       onClick={onClick}
       disabled={isLoading || disabled}
-      className="w-full h-11 bg-[#5C7FC4] hover:bg-[#4A6BAF] active:bg-[#3D5A9C] text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+      className="cursor-pointer w-full h-11 bg-[#5C7FC4] hover:bg-[#4A6BAF] active:bg-[#3D5A9C] text-white font-semibold text-sm rounded-lg transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {isLoading ? (
         <Loader2 className="w-4 h-4 animate-spin mr-2" />

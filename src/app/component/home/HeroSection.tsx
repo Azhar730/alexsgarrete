@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Button } from "./button";
@@ -49,7 +52,7 @@ export default function HeroSection() {
                 >
                   Get started
                 </Button>
-                <span className="rounded-full bg-white text-black flex items-center justify-center flex-shrink-0 cursor-pointer
+                <span className="rounded-full bg-white text-black flex items-center justify-center shrink-0 cursor-pointer
                                  w-10 h-10
                                  sm:w-12 sm:h-12
                                  lg:w-14 lg:h-14

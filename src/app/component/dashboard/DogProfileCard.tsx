@@ -43,8 +43,8 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
           />
         </div>
         <div>
-          <p className="font-semibold text-slate-800 text-base">{dog.name}</p>
-          <p className="text-xs text-slate-400">
+          <p className="font-semibold text-secondary text-lg">{dog.name}</p>
+          <p className="text-sm text-muted-foreground">
             {dog.breed} • {dog.age} yrs
           </p>
         </div>
@@ -56,18 +56,18 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
       {/* Billing info */}
       <div className="grid grid-cols-2 gap-3 rounded bg-primary/10 px-8 py-4 border border-slate-100">
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
             Monthly Fee
           </p>
-          <p className="text-sm font-bold text-slate-700">
+          <p className="text-base font-bold text-secondary">
             {dog.monthlyFee ? `$${dog.monthlyFee.toFixed(2)}` : "N/A"}
           </p>
         </div>
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
             Next Billing
           </p>
-          <p className="text-sm font-bold text-slate-700">
+          <p className="text-base font-bold text-secondary">
             {dog.nextBilling ?? "N/A"}
           </p>
         </div>

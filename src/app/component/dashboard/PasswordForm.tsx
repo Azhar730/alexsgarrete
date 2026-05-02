@@ -51,8 +51,8 @@ export default function PasswordForm() {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
       <div className="mb-5">
-        <h3 className="text-base font-bold text-slate-800">Password &amp; Security</h3>
-        <p className="text-sm text-slate-400 mt-0.5">
+        <h3 className="text-lg font-bold text-secondary">Password &amp; Security</h3>
+        <p className="text-base text-muted-foreground mt-0.5">
           Manage your password and secure your account.
         </p>
       </div>
@@ -64,7 +64,7 @@ export default function PasswordForm() {
             name="currentPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-slate-600">
+                <FormLabel className="text-sm font-medium text-muted-foreground">
                   Current Password
                 </FormLabel>
                 <FormControl>
@@ -74,8 +74,8 @@ export default function PasswordForm() {
                     disabled={!isEditing}
                     className={
                       isEditing
-                        ? "border-slate-300 focus-visible:ring-slate-400"
-                        : "border-dashed border-slate-200 bg-transparent text-slate-700"
+                        ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                        : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
                     }
                   />
                 </FormControl>
@@ -90,7 +90,7 @@ export default function PasswordForm() {
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
                     New Password
                   </FormLabel>
                   <FormControl>
@@ -101,8 +101,8 @@ export default function PasswordForm() {
                       placeholder={isEditing ? "Enter new password" : ""}
                       className={
                         isEditing
-                          ? "border-slate-300 focus-visible:ring-slate-400"
-                          : "border-dashed border-slate-200 bg-transparent"
+                          ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                          : "border-dashed border-slate-200 bg-transparent text-base"
                       }
                     />
                   </FormControl>
@@ -115,7 +115,7 @@ export default function PasswordForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
                     Confirm New Password
                   </FormLabel>
                   <FormControl>
@@ -126,8 +126,8 @@ export default function PasswordForm() {
                       placeholder={isEditing ? "Confirm new password" : ""}
                       className={
                         isEditing
-                          ? "border-slate-300 focus-visible:ring-slate-400"
-                          : "border-dashed border-slate-200 bg-transparent"
+                          ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                          : "border-dashed border-slate-200 bg-transparent text-base"
                       }
                     />
                   </FormControl>
@@ -147,7 +147,7 @@ export default function PasswordForm() {
                   form.setValue("currentPassword", "");
                   setIsEditing(true);
                 }}
-                className="border-slate-200 text-slate-600"
+                className="border-slate-200 text-muted-foreground"
               >
                 Edit
               </Button>
@@ -161,7 +161,7 @@ export default function PasswordForm() {
                     form.reset({ currentPassword: "••••••••", newPassword: "", confirmPassword: "" });
                     setIsEditing(false);
                   }}
-                  className="border-slate-200 text-slate-600"
+                  className="border-slate-200 text-muted-foreground"
                 >
                   Cancel
                 </Button>

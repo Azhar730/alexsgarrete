@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -11,6 +12,10 @@ import { AuthShell } from "./shared/AuthShell";
 import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
+import { useLoginMutation } from "@/redux/api/authApi";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { ca } from "zod/v4/locales";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
@@ -24,6 +29,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [login] = useLoginMutation();
+  const router = useRouter();
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -34,23 +41,35 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      // TODO: replace with real API call
       console.log("Login:", values);
-      await new Promise((r) => setTimeout(r, 1200));
-      // router.push("/dashboard");
-    } finally {
+      const response = await login(values).unwrap();
+      console.log("API response:", response);
+      if (response?.success) {
+        toast.success("Login successful! Redirecting...");
+        await new Promise((r) => setTimeout(r, 1200));
+        router.push("/");
+        setIsLoading(false);
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      if (error?.status === 401) {
+        router.push("/verify-email?email=" + encodeURIComponent(values.email));
+      }
       setIsLoading(false);
+      toast.error(
+        error?.data?.error?.message || "Login failed! Please try again.",
+      );
     }
   };
 
   return (
     <AuthShell slide={AUTH_SLIDES.login}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Welcome back
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           Enter your credentials to access your account.
         </p>
       </div>
@@ -112,11 +131,17 @@ export default function LoginPage() {
       {/* Legal */}
       <p className="mt-4 text-center text-xs text-gray-400 leading-relaxed">
         By logging in, you agree to our{" "}
-        <Link href="/terms" className="text-[#5C7FC4] hover:underline font-medium">
+        <Link
+          href="/terms"
+          className="text-[#5C7FC4] hover:underline font-medium"
+        >
           Terms
         </Link>{" "}
         and{" "}
-        <Link href="/privacy" className="text-[#5C7FC4] hover:underline font-medium">
+        <Link
+          href="/privacy"
+          className="text-[#5C7FC4] hover:underline font-medium"
+        >
           Privacy Policy
         </Link>
         .

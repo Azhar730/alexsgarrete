@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +9,9 @@ import { AuthShell } from "./shared/AuthShell";
 import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { OTPInput } from "./shared/OTPInput";
 import { AuthButton } from "./shared/AuthButton";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import { useVerifyOtpMutation } from "@/redux/api/authApi";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const verifySchema = z.object({
@@ -26,9 +28,11 @@ export default function VerifyEmailPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resent, setResent] = useState(false);
-
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [verifyOtp] = useVerifyOtpMutation();
   // In a real app, get this from router state / context
-  const userEmail = "name@example.com";
+  const userEmail = searchParams.get("email");
 
   const form = useForm<VerifyValues>({
     resolver: zodResolver(verifySchema),
@@ -38,13 +42,34 @@ export default function VerifyEmailPage() {
 
   const onSubmit = async (values: VerifyValues) => {
     setIsLoading(true);
+
+    const payload = {
+      email: userEmail,
+      purpose: "email_verification",
+      otp: values.code,
+    };
     try {
-      console.log("Verify code:", values.code);
-      await new Promise((r) => setTimeout(r, 1200));
-      // router.push("/dashboard");
-    } finally {
+       await new Promise((r) => setTimeout(r, 1200));
+      const res = await verifyOtp(payload).unwrap();
+      console.log("verify-email", res);
+      if (res.success) {
+        toast.success("OTP verified successfully! You can now log in.");
+        router.push("/login");
+        setIsLoading(false);
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.data.message || "Verification failed! Try again.");
       setIsLoading(false);
     }
+
+    // try {
+    //   console.log("Verify code:", values.code);
+    //   await new Promise((r) => setTimeout(r, 1200));
+    //   // router.push("/dashboard");
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const handleResend = async () => {
@@ -62,14 +87,14 @@ export default function VerifyEmailPage() {
   return (
     <AuthShell slide={AUTH_SLIDES.verify}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Check your email
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           We&apos;ve sent a 6-digit verification code to{" "}
-          <span className="font-semibold text-gray-800">{userEmail}</span>
-          . Enter the code below to verify your account.
+          <span className="font-semibold text-gray-800">{userEmail}</span>.
+          Enter the code below to verify your account.
         </p>
       </div>
 

@@ -6,10 +6,10 @@ import ProfileForm from "@/app/component/dashboard/ProfileForm";
 export default function SettingsPage() {
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="container mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">Settings</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-3xl font-bold text-secondary">Settings</h1>
+          <p className="text-base text-muted-foreground mt-1.5">
             Manage your account details and preferences.
           </p>
         </div>

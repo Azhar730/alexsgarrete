@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { Fraunces, Inter } from "next/font/google";
 
@@ -19,7 +22,13 @@ export default function AboutSection() {
       <div className="flex flex-col md:flex-row items-stretch gap-4 md:gap-6">
 
         {/* Left card — dog photo with white text bottom-left */}
-        <div className="relative rounded-3xl overflow-hidden flex-[1.53]">
+        <motion.div
+          className="relative rounded-3xl overflow-hidden flex-[1.53]"
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          viewport={{ once: true, amount: 0.4 }}
+        >
           <Image
             src="/dog-1.png"
             alt="Dog"
@@ -42,7 +51,7 @@ export default function AboutSection() {
               owner passed away without a plan.
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right card — light blue bg with text top-left + cartoon dog */}
         <div className="relative rounded-3xl overflow-hidden flex-1 mt-4 md:mt-0">

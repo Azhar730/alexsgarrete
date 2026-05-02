@@ -11,6 +11,9 @@ import { AuthShell } from "./shared/AuthShell";
 import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
+import { useRegisterMutation } from "@/redux/api/authApi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const signupSchema = z.object({
@@ -19,11 +22,7 @@ const signupSchema = z.object({
     .min(2, "Full name must be at least 2 characters")
     .max(60, "Full name is too long"),
   email: z.string().email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Must include at least one uppercase letter")
-    .regex(/[0-9]/, "Must include at least one number"),
+  password: z.string().regex(/[0-9]/, "Must include at least one number"),
 });
 
 type SignupValues = z.infer<typeof signupSchema>;
@@ -32,6 +31,8 @@ type SignupValues = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [register] = useRegisterMutation();
+  const router = useRouter();
 
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
@@ -44,6 +45,16 @@ export default function SignupPage() {
     try {
       // TODO: replace with real API call
       console.log("Signup:", values);
+      const response = await register(values).unwrap();
+      console.log("API response:", response);
+      if (response.success) {
+        toast.success(
+          "Registration successful! Please check your email for verification.",
+        );
+        router.push("/verify-email?email=" + encodeURIComponent(values.email));
+      } else {
+        toast.error(response.message || "Registration failed");
+      }
       await new Promise((r) => setTimeout(r, 1200));
       // router.push("/verify-email");
     } finally {
@@ -54,11 +65,11 @@ export default function SignupPage() {
   return (
     <AuthShell slide={AUTH_SLIDES.signup}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Create an account
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           Enter your details below to start setting up your custom plan.
         </p>
       </div>
@@ -119,11 +130,17 @@ export default function SignupPage() {
       {/* Legal */}
       <p className="mt-4 text-center text-xs text-gray-400 leading-relaxed">
         By signing up, you agree to our{" "}
-        <Link href="/terms" className="text-[#5C7FC4] hover:underline font-medium">
+        <Link
+          href="/terms"
+          className="text-[#5C7FC4] hover:underline font-medium"
+        >
           Terms
         </Link>{" "}
         and{" "}
-        <Link href="/privacy" className="text-[#5C7FC4] hover:underline font-medium">
+        <Link
+          href="/privacy"
+          className="text-[#5C7FC4] hover:underline font-medium"
+        >
           Privacy Policy
         </Link>
         .

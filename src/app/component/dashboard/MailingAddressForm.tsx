@@ -46,14 +46,14 @@ export default function MailingAddressForm() {
 
   const inputClass = (editing: boolean) =>
     editing
-      ? "border-slate-300 focus-visible:ring-slate-400"
-      : "border-dashed border-slate-200 bg-transparent text-slate-700";
+      ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+      : "border-dashed border-slate-200 bg-transparent text-secondary text-base";
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
       <div className="mb-5">
-        <h3 className="text-base font-bold text-slate-800">Mailing Address</h3>
-        <p className="text-sm text-slate-400 mt-0.5">
+        <h3 className="text-lg font-bold text-secondary">Mailing Address</h3>
+        <p className="text-base text-muted-foreground mt-0.5">
           Where should we send your physical documents?
         </p>
       </div>
@@ -65,7 +65,7 @@ export default function MailingAddressForm() {
             name="streetAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-slate-600">
+                <FormLabel className="text-sm font-medium text-muted-foreground">
                   Street Address
                 </FormLabel>
                 <FormControl>
@@ -86,7 +86,7 @@ export default function MailingAddressForm() {
               name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">City</FormLabel>
+                  <FormLabel className="text-sm font-medium text-muted-foreground">City</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -103,7 +103,7 @@ export default function MailingAddressForm() {
               name="stateProvince"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
                     State / Province
                   </FormLabel>
                   <FormControl>
@@ -125,7 +125,7 @@ export default function MailingAddressForm() {
               name="postalCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
                     Postal Code
                   </FormLabel>
                   <FormControl>
@@ -144,7 +144,7 @@ export default function MailingAddressForm() {
               name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-slate-600">Country</FormLabel>
+                  <FormLabel className="text-sm font-medium text-muted-foreground">Country</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -165,7 +165,7 @@ export default function MailingAddressForm() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditing(true)}
-                className="border-slate-200 text-slate-600"
+                className="border-slate-200 text-muted-foreground"
               >
                 Edit
               </Button>
@@ -179,7 +179,7 @@ export default function MailingAddressForm() {
                     form.reset();
                     setIsEditing(false);
                   }}
-                  className="border-slate-200 text-slate-600"
+                  className="border-slate-200 text-muted-foreground"
                 >
                   Cancel
                 </Button>
