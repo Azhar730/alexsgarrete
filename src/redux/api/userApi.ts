@@ -33,7 +33,7 @@ const userApi = baseApi.injectEndpoints({
     }),
     getMe: builder.query({
       query: () => ({
-        url: `/users/me`,
+        url: `/auth/me`,
         method: "GET",
       }),
       providesTags:["users"]
