@@ -15,7 +15,6 @@ import { AuthButton } from "./shared/AuthButton";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ca } from "zod/v4/locales";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
