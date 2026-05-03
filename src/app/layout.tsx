@@ -4,6 +4,7 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 import ReduxProvider from "@/redux/provider/ReduxProvider";
 
 import { inter } from "./fonts";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -21,6 +22,7 @@ export default function RootLayout({
         <ReduxProvider>
           <SmoothScroll>
             {children}
+            <Toaster position="top-center" richColors/>
           </SmoothScroll>
         </ReduxProvider>
       </body>
