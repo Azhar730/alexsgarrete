@@ -3,7 +3,7 @@ import "./globals.css";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import ReduxProvider from "@/redux/provider/ReduxProvider";
 
-import { inter } from "./fonts";
+import { inter, jetbrainsMono } from "./fonts";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans antialiased">
         <ReduxProvider>
           <SmoothScroll>
