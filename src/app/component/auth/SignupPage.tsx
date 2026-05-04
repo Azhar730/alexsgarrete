@@ -43,20 +43,22 @@ export default function SignupPage() {
   const onSubmit = async (values: SignupValues) => {
     setIsLoading(true);
     try {
-      // TODO: replace with real API call
       console.log("Signup:", values);
       const response = await register(values).unwrap();
       console.log("API response:", response);
-      if (response.success) {
+      if (response?.success) {
         toast.success(
-          "Registration successful! Please check your email for verification.",
+          response?.message ||
+            "Registration successful! Please check your email for verification.",
         );
+        await new Promise((r) => setTimeout(r, 1200));
         router.push("/verify-email?email=" + encodeURIComponent(values.email));
       } else {
-        toast.error(response.message || "Registration failed");
+        toast.error(response?.message || "Registration failed");
       }
-      await new Promise((r) => setTimeout(r, 1200));
-      // router.push("/verify-email");
+    } catch (error: any) {
+      console.error("Registration failed:", error);
+      toast.error(error?.data?.error?.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }

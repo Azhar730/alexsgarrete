@@ -124,21 +124,16 @@ import { MobileMenu } from "../navbar/MobileMenu";
 
 
 
-// 👇 এটা তোমার আসল auth hook দিয়ে replace করো
-function useAuth() {
-  // const user = { name: "Rahim Uddin", email: "rahim@gmail.com", image: "" };
-  const user = null
-  const logout = async () => {};
-  return { user, logout };
-}
+
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuth();
   const router = useRouter();
 
+  const user = {name: "John Doe", email: "john.doe@example.com"};
+
   const handleLogout = async () => {
-    await logout();
+    // await logout();
     router.push("/");
   };
 
