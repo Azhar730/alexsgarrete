@@ -40,9 +40,8 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      console.log("Login:", values);
       const response = await login(values).unwrap();
-      console.log("API response:", response);
+      console.log("Login response:", response);
       if (response?.success) {
         toast.success("Login successful! Redirecting...");
         await new Promise((r) => setTimeout(r, 1200));
@@ -60,11 +59,11 @@ export default function LoginPage() {
   return (
     <AuthShell slide={AUTH_SLIDES.login}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Welcome back
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           Enter your credentials to access your account.
         </p>
       </div>

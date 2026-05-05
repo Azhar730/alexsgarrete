@@ -43,20 +43,22 @@ export default function SignupPage() {
   const onSubmit = async (values: SignupValues) => {
     setIsLoading(true);
     try {
-      // TODO: replace with real API call
       console.log("Signup:", values);
       const response = await register(values).unwrap();
       console.log("API response:", response);
-      if (response.success) {
+      if (response?.success) {
         toast.success(
-          "Registration successful! Please check your email for verification.",
+          response?.message ||
+            "Registration successful! Please check your email for verification.",
         );
+        await new Promise((r) => setTimeout(r, 1200));
         router.push("/verify-email?email=" + encodeURIComponent(values.email));
       } else {
-        toast.error(response.message || "Registration failed");
+        toast.error(response?.message || "Registration failed");
       }
-      await new Promise((r) => setTimeout(r, 1200));
-      // router.push("/verify-email");
+    } catch (error: any) {
+      console.error("Registration failed:", error);
+      toast.error(error?.data?.error?.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
@@ -65,11 +67,11 @@ export default function SignupPage() {
   return (
     <AuthShell slide={AUTH_SLIDES.signup}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Create an account
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
           Enter your details below to start setting up your custom plan.
         </p>
       </div>

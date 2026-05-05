@@ -70,10 +70,13 @@ export default function NewPasswordPage() {
   return (
     <AuthShell slide={AUTH_SLIDES["new-password"]}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           New Password
         </h1>
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
+          Create a secure password to protect your account.
+        </p>
       </div>
 
       {/* Success state */}

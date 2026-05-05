@@ -44,12 +44,12 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell slide={AUTH_SLIDES["forgot-password"]}>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Forgot password
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-snug text-center">
-          Please enter your email to receive verification code
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
+          Please enter your email to receive a verification code.
         </p>
       </div>
 

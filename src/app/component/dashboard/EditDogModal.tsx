@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -30,38 +30,47 @@ import {
 } from "@/components/ui/form";
 import { Camera, X, Upload, Loader2 } from "lucide-react";
 
-// ─── Zod Schema ───────────────────────────────────────────────
-const dogSchema = z
-  .object({
-    name: z.string().min(1, "Dog name is required"),
-    gender: z.string().min(1, "Please select a gender"),
-    spayedNeutered: z.string().min(1, "Please select an option"),
-    birthday: z
-      .string()
-      .min(1, "Birthday is required")
-      .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Format must be MM/DD/YYYY"),
-    primaryBreed: z.string().min(1, "Primary breed is required"),
-    additionalBreed: z.string().optional(),
-    colorCoat: z.string().min(1, "Color & coat description is required"),
-    microchipped: z.string().min(1, "Please select an option"),
-    microchipNumber: z.string().optional(),
-    microchipId: z.string().optional(),
-  });
+// ─── Schema ───────────────────────────────────────────────────
+const dogSchema = z.object({
+  name: z.string().min(1, "Dog name is required"),
+  gender: z.string().min(1, "Please select a gender"),
+  spayedNeutered: z.string().min(1, "Please select an option"),
+  birthday: z
+    .string()
+    .min(1, "Birthday is required")
+    .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Format must be MM/DD/YYYY"),
+  primaryBreed: z.string().min(1, "Primary breed is required"),
+  additionalBreed: z.string().optional(),
+  colorCoat: z.string().min(1, "Color & coat description is required"),
+  microchipped: z.string().min(1, "Please select an option"),
+  microchipNumber: z.string().optional(),
+  microchipId: z.string().optional(),
+});
 
 export type DogFormData = z.infer<typeof dogSchema> & {
   imageFile: File | null;
 };
 
 // ─── Props ────────────────────────────────────────────────────
-interface AddDogModalProps {
+interface EditDogModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: DogFormData) => Promise<void> | void;
+  defaultValues?: Partial<z.infer<typeof dogSchema>>;
+  currentImageUrl?: string;
 }
 
 // ─── Component ───────────────────────────────────────────────
-export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+export function EditDogModal({
+  open,
+  onClose,
+  onSubmit,
+  defaultValues,
+  currentImageUrl,
+}: EditDogModalProps) {
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    currentImageUrl ?? null
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -81,12 +90,13 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
       microchipped: "",
       microchipNumber: "",
       microchipId: "",
+      ...defaultValues,
     },
   });
 
   const microchipped = form.watch("microchipped");
 
-  // ─── Image Handling ───────────────────────────────────────
+  // ─── Image Handling ──────────────────────────────────────
   const handleImageFile = (file: File) => {
     setImageError(null);
     if (!file.type.match(/image\/(jpeg|png|gif)/)) {
@@ -119,7 +129,7 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // ─── Submit ───────────────────────────────────────────────
+  // ─── Submit ──────────────────────────────────────────────
   const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
     setIsSubmitting(true);
     try {
@@ -130,7 +140,6 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
     }
   };
 
-  // ─── Close / Reset ────────────────────────────────────────
   const handleClose = () => {
     form.reset();
     removeImage();
@@ -140,24 +149,24 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-hidden">
-        {/* ── Header ── */}
+        {/* Header */}
         <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10">
           <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
-            Add a New Dog
+            Edit Dog Profile
           </DialogTitle>
           <p className="text-sm text-gray-500 mt-1 font-normal leading-relaxed">
-            Tell us about your furry friend so we can better accommodate their needs.
+            Update your furry friend&apos;s information below.
           </p>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
-            {/* ── Scrollable Content Section ── */}
-            <div 
-              className="flex-1 overflow-y-auto px-8 py-7 space-y-8 overscroll-contain custom-scrollbar"
-              data-lenis-prevent
-            >
-              {/* ── Photo Upload ── */}
+          <form
+            onSubmit={form.handleSubmit(handleFormSubmit)}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-8 py-7 space-y-8">
+              {/* Photo Upload */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium text-gray-700">Photo</p>
 
@@ -169,7 +178,6 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                       fill
                       className="object-cover"
                     />
-                    {/* Overlay on hover */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
                     <button
                       type="button"
@@ -192,28 +200,36 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                     role="button"
                     tabIndex={0}
                     onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && fileInputRef.current?.click()
+                    }
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
-                    className={`w-full h-40 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer select-none transition-all
-                      ${isDragging
+                    className={`w-full h-40 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer select-none transition-all ${
+                      isDragging
                         ? "border-[#5B6BBF] bg-[#5B6BBF]/5"
                         : "border-gray-200 bg-gray-50/60 hover:border-[#5B6BBF] hover:bg-[#5B6BBF]/5"
-                      }`}
+                    }`}
                   >
-                    <div className="w-14 h-14 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-3 shadow-sm transition-transform group-hover:scale-110">
+                    <div className="w-14 h-14 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-3 shadow-sm">
                       <Camera className="w-6 h-6 text-[#5B6BBF]" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-700">Upload a photo of your dog</p>
-                    <p className="text-xs text-gray-500 mt-1.5 bg-gray-100 px-2.5 py-1 rounded-full">JPG, PNG or GIF · Max size 5MB</p>
+                    <p className="text-sm font-semibold text-gray-700">
+                      Upload a photo of your dog
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1.5 bg-gray-100 px-2.5 py-1 rounded-full">
+                      JPG, PNG or GIF · Max size 5MB
+                    </p>
                   </div>
                 )}
 
                 {imageError && (
                   <p className="text-xs text-red-500 mt-1">{imageError}</p>
                 )}
-
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -226,16 +242,17 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                 />
               </div>
 
-              {/* ── Form Grid ── */}
+              {/* Form Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-
                 {/* Name */}
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel className="text-sm font-semibold text-gray-700">Name of Dog</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Name of Dog
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="What's your dog's name?"
@@ -254,8 +271,13 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">Gender</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Gender
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger className="w-full rounded-xl border-gray-200 h-12 bg-gray-50/30 px-4 focus:ring-[#5B6BBF]/20">
                             <SelectValue placeholder="Select gender" />
@@ -277,8 +299,13 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="spayedNeutered"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">Spayed / Neutered</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Spayed / Neutered
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger className="w-full rounded-xl border-gray-200 h-12 bg-gray-50/30 px-4 focus:ring-[#5B6BBF]/20">
                             <SelectValue placeholder="Select status" />
@@ -300,7 +327,9 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="birthday"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">Birthday / Age of Pet</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Birthday / Age of Pet
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="MM/DD/YYYY"
@@ -319,7 +348,9 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="primaryBreed"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">Primary Breed</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Primary Breed
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g. Golden Retriever"
@@ -340,7 +371,9 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                     <FormItem className="md:col-span-2">
                       <FormLabel className="text-sm font-semibold text-gray-700">
                         Additional Breed(s){" "}
-                        <span className="text-gray-400 font-normal italic">(optional)</span>
+                        <span className="text-gray-400 font-normal italic">
+                          (optional)
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -360,7 +393,9 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="colorCoat"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel className="text-sm font-semibold text-gray-700">Color(s) & Coat description</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Color(s) &amp; Coat description
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g. Light golden, medium-length wavy coat"
@@ -379,8 +414,13 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="microchipped"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">Microchipped</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Microchipped
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger className="w-full rounded-xl border-gray-200 h-12 bg-gray-50/30 px-4 focus:ring-[#5B6BBF]/20">
                             <SelectValue placeholder="Select option" />
@@ -402,10 +442,16 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="microchipNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">Microchip number</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Microchip number
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={microchipped === "yes" ? "1-800-252-7894" : "Select 'Yes' to enable"}
+                          placeholder={
+                            microchipped === "yes"
+                              ? "1-800-252-7894"
+                              : "Select 'Yes' to enable"
+                          }
                           {...field}
                           disabled={microchipped !== "yes"}
                           className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
@@ -422,10 +468,16 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                   name="microchipId"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel className="text-sm font-semibold text-gray-700">Microchip ID</FormLabel>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Microchip ID
+                      </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={microchipped === "yes" ? "989879456654964" : "Select 'Yes' to enable"}
+                          placeholder={
+                            microchipped === "yes"
+                              ? "989879456654964"
+                              : "Select 'Yes' to enable"
+                          }
                           {...field}
                           disabled={microchipped !== "yes"}
                           className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
@@ -438,7 +490,7 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
               </div>
             </div>
 
-            {/* ── Footer ── */}
+            {/* Footer */}
             <div className="px-8 py-5 border-t border-gray-50 flex items-center justify-end gap-3 bg-white shrink-0">
               <Button
                 type="button"
@@ -460,7 +512,7 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
                     Saving...
                   </span>
                 ) : (
-                  "Add Dog"
+                  "Save Changes"
                 )}
               </Button>
             </div>
