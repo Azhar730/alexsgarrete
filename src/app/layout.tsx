@@ -22,6 +22,7 @@ export default function RootLayout({
         <ReduxProvider>
           <SmoothScroll>
             {children}
+            <Toaster position="top-center" richColors/>
           </SmoothScroll>
         </ReduxProvider>
       </body>

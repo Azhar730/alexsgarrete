@@ -51,7 +51,7 @@ export default function LoginPage() {
     } catch (error: any) {
       setIsLoading(false);
       toast.error(
-        error?.data?.error?.message || "Login failed! Please try again.",
+        error?.message || "Login failed! Please try again.",
       );
     }
   };
