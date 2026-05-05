@@ -142,7 +142,7 @@ export default function PetDetailsPage() {
           <div className="flex items-center gap-4">
             <div className="relative w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
               <Image
-                src={dog.imageUrl}
+                src={"/dog.png"}
                 alt={dog.name}
                 fill
                 className="object-cover"
