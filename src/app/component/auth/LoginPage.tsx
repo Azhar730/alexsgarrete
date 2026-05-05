@@ -40,9 +40,8 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      console.log("Login:", values);
       const response = await login(values).unwrap();
-      console.log("API response:", response);
+      console.log("Login response:", response);
       if (response?.success) {
         toast.success("Login successful! Redirecting...");
         await new Promise((r) => setTimeout(r, 1200));
@@ -50,7 +49,6 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     } catch (error: any) {
-      console.error("Login error:", error);
       setIsLoading(false);
       toast.error(
         error?.message || "Login failed! Please try again.",

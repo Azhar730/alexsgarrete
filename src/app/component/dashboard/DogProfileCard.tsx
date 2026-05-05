@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DogProfile } from ".";
 import Image from "next/image";
+import Link from "next/link";
 
 const statusConfig: Record<
   DogProfile["status"],
@@ -73,6 +74,7 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
         </div>
       </div>
 
+      <Link href={`/dashboard/${dog.id}`}>
       <Button
         variant="ghost"
         size="lg"
@@ -80,6 +82,7 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
       >
         See Details
       </Button>
+      </Link>
     </div>
   );
 }

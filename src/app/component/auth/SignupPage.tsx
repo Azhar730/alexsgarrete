@@ -47,11 +47,16 @@ export default function SignupPage() {
       console.log("Signup:", values);
       const response = await register(values).unwrap();
       console.log("API response:", response);
-      toast.success(response?.message ||
-        "Registration successful! Please check your email for verification.",
-      );
-      await new Promise((r) => setTimeout(r, 1200));
-      router.push("/verify-email?email=" + encodeURIComponent(values.email));
+      if (response?.success) {
+        toast.success(
+          response?.message ||
+            "Registration successful! Please check your email for verification.",
+        );
+        await new Promise((r) => setTimeout(r, 1200));
+        router.push("/verify-email?email=" + encodeURIComponent(values.email));
+      } else {
+        toast.error(response?.message || "Registration failed");
+      }
     } catch (error: any) {
       console.error("Registration failed:", error);
       toast.error(error?.data?.error?.message || "Registration failed");

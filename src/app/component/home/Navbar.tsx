@@ -130,8 +130,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const {data: userData} = useGetMeQuery({});
-  const user = userData
-  console.log("User data in Navbar:", user);
+
+  const user = {name: "John Doe", email: "john.doe@example.com"};
 
   const handleLogout = async () => {
     router.push("/");

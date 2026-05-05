@@ -1,11 +1,11 @@
-import SignupPage from "@/app/component/auth/SignupPage";
+import { Suspense } from "react";
 import VerifyEmailPage from "@/app/component/auth/VerifyEmailPage";
 
 function VerifyEmail() {
   return (
-    <div className="">
-      <VerifyEmailPage/> 
-    </div>
+    <Suspense fallback={null}>
+      <VerifyEmailPage />
+    </Suspense>
   );
 }
 

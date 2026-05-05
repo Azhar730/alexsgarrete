@@ -19,7 +19,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -31,7 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Camera, X, Upload, Loader2 } from "lucide-react";
 
-// ─── Schema ───────────────────────────────────────────────────
+// ─── Zod Schema ───────────────────────────────────────────────
 const dogSchema = z.object({
   name: z.string().min(1, "Dog name is required"),
   gender: z.string().min(1, "Please select a gender"),
@@ -48,8 +47,11 @@ const dogSchema = z.object({
   microchipId: z.string().optional(),
 });
 
-export type DogFormData = z.infer<typeof dogSchema> & {
+export type DogFormValues = z.infer<typeof dogSchema>;
+
+export type DogFormData = DogFormValues & {
   imageFile: File | null;
+  existingImageUrl?: string | null;
 };
 
 // ─── Props ────────────────────────────────────────────────────
@@ -57,8 +59,7 @@ interface EditDogModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: DogFormData) => Promise<void> | void;
-  defaultValues?: Partial<z.infer<typeof dogSchema>>;
-  currentImageUrl?: string;
+  defaultValues?: Partial<DogFormData>;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -67,39 +68,56 @@ export function EditDogModal({
   onClose,
   onSubmit,
   defaultValues,
-  currentImageUrl,
 }: EditDogModalProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(
-    currentImageUrl ?? null
+    defaultValues?.existingImageUrl ?? null
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const form = useForm<z.infer<typeof dogSchema>>({
+  const form = useForm<DogFormValues>({
     resolver: zodResolver(dogSchema),
     defaultValues: {
-      name: "",
-      gender: "",
-      spayedNeutered: "",
-      birthday: "",
-      primaryBreed: "",
-      additionalBreed: "",
-      colorCoat: "",
-      microchipped: "",
-      microchipNumber: "",
-      microchipId: "",
-      ...defaultValues,
+      name: defaultValues?.name ?? "",
+      gender: defaultValues?.gender ?? "",
+      spayedNeutered: defaultValues?.spayedNeutered ?? "",
+      birthday: defaultValues?.birthday ?? "",
+      primaryBreed: defaultValues?.primaryBreed ?? "",
+      additionalBreed: defaultValues?.additionalBreed ?? "",
+      colorCoat: defaultValues?.colorCoat ?? "",
+      microchipped: defaultValues?.microchipped ?? "",
+      microchipNumber: defaultValues?.microchipNumber ?? "",
+      microchipId: defaultValues?.microchipId ?? "",
     },
   });
 
+  // Re-populate form when defaultValues change (e.g. modal re-opened with new dog)
+  useEffect(() => {
+    if (open && defaultValues) {
+      form.reset({
+        name: defaultValues.name ?? "",
+        gender: defaultValues.gender ?? "",
+        spayedNeutered: defaultValues.spayedNeutered ?? "",
+        birthday: defaultValues.birthday ?? "",
+        primaryBreed: defaultValues.primaryBreed ?? "",
+        additionalBreed: defaultValues.additionalBreed ?? "",
+        colorCoat: defaultValues.colorCoat ?? "",
+        microchipped: defaultValues.microchipped ?? "",
+        microchipNumber: defaultValues.microchipNumber ?? "",
+        microchipId: defaultValues.microchipId ?? "",
+      });
+      setImagePreview(defaultValues.existingImageUrl ?? null);
+      setImageFile(null);
+      setImageError(null);
+    }
+  }, [open, defaultValues, form]);
+
   const microchipped = form.watch("microchipped");
 
-  // ─── Image Handling ──────────────────────────────────────
+  // ─── Image Handling ───────────────────────────────────────
   const handleImageFile = (file: File) => {
     setImageError(null);
     if (!file.type.match(/image\/(jpeg|png|gif)/)) {
@@ -132,37 +150,22 @@ export function EditDogModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    if (open) {
-      document.body.style.overflow = "hidden";
-    }
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
-  const handleDialogWheel = useCallback((e: React.WheelEvent) => {
-    const el = contentRef.current;
-    if (!el) return;
-    // If the dialog can scroll, perform the scroll and prevent page scroll
-    if (el.scrollHeight > el.clientHeight) {
-      el.scrollBy({ top: e.deltaY, behavior: "auto" });
-      e.preventDefault();
-    }
-  }, []);
-
-  // ─── Submit ──────────────────────────────────────────────
-  const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
+  // ─── Submit ───────────────────────────────────────────────
+  const handleFormSubmit = async (values: DogFormValues) => {
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...values, imageFile });
+      await onSubmit({
+        ...values,
+        imageFile,
+        existingImageUrl: imagePreview,
+      });
       handleClose();
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ─── Close / Reset ────────────────────────────────────────
   const handleClose = () => {
     form.reset();
     removeImage();
@@ -171,24 +174,9 @@ export function EditDogModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent
-        ref={contentRef}
-        onWheel={handleDialogWheel}
-        tabIndex={0}
-        className="hide-scrollbar sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-y-auto overscroll-contain"
-      >
-        {/* Header */}
-        <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10 sticky top-0">
-          <DialogClose>
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={handleClose}
-              className="absolute top-3 right-3 inline-flex items-center justify-center rounded-full p-2 text-gray-600 hover:bg-gray-100"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </DialogClose>
+      <DialogContent className="sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-hidden">
+        {/* ── Header ── */}
+        <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10">
           <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
             Edit Dog Profile
           </DialogTitle>
@@ -200,11 +188,11 @@ export function EditDogModal({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleFormSubmit)}
-            className="flex flex-col flex-1 min-h-0"
+            className="flex flex-col flex-1 overflow-hidden"
           >
-            {/* Scrollable body */}
-            <div ref={scrollRef} className="px-8 py-7 space-y-8">
-              {/* Photo Upload */}
+            {/* ── Scrollable Content ── */}
+            <div className="flex-1 overflow-y-auto px-8 py-7 space-y-8">
+              {/* ── Photo Upload ── */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium text-gray-700">Photo</p>
 
@@ -247,11 +235,12 @@ export function EditDogModal({
                     }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
-                    className={`w-full h-40 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer select-none transition-all ${
-                      isDragging
-                        ? "border-[#5B6BBF] bg-[#5B6BBF]/5"
-                        : "border-gray-200 bg-gray-50/60 hover:border-[#5B6BBF] hover:bg-[#5B6BBF]/5"
-                    }`}
+                    className={`w-full h-40 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer select-none transition-all
+                      ${
+                        isDragging
+                          ? "border-[#5B6BBF] bg-[#5B6BBF]/5"
+                          : "border-gray-200 bg-gray-50/60 hover:border-[#5B6BBF] hover:bg-[#5B6BBF]/5"
+                      }`}
                   >
                     <div className="w-14 h-14 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-3 shadow-sm">
                       <Camera className="w-6 h-6 text-[#5B6BBF]" />
@@ -268,6 +257,7 @@ export function EditDogModal({
                 {imageError && (
                   <p className="text-xs text-red-500 mt-1">{imageError}</p>
                 )}
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -280,7 +270,7 @@ export function EditDogModal({
                 />
               </div>
 
-              {/* Form Grid */}
+              {/* ── Form Grid ── */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                 {/* Name */}
                 <FormField
@@ -528,12 +518,21 @@ export function EditDogModal({
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="px-8 py-5 border-t border-gray-50 flex items-center justify-end gap-3 bg-white shrink-0 sticky bottom-0">
+            {/* ── Footer ── */}
+            <div className="px-8 py-5 border-t border-gray-50 flex items-center justify-end gap-3 bg-white shrink-0">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="rounded-full px-6 text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-[140px]"
+                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-[160px]"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">

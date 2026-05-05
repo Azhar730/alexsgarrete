@@ -1,10 +1,8 @@
 import Image from "next/image";
-import Navbar from "../home/Navbar";
 
 export function MeetHeroSection() {
   return (
     <div>
-      <Navbar/>
       <section className="py-10 px-4 md:px-8">
       <div className="container mx-auto flex flex-col lg:flex-row items-start gap-12 lg:gap-16">
 
