@@ -4,6 +4,7 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 import ReduxProvider from "@/redux/provider/ReduxProvider";
 
 import { inter, jetbrainsMono } from "./fonts";
+import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
   title: "Create Next App",

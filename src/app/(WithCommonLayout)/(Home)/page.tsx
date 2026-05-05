@@ -12,8 +12,8 @@ import Navbar from "@/app/component/home/Navbar";
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
-      {/* <Header /> */}
-<Navbar/>
+      <Header />
+{/* <Navbar/> */}
       {/* Add pt-16 to offset fixed navbar */}
       <div>
         <HeroSection />

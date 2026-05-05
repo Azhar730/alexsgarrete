@@ -24,8 +24,8 @@ export const navLinks = [
 
 export function Header() {
   const scrolled = useScroll(10);
-  // const user = {name: "John Doe", email: "john.doe@example.com"};
-  const user = null;
+  const user = {name: "John Doe", email: "john.doe@example.com"};
+  // const user = null;
   const handleLogout = async () => {
     toast.success("Logged out successfully!");
   };

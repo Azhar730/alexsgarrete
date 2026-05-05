@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -76,6 +77,8 @@ export function EditDogModal({
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const form = useForm<z.infer<typeof dogSchema>>({
     resolver: zodResolver(dogSchema),
@@ -129,6 +132,26 @@ export function EditDogModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    if (open) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const handleDialogWheel = useCallback((e: React.WheelEvent) => {
+    const el = contentRef.current;
+    if (!el) return;
+    // If the dialog can scroll, perform the scroll and prevent page scroll
+    if (el.scrollHeight > el.clientHeight) {
+      el.scrollBy({ top: e.deltaY, behavior: "auto" });
+      e.preventDefault();
+    }
+  }, []);
+
   // ─── Submit ──────────────────────────────────────────────
   const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
     setIsSubmitting(true);
@@ -148,9 +171,24 @@ export function EditDogModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-hidden">
+      <DialogContent
+        ref={contentRef}
+        onWheel={handleDialogWheel}
+        tabIndex={0}
+        className="hide-scrollbar sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-y-auto overscroll-contain"
+      >
         {/* Header */}
-        <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10">
+        <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10 sticky top-0">
+          <DialogClose>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={handleClose}
+              className="absolute top-3 right-3 inline-flex items-center justify-center rounded-full p-2 text-gray-600 hover:bg-gray-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </DialogClose>
           <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
             Edit Dog Profile
           </DialogTitle>
@@ -162,10 +200,10 @@ export function EditDogModal({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleFormSubmit)}
-            className="flex flex-col flex-1 overflow-hidden"
+            className="flex flex-col flex-1 min-h-0"
           >
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-8 py-7 space-y-8">
+            <div ref={scrollRef} className="px-8 py-7 space-y-8">
               {/* Photo Upload */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium text-gray-700">Photo</p>
@@ -491,16 +529,7 @@ export function EditDogModal({
             </div>
 
             {/* Footer */}
-            <div className="px-8 py-5 border-t border-gray-50 flex items-center justify-end gap-3 bg-white shrink-0">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="rounded-full px-6 text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-              >
-                Cancel
-              </Button>
+            <div className="px-8 py-5 border-t border-gray-50 flex items-center justify-end gap-3 bg-white shrink-0 sticky bottom-0">
               <Button
                 type="submit"
                 disabled={isSubmitting}

@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function AboutHero() {
   return (
-   <div className="container mx-auto">
+   <div className="container mx-auto ">
      <section className="bg-primary rounded-2xl md:mx-8 mt-6 px-6 py-16 flex flex-col items-center text-center">
       {/* Logo */}
       <Image

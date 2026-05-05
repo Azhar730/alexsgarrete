@@ -47,8 +47,8 @@ function DetailRow({
 }) {
   return (
     <div className="py-4 border-b border-gray-50 last:border-0">
-      <p className="text-xs text-gray-400 font-medium mb-1">{label}</p>
-      <p className="text-sm font-semibold text-gray-900">{value || "N/A"}</p>
+      <p className="text-xs text-muted-foreground font-medium mb-1">{label}</p>
+      <p className="text-sm font-semibold text-primary">{value || "N/A"}</p>
     </div>
   );
 }
@@ -69,10 +69,10 @@ function BillingRow({
         bold ? "font-bold" : ""
       }`}
     >
-      <span className={`text-sm ${bold ? "text-gray-900" : "text-gray-500"}`}>
+      <span className={`text-sm ${bold ? "text-primary" : "text-secondary"}`}>
         {label}
       </span>
-      <span className={`text-sm ${bold ? "text-gray-900" : "text-gray-900 font-semibold"}`}>
+      <span className={`text-sm ${bold ? "text-primary" : "text-primary font-semibold"}`}>
         {value}
       </span>
     </div>
@@ -131,7 +131,7 @@ export default function PetDetailsPage() {
         {/* Back link */}
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-[#5B6BBF] hover:gap-2.5 transition-all"
+          className="inline-flex items-center gap-1.5 text-[13.5px] font-medium text-primary hover:gap-2.5 transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
@@ -150,12 +150,12 @@ export default function PetDetailsPage() {
             </div>
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <h1 className="text-xl font-bold text-gray-900">{dog.name}</h1>
+                <h1 className="text-xl font-bold text-primary">{dog.name}</h1>
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-[11px] font-semibold px-2.5 rounded-full">
                   Active
                 </Badge>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-secondary">
                 {dog.primaryBreed} • {ageLabel} •{" "}
                 {capitalize(dog.gender)}
               </p>
@@ -164,7 +164,7 @@ export default function PetDetailsPage() {
           <Button
             variant="outline"
             onClick={() => setEditOpen(true)}
-            className="rounded-xl border-gray-200 text-[#5B6BBF] hover:bg-[#f0f3ff] hover:border-[#5B6BBF] font-semibold text-sm gap-2"
+            className="rounded-xl border-gray-200 text-primary hover:bg-[#f0f3ff] hover:border-[#5B6BBF] font-semibold text-sm gap-2"
           >
             <Pencil className="w-3.5 h-3.5" />
             Edit Profile
@@ -174,7 +174,7 @@ export default function PetDetailsPage() {
         {/* ── Pet Details Card ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-50">
-            <h2 className="text-[15px] font-bold text-gray-900">Pet Details</h2>
+            <h2 className="text-[15px] font-bold text-primary">Pet Details</h2>
           </div>
           <div className="px-6 grid grid-cols-1 sm:grid-cols-2">
             <DetailRow label="Name of Dog" value={dog.name} />
@@ -216,12 +216,12 @@ export default function PetDetailsPage() {
         {/* ── Billing Summary Card ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="text-[15px] font-bold text-gray-900">
+            <h2 className="text-[15px] font-bold text-primary">
               Billing Summary
             </h2>
             <Button
               variant="ghost"
-              className="text-[#5B6BBF] font-semibold text-sm h-auto p-0 hover:bg-transparent hover:opacity-70"
+              className="text-primary font-semibold text-sm h-auto p-0 hover:bg-transparent hover:opacity-70"
             >
               Manage
             </Button>
