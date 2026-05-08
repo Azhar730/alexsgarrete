@@ -13,6 +13,7 @@ type User = {
   name: string;
   email: string;
   image?: string;
+  role?: string;
 };
 
 interface MobileMenuProps {
@@ -27,6 +28,8 @@ function getInitials(name: string) {
 
 export function MobileMenu({ user, onLogout, onClose }: MobileMenuProps) {
   const router = useRouter();
+  const dashboardHref = user?.role === "USER" ? "/dashboard" : "/dashboard";
+  const dashboardLabel = user?.role === "USER" ? "User Dashboard" : "Dashboard";
 
   return (
     <motion.div
@@ -67,10 +70,10 @@ export function MobileMenu({ user, onLogout, onClose }: MobileMenuProps) {
           <Button
             variant="outline"
             className="w-full rounded-full justify-start gap-2"
-            onClick={() => { router.push("/dashboard"); onClose(); }}
+            onClick={() => { router.push(dashboardHref); onClose(); }}
           >
             <LayoutDashboard className="h-4 w-4 text-[#5B6BBF]" />
-            Dashboard
+            {dashboardLabel}
           </Button>
 
           <Button

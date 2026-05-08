@@ -6,8 +6,20 @@ import { CheckCircle2 } from "lucide-react";
 import { StepPersonalInfo } from "./StepPersonalInfo";
 import { StepDogInformation } from "./StepDogInformation";
 import { StepRepresentative } from "./StepRepresentative";
-import { StepHealthDetails } from "./StepHealthDetails";
+import { StepHealthDetails } from "@/app/component/onboarding/StepHealthDetails";
 import { StepReview } from "./StepReview";
+import type {
+  DogsStepValues,
+  PersonalInfoValues,
+  RepresentativeValues,
+} from "./application";
+
+type OnboardingApplication = {
+  id?: string;
+  personInfo?: Partial<PersonalInfoValues>;
+  pets?: Partial<DogsStepValues>["dogs"];
+  representative?: Partial<RepresentativeValues>;
+};
 
 // Success toast shown after signup
 function SuccessBanner() {
@@ -19,19 +31,19 @@ function SuccessBanner() {
   );
 }
 
-export function ApplicationFlow() {
+export function ApplicationFlow({ application }: { application?: OnboardingApplication }) {
   const { currentStep } = useApplication();
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <StepPersonalInfo />;
+        return <StepPersonalInfo application={application} />;
       case 2:
-        return <StepDogInformation />;
+        return <StepDogInformation applicationId={application?.id} pets={application?.pets} />;
       case 3:
-        return <StepRepresentative />;
+        return <StepRepresentative representativeInfo={application?.representative} applicationId={application?.id} />;
       case 4:
-        return <StepHealthDetails />;
+        return <StepHealthDetails applicationId={application?.id} />;
       case 5:
         return <StepReview />;
       default:

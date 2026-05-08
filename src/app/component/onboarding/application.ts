@@ -74,11 +74,45 @@ export const healthDetailsSchema = z.object({
 
 // ─── Combined form data ───────────────────────────────────────────────────────
 
-export type PersonalInfoValues = z.infer<typeof personalInfoSchema>;
-export type DogValues = z.infer<typeof dogSchema>;
-export type DogsStepValues = z.infer<typeof dogsStepSchema>;
+export interface PersonalInfoValues {
+  firstName?: string;
+  middleInitial?: string;
+  lastName?: string;
+  email?: string;
+  ssnLast4?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  cellPhone?: string;
+  homePhone?: string;
+  workPhone?: string;
+}
+
+export type DogValues = z.infer<typeof dogSchema> & {
+  id?: string;
+};
+export type DogsStepValues = {
+  dogs: DogValues[];
+};
 export type RepresentativeValues = z.infer<typeof representativeSchema>;
-export type HealthDetailsValues = z.infer<typeof healthDetailsSchema>;
+export interface HealthDetailsValues {
+  hipaaAcknowledged?: true;
+  chronicConditions?: "Yes" | "No";
+  terminalConditions?: "Yes" | "No";
+  terminalExplanation?: string;
+  familyCancer?: "Yes" | "No";
+  cancerRelation?: string;
+  cancerDiagnosis?: string;
+  cancerAgeOnset?: string;
+  cancerAgeAtDeath?: string;
+  familyHeartDisease?: "Yes" | "No";
+  familyDiabetes?: "Yes" | "No";
+  tobaccoUse?: "Yes" | "No";
+  tobaccoCurrentUser?: "Yes" | "No";
+  tobaccoLastUsed?: string;
+  [key: string]: unknown;
+}
 
 export interface ApplicationData {
   personalInfo?: PersonalInfoValues;

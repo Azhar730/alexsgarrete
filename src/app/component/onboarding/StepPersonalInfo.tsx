@@ -1,37 +1,131 @@
 "use client";
 
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Form } from "@/components/ui/form";
 import { useApplication } from "./application-context";
-import { personalInfoSchema, PersonalInfoValues } from "./application";
+import { PersonalInfoValues } from "./application";
 import { FormInput, SectionDivider, StepHeader, StepNav } from "./FormFields";
+import { useGetMeQuery } from "@/redux/api/userApi";
+import { useUpdateProfileMutation } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
 
-export function StepPersonalInfo() {
+const EMPTY_VALUES: PersonalInfoValues = {
+  firstName: "",
+  middleInitial: "",
+  lastName: "",
+  email: "",
+  ssnLast4: "",
+  streetAddress: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  cellPhone: "",
+  homePhone: "",
+  workPhone: "",
+};
+
+function buildValues(
+  email: string | undefined,
+  personInfo: Partial<PersonalInfoValues> | undefined,
+): PersonalInfoValues {
+  return {
+    firstName: personInfo?.firstName ?? "",
+    middleInitial: personInfo?.middleInitial ?? "",
+    lastName: personInfo?.lastName ?? "",
+    email: email ?? personInfo?.email ?? "",
+    ssnLast4: personInfo?.ssnLast4 ?? "",
+    streetAddress: personInfo?.streetAddress ?? "",
+    city: personInfo?.city ?? "",
+    state: personInfo?.state ?? "",
+    zipCode: personInfo?.zipCode ?? "",
+    cellPhone: personInfo?.cellPhone ?? "",
+    homePhone: personInfo?.homePhone ?? "",
+    workPhone: personInfo?.workPhone ?? "",
+  };
+}
+
+type OnboardingApplication = {
+  id?: string;
+  personInfo?: Partial<PersonalInfoValues>;
+};
+
+export function StepPersonalInfo({ application }: { application?: OnboardingApplication }) {
+
   const { data, savePersonalInfo, nextStep } = useApplication();
+  const router = useRouter();
+  const hydrationDone = useRef(false);
+  const {
+    data: meResponse,
+    isLoading: isMeLoading,
+    isFetching: isMeFetching,
+  } = useGetMeQuery({});
+  const [updateProfile] = useUpdateProfileMutation();
+
+  const me = meResponse?.data ?? meResponse;
+  const existingPersonInfo = application?.personInfo;
+  const applicationId = application?.id;
+  const defaultValues = useMemo(
+    () => buildValues(me?.email, existingPersonInfo),
+    [existingPersonInfo, me?.email],
+  );
 
   const form = useForm<PersonalInfoValues>({
-    resolver: zodResolver(personalInfoSchema),
-    defaultValues: data.personalInfo ?? {
-      firstName: "",
-      middleInitial: "",
-      lastName: "",
-      email: "",
-      ssnLast4: "",
-      streetAddress: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      cellPhone: "",
-      homePhone: "",
-      workPhone: "",
-    },
+    defaultValues: data.personalInfo ?? EMPTY_VALUES,
     mode: "onTouched",
   });
+  useEffect(() => {
+    if (hydrationDone.current) return;
+    if (isMeLoading || isMeFetching) return;
+    if (!me && !existingPersonInfo) return;
 
-  const onSubmit = (values: PersonalInfoValues) => {
-    savePersonalInfo(values);
-    nextStep();
+    form.reset(defaultValues);
+    hydrationDone.current = true;
+  }, [defaultValues, existingPersonInfo, form, isMeFetching, isMeLoading, me]);
+
+  const saveProfile = async (values: PersonalInfoValues) => {
+    if (!applicationId) {
+      toast.error("Application is not ready yet. Please try again.");
+      return false;
+    }
+
+    try {
+      await updateProfile({
+        applicationId,
+        firstName: values.firstName?.trim() || undefined,
+        middleInitial: values.middleInitial?.trim() || undefined,
+        lastName: values.lastName?.trim() || undefined,
+        streetAddress: values.streetAddress?.trim() || undefined,
+        city: values.city?.trim() || undefined,
+        state: values.state?.trim() || undefined,
+        zipCode: values.zipCode?.trim() || undefined,
+        homePhone: values.homePhone?.trim() || undefined,
+        workPhone: values.workPhone?.trim() || undefined,
+        cellPhone: values.cellPhone?.trim() || undefined,
+        ssnLast4: values.ssnLast4?.trim() || undefined,
+      }).unwrap();
+
+      savePersonalInfo({
+        ...values,
+        email: me?.email ?? values.email,
+      });
+      return true;
+    } catch {
+      toast.error("Could not save personal information. Please try again.");
+      return false;
+    }
+  };
+
+  const onSubmit = async (values: PersonalInfoValues) => {
+    const saved = await saveProfile(values);
+    if (saved) nextStep();
+  };
+
+  const handleSaveExit = async () => {
+    const values = form.getValues();
+    const saved = await saveProfile(values);
+    if (saved) router.push("/");
   };
 
   return (
@@ -77,6 +171,7 @@ export function StepPersonalInfo() {
             placeholder="sarah.jenkins@example.com"
             type="email"
             autoComplete="email"
+            disabled
           />
           <FormInput
             control={form.control}
@@ -154,7 +249,7 @@ export function StepPersonalInfo() {
         </div>
 
         <StepNav
-          onSaveExit={() => {}}
+          onSaveExit={handleSaveExit}
           onNext={nextStep}
           nextLabel="Dog Information →"
           isSubmitting={form.formState.isSubmitting}

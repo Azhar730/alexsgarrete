@@ -15,6 +15,7 @@ type User = {
   name: string;
   email: string;
   image?: string;
+  role?: string;
 };
 
 interface UserDropdownProps {
@@ -33,6 +34,8 @@ function getInitials(name: string) {
 
 export function UserDropdown({ user, onLogout }: UserDropdownProps) {
   const router = useRouter();
+  const dashboardHref = user.role === "USER" ? "/dashboard" : "/dashboard";
+  const dashboardLabel = user.role === "USER" ? "User Dashboard" : "Dashboard";
 
   return (
     <DropdownMenu>
@@ -75,10 +78,10 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
         {/* Menu Items */}
         <DropdownMenuItem
           className="cursor-pointer px-4 py-3 text-[15px] font-medium text-gray-700 hover:bg-gray-50 rounded-md focus:bg-gray-50 transition-colors"
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push(dashboardHref)}
         >
           <LayoutDashboard className="mr-3 h-5 w-5 text-[#5B6BBF]" />
-          Dashboard
+          {dashboardLabel}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator className="my-1" />

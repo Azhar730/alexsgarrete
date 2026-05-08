@@ -1,12 +1,15 @@
 "use client";
 
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Info } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { useApplication } from "./application-context";
-import { representativeSchema, RepresentativeValues } from "./application";
+import { RepresentativeValues } from "./application";
 import { FormInput, FormSelect, SectionDivider, StepHeader, StepNav } from "./FormFields";
+import { useUpdateRepresentativeMutation } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const RELATIONSHIP_OPTIONS = [
   { value: "Spouse", label: "Spouse" },
@@ -27,12 +30,14 @@ const US_STATES = [
   "WI","WY",
 ].map((s) => ({ value: s, label: s }));
 
-export function StepRepresentative() {
+export function StepRepresentative({ representativeInfo, applicationId }: { representativeInfo?: Partial<RepresentativeValues>; applicationId?: string }) {
   const { data, saveRepresentative, nextStep, prevStep } = useApplication();
+  const router = useRouter();
+  const hydratedRef = useRef(false);
+  const [updateRepresentative] = useUpdateRepresentativeMutation();
 
-  const form = useForm<RepresentativeValues>({
-    resolver: zodResolver(representativeSchema),
-    defaultValues: data.representative ?? {
+  const defaultValues = useMemo(
+    () => representativeInfo ?? data.representative ?? {
       fullName: "",
       relationship: "",
       phoneNumber: "",
@@ -44,12 +49,53 @@ export function StepRepresentative() {
       homePhone: "",
       workPhone: "",
     },
-    mode: "onTouched",
+    [data.representative, representativeInfo],
+  );
+
+  const form = useForm<RepresentativeValues>({
+    defaultValues,
+    mode: "onSubmit",
   });
 
-  const onSubmit = (values: RepresentativeValues) => {
-    saveRepresentative(values);
-    nextStep();
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    form.reset(defaultValues);
+  }, [defaultValues, form]);
+
+  const saveRepresentativeProfile = async (values: RepresentativeValues) => {
+    try {
+      await updateRepresentative({
+        applicationId,
+        fullName: values.fullName?.trim() || undefined,
+        relationship: values.relationship?.trim() || undefined,
+        email: values.email?.trim() || undefined,
+        phoneNumber: values.phoneNumber?.trim() || undefined,
+        city: values.city?.trim() || undefined,
+        state: values.state?.trim() || undefined,
+        zipCode: values.zipCode?.trim() || undefined,
+        homePhone: values.homePhone?.trim() || undefined,
+        workPhone: values.workPhone?.trim() || undefined,
+        cellPhone: values.cellPhone?.trim() || undefined,
+      }).unwrap();
+
+      saveRepresentative(values);
+      return true;
+    } catch (error) {
+      console.error("updateRepresentative error:", error);
+      toast.error("Could not save representative details. Please try again.");
+      return false;
+    }
+  };
+
+  const onSubmit = async (values: RepresentativeValues) => {
+    const saved = await saveRepresentativeProfile(values);
+    if (saved) nextStep();
+  };
+
+  const handleSaveExit = async () => {
+    const saved = await saveRepresentativeProfile(form.getValues());
+    if (saved) router.push("/");
   };
 
   return (
@@ -71,7 +117,7 @@ export function StepRepresentative() {
             <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
               The executor is the trusted contact we will reach out to if you
               are unable to fulfill your caretaking duties. They will coordinate
-              with us to activate your dog's care plan smoothly and securely.
+              with us to activate your dog&apos;s care plan smoothly and securely.
             </p>
           </div>
         </div>
@@ -170,7 +216,7 @@ export function StepRepresentative() {
         <StepNav
           onBack={prevStep}
           backLabel="← Back to Dog Info"
-          onSaveExit={() => {}}
+          onSaveExit={handleSaveExit}
           onNext={nextStep}
           nextLabel="Health Details →"
           isSubmitting={form.formState.isSubmitting}

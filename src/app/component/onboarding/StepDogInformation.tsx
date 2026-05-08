@@ -1,12 +1,14 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { DogForm } from "./DogForm";
 import { useApplication } from "./application-context";
-import { dogsStepSchema, DogsStepValues } from "./application";
+import { DogValues, DogsStepValues } from "./application";
 import { StepHeader, StepNav } from "./FormFields";
+import { toast } from "sonner";
+import { useUpdatePetMutation } from "@/redux/api/onboardingApi";
 
 const DEFAULT_DOG = {
   photoUrl: "",
@@ -22,16 +24,80 @@ const DEFAULT_DOG = {
   microchipId: "",
 };
 
-export function StepDogInformation() {
+type BackendPet = {
+  id?: string;
+  species?: string;
+  name?: string;
+  gender?: "MALE" | "FEMALE" | "Male" | "Female";
+  isSpayedNeutered?: boolean;
+  additionalBreed?: string | null;
+  colorsAndCoat?: string | null;
+  isMicrochipped?: boolean;
+  birthday?: string;
+  primaryBreed?: string;
+  microchipNumber?: string | null;
+  microchipId?: string | null;
+  photoUrl?: string | null;
+};
+
+function mapBackendPet(pet: Partial<BackendPet>): DogValues {
+  return {
+    id: pet.id,
+    photoUrl: pet.photoUrl ?? undefined,
+    name: pet.name ?? DEFAULT_DOG.name,
+    gender: pet.gender === "Female" || pet.gender === "FEMALE" ? "Female" : "Male",
+    spayedNeutered: pet.isSpayedNeutered ? "Yes" : "No",
+    birthday: pet.birthday ?? "",
+    primaryBreed: pet.primaryBreed ?? "",
+    additionalBreeds: pet.additionalBreed ?? "",
+    colorCoatDescription: pet.colorsAndCoat ?? "",
+    microchipped: pet.isMicrochipped ? "Yes" : "No",
+    microchipNumber: pet.microchipNumber ?? undefined,
+    microchipId: pet.microchipId ?? undefined,
+  };
+}
+
+function buildPetPayload(applicationId: string, dog: DogValues, id?: string) {
+  return {
+    applicationId,
+    ...(id ? { id } : {}),
+    species: "Dog",
+    name: dog.name,
+    gender: dog.gender === "Female" ? "FEMALE" : "MALE",
+    isSpayedNeutered: dog.spayedNeutered === "Yes",
+    birthday: dog.birthday,
+    primaryBreed: dog.primaryBreed,
+    additionalBreed: dog.additionalBreeds || undefined,
+    colorsAndCoat: dog.colorCoatDescription,
+    isMicrochipped: dog.microchipped === "Yes",
+    microchipNumber: dog.microchipNumber || undefined,
+    microchipId: dog.microchipId || undefined,
+    photoUrl: dog.photoUrl || undefined,
+  };
+}
+
+export function StepDogInformation({
+  applicationId,
+  pets,
+}: {
+  applicationId?: string;
+  pets?: Partial<BackendPet>[];
+}) {
   const { data, saveDogs, nextStep, prevStep } = useApplication();
+  const [updatePet] = useUpdatePetMutation();
+  const initialDogs: DogValues[] = useMemo(() => {
+    const backendDogs = pets?.length ? pets.map((dog) => mapBackendPet(dog)) : [];
+    if (backendDogs.length) return backendDogs;
+
+    if (data.dogs?.length) {
+      return data.dogs.map((dog) => ({ ...DEFAULT_DOG, ...dog }));
+    }
+
+    return [DEFAULT_DOG];
+  }, [data.dogs, pets]);
 
   const form = useForm<DogsStepValues>({
-    resolver: zodResolver(dogsStepSchema),
-    defaultValues: {
-      dogs: data.dogs?.length
-        ? data.dogs.map((d) => ({ ...DEFAULT_DOG, ...d }))
-        : [DEFAULT_DOG],
-    },
+    defaultValues: { dogs: initialDogs } as DogsStepValues,
     mode: "onTouched",
   });
 
@@ -40,9 +106,36 @@ export function StepDogInformation() {
     name: "dogs",
   });
 
-  const onSubmit = (values: DogsStepValues) => {
-    saveDogs(values.dogs);
-    nextStep();
+  useEffect(() => {
+    form.reset({ dogs: initialDogs } as DogsStepValues);
+  }, [form, initialDogs]);
+
+  const onSubmit = async (values: DogsStepValues) => {
+    const resolvedApplicationId = applicationId;
+    if (!resolvedApplicationId) {
+      toast.error("Application is not ready yet. Please try again.");
+      return;
+    }
+
+    try {
+      const savedDogs = await Promise.all(
+        values.dogs.map(async (dog) => {
+          const response = await updatePet(buildPetPayload(resolvedApplicationId, dog, dog.id)).unwrap();
+          const savedDog = (response as { data?: Partial<BackendPet> } | undefined)?.data;
+
+          return {
+            ...dog,
+            id: savedDog?.id ?? dog.id,
+          };
+        })
+      );
+
+      saveDogs(savedDogs);
+      nextStep();
+    } catch (error) {
+      console.error("updatePet error:", error);
+      toast.error("Could not save dog details. Please try again.");
+    }
   };
 
   return (
