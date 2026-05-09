@@ -30,10 +30,10 @@ export default function HowItWorksSection() {
             className="w-full h-full object-cover"
           />
           <motion.div className="absolute inset-0 flex flex-col items-center justify-center px-3" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.4 }} viewport={{ once: true }}>
-            <h2 className="text-primary font-bold leading-tight mb-1 text-center text-4xl">
+            <h2 className="text-primary font-bold leading-tight mb-1 text-center text-4xl md:text-2xl">
               How it works
             </h2>
-            <p className="text-muted-foreground text-center leading-snug text-xl">
+            <p className="text-muted-foreground text-center leading-snug text-lg">
               A simple process designed to<br />secure your dog&apos;s future care
             </p>
           </motion.div>

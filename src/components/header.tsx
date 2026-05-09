@@ -3,105 +3,149 @@ import { cn } from "@/lib/utils";
 import { useScroll } from "@/hooks/use-scroll";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/mobile-nav";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
+import { UserDropdown } from "@/app/component/navbar/UserDropdown";
+import { toast } from "sonner";
 import { useGetMeQuery } from "@/redux/api/userApi";
+import { useLogoutMutation } from "@/redux/api/authApi";
 
 const poppins = Poppins({
-	subsets: ["latin"],
-	weight: ["400", "500", "600"],
-	display: "swap",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 export const navLinks = [
-	{ label: "Home", href: "#home" },
-	{ label: "How it works", href: "#how-it-works" },
-	{ label: "Features", href: "#features" },
-	{ label: "FAQ", href: "#faq" },
-	{ label: "Contact us", href: "#contact" },
+  { label: "Home", href: "#home" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Features", href: "#features" },
+  { label: "FAQ", href: "#faq" },
+  { label: "About", href: "/about-us" },
 ];
 
 export function Header() {
-	const scrolled = useScroll(10);
-	const { data: session } = useGetMeQuery(undefined)
-	console.log("Session in Header:", session);
+  const scrolled = useScroll(10);
+  const router = useRouter();
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [logout] = useLogoutMutation();
+  const { data: userResponse, isLoading, isFetching } = useGetMeQuery({});
+  const userData = userResponse?.data ?? userResponse;
+  const user = !isLoggedOut && userData
+    ? {
+        name: userData.fullName ?? userData.name ?? "User",
+        email: userData.email ?? "",
+        image: userData.avatarUrl ?? userData.profilePicture ?? userData.image ?? undefined,
+        role: userData.role,
+      }
+    : null;
 
-	return (
-		<header className="sticky top-0 z-50 w-full transition-all duration-500 ease-in-out">
-			<div
-				className={cn(
-					"mx-auto w-full transition-all duration-500 ease-in-out flex justify-center",
-					scrolled ? "pt-2 px-2 md:pt-4 md:px-4" : "pt-0 px-0"
-				)}
-			>
-				<div
-					className={cn(
-						"bg-white/90 backdrop-blur-md transition-all duration-500 ease-in-out flex flex-col justify-center",
-						scrolled
-							? "w-[95%] max-w-6xl rounded-full shadow-lg  "
-							: "w-full max-w-full rounded-none   border-x-0 border-t-0"
-					)}
-				>
-					<nav
-						className={cn(
-							"container mx-auto flex w-full items-center justify-between px-4 transition-all duration-500 ease-in-out relative",
-							scrolled ? "h-16 md:px-8" : "h-24"
-						)}
-					>
-						{/* Logo Container */}
-						<div className="flex-1">
-							<Link href="/" className="flex items-center gap-2">
-								<Image
-									src={"/encore-nav.png"}
-									alt="encore"
-									height={65}
-									width={228}
-									className={cn("w-auto transition-all duration-500 ease-in-out", scrolled ? "h-[45px]" : "h-[50px] md:h-[65px]")}
-								/>
-							</Link>
-						</div>
+  // const user = null;
+  const handleLogout = async () => {
+    setIsLoggedOut(true);
+    try {
+      await logout({}).unwrap();
+      toast.success("Logged out successfully!");
+      router.push("/");
+    } catch {
+      setIsLoggedOut(false);
+      toast.error("Logout failed. Please try again.");
+    }
+  };
+  const isAuthLoading = isLoading || isFetching;
+  return (
+    <header className="sticky top-0 z-50 w-full transition-all duration-500 ease-in-out">
+      <div
+        className={cn(
+          "mx-auto w-full transition-all duration-500 ease-in-out flex justify-center",
+          scrolled ? "pt-2 px-2 md:pt-4 md:px-4" : "pt-0 px-0",
+        )}
+      >
+        <div
+          className={cn(
+            "bg-white/90 backdrop-blur-md transition-all duration-500 ease-in-out flex flex-col justify-center",
+            scrolled
+              ? "w-[95%] max-w-6xl rounded-full shadow-lg  "
+              : "w-full max-w-full rounded-none   border-x-0 border-t-0",
+          )}
+        >
+          <nav
+            className={cn(
+              "container mx-auto flex w-full items-center justify-between px-4 transition-all duration-500 ease-in-out relative",
+              scrolled ? "h-16 md:px-8" : "h-24",
+            )}
+          >
+            {/* Logo Container */}
+            <div className="flex-1">
+              <Link href="/" className="flex items-center gap-2">
+                <Image
+                  src={"/encore-nav.png"}
+                  alt="encore"
+                  height={65}
+                  width={228}
+                  className={cn(
+                    "w-auto transition-all duration-500 ease-in-out",
+                    scrolled ? "h-11" : "h-12 md:h-16",
+                  )}
+                />
+              </Link>
+            </div>
 
-						{/* Centered Navigation */}
-						<div className="hidden absolute left-1/2 -translate-x-1/2 items-center gap-6 md:flex">
-							{navLinks.map((link) => (
-								<Button
-									key={link.label}
-									variant="ghost"
-									className={cn(poppins.className, "text-gray-600 hover:text-[#5B6BBF] text-xl transition-colors font-medium  bg-transparent hover:bg-transparent px-0")}
-									render={<Link href={link.href} />}
-									nativeButton={false}
-								>
-									{link.label}
-								</Button>
-							))}
-						</div>
+            {/* Centered Navigation */}
+            <div className="hidden absolute left-1/2 -translate-x-1/2 items-center gap-6 md:flex">
+              {navLinks.map((link) => (
+                <Button
+                  key={link.label}
+                  variant="ghost"
+                  className={cn(
+                    poppins.className,
+                    "text-gray-600 hover:text-[#5B6BBF] text-lg transition-colors font-medium  bg-transparent hover:bg-transparent px-0",
+                  )}
+                  render={<Link href={link.href} />}
+                  nativeButton={false}
+                >
+                  {link.label}
+                </Button>
+              ))}
+            </div>
 
-						{/* Right CTA Container */}
-						<div className="hidden items-center gap-4 md:flex flex-1 justify-end">
-							<Button
-								variant="ghost"
-								className={cn(poppins.className, "text-xl text-gray-700 hover:text-[#85A1D1] hover:bg-transparent px-3 rounded-full cursor-pointer transition-colors")}
-								render={<Link href="/login" />}
-								nativeButton={false}
-							>
-								Log In
-							</Button>
-							<Button
-								className={cn(poppins.className, "text-xl bg-[#85A1D1] hover:bg-[#7a95c4] text-white rounded-full px-6 h-12 cursor-pointer border-transparent shadow-sm transition-transform hover:scale-105")}
-								render={<Link href="/signup" />}
-								nativeButton={false}
-							>
-								Sign Up
-							</Button>
-						</div>
+            {/* Right CTA Container */}
+            <div className="hidden md:flex items-center gap-3">
+              {isAuthLoading ? (
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-24 animate-pulse rounded-full bg-slate-200" />
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200" />
+                </div>
+              ) : user ? (
+                <UserDropdown user={user} onLogout={handleLogout} />
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button
+                      variant="ghost"
+                      className="text-gray-700 hover:text-[#5B6BBF] cursor-pointer text-lg p-5"
+                    >
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button className="bg-primary text-white rounded-full p-5 cursor-pointer text-lg">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
 
-						{/* Mobile Nav Toggle */}
-						<div className="md:hidden flex-1 flex justify-end">
-							<MobileNav />
-						</div>
-					</nav>
-				</div>
-			</div>
-		</header>
-	);
+            {/* Mobile Nav Toggle */}
+            <div className="md:hidden flex-1 flex justify-end">
+              <MobileNav />
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
 }

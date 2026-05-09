@@ -44,3 +44,17 @@ export interface BillingRecord {
   amount: number;
   status: "paid" | "pending" | "failed";
 }
+
+
+
+export type DogStatus = "Active" | "In progress" | "Quote Ready" | "Incomplete";
+
+export interface TPlanBanner {
+  title: string;
+  status: "Quote Ready" | "In progress" | "Incomplete";
+  description: string;
+  dogName: string;
+  dogBreed: string;
+  ctaLabel: string;
+  submittedDate: string; // only for "In progress" 
+}

@@ -15,7 +15,6 @@ import { AuthButton } from "./shared/AuthButton";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ca } from "zod/v4/locales";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
@@ -41,23 +40,18 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      console.log("Login:", values);
       const response = await login(values).unwrap();
-      console.log("API response:", response);
+      console.log("Login response:", response);
       if (response?.success) {
-        toast.success("Login successful! Redirecting...");
+        toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
-        router.push("/");
+        router.push("/onboarding");
         setIsLoading(false);
       }
     } catch (error: any) {
-      console.error("Login error:", error);
-      if (error?.status === 401) {
-        router.push("/verify-email?email=" + encodeURIComponent(values.email));
-      }
       setIsLoading(false);
       toast.error(
-        error?.data?.error?.message || "Login failed! Please try again.",
+        error?.message || "Login failed! Please try again.",
       );
     }
   };

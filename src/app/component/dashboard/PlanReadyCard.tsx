@@ -1,87 +1,129 @@
-import Image from "next/image";
-import Link from "next/link";
+// components/dashboard/PlanReadyCard.tsx
 
-interface PlanReadyCardProps {
-  petName: string;
-  breed: string;
+"use client";
+
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { TPlanBanner } from ".";
+
+export type PlanStatus = "Quote Ready" | "In progress" | "Incomplete";
+
+export interface PlanBanner {
+  status: PlanStatus;
+  dogName: string;
+  dogBreed: string;
+  submittedDate?: string; // only for "In progress"
 }
 
-export default function PlanReadyCard({ petName, breed }: PlanReadyCardProps) {
+// ─── Static config per status ──────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<
+  PlanStatus,
+  {
+    title: string;
+    description: string;
+    dot: string;
+    badge: string;
+    label: string;
+    ctaLabel?: string;
+    ctaHref?: string;
+    showDogName: boolean;
+    showDate: boolean;
+  }
+> = {
+  "Quote Ready": {
+    title: "Your Plan is Ready",
+    description:
+      "We've prepared your plan based on your information. Please review and accept to continue.",
+    dot: "bg-blue-500",
+    badge: "bg-blue-50 text-blue-600 border border-blue-200",
+    label: "Quote Ready",
+    ctaLabel: "Check Quote",
+    ctaHref: "/dashboard/quote/review",       // ← adjust to your real route
+    showDogName: true,
+    showDate: false,
+  },
+  "In progress": {
+    title: "Application Under Review",
+    description:
+      "We're reviewing your information and preparing your personalized plan.",
+    dot: "bg-amber-500",
+    badge: "bg-amber-50 text-amber-600 border border-amber-200",
+    label: "In progress",
+    ctaLabel: undefined,               // no button for this state
+    ctaHref: undefined,
+    showDogName: true,
+    showDate: true,
+  },
+  Incomplete: {
+    title: "Application Incomplete",
+    description:
+      "You haven't finished your application yet. Get started from where you left off.",
+    dot: "bg-red-400",
+    badge: "bg-red-50 text-red-500 border border-red-200",
+    label: "Incomplete",
+    ctaLabel: "Continue",
+    ctaHref: "/onboarding",  // ← adjust to your real route
+    showDogName: false,
+    showDate: false,
+  },
+};
+
+// ─── Component ─────────────────────────────────────────────────────────────
+
+interface PlanBannerSectionProps {
+  banner: TPlanBanner;
+}
+
+export function PlanBannerSection({ banner }: PlanBannerSectionProps) {
+  const router = useRouter();
+  const cfg = STATUS_CONFIG[banner.status];
+
   return (
-    <div className="mb-8 relative container mx-auto">
-      {/* Background image — hidden on mobile, shown md+ */}
-      <div className="hidden md:block">
-        <Image
-          src="/bg-plan-ready.png"
-          alt="Plan Ready"
-          width={1550}
-          height={120}
-          className="w-full h-auto rounded-2xl"
-        />
+    <div className="relative bg-white border border-slate-200 rounded-xl px-5 py-4 flex items-center justify-between overflow-hidden mb-6">
+      {/* Decorative circles */}
+      <div className="absolute right-28 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-slate-100/80 pointer-events-none" />
+      <div className="absolute right-16 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-slate-200/60 pointer-events-none" />
+
+      {/* Left — title + badge + description */}
+      <div className="relative z-10">
+        <div className="flex items-center gap-2.5 mb-1.5">
+          <h2 className="text-xl font-bold text-slate-900">{cfg.title}</h2>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full",
+              cfg.badge
+            )}
+          >
+            <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+            {cfg.label}
+          </span>
+        </div>
+        <p className="text-[13px] text-slate-500">{cfg.description}</p>
       </div>
 
-      {/* Mobile: plain styled card (no bg image) */}
-      <div className="md:hidden bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-4 flex flex-col gap-3">
-        {/* Top row: title + badge */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-secondary font-bold text-3xl md:text-4xl">
-            Your Plan is Ready
+      {/* Right — dog info + optional CTA */}
+      <div className="relative z-10 flex flex-col items-end gap-2 shrink-0 ml-6">
+        {cfg.showDogName && (
+          <span className="text-[12px] font-medium text-[#5C7FC4]">
+            {banner.dogName} ({banner.dogBreed})
           </span>
-          <span className="flex items-center gap-1 text-xs text-blue-600 border border-blue-200 bg-blue-50 rounded-full px-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
-            Quote Ready
+        )}
+
+        {cfg.showDate && banner.submittedDate && (
+          <span className="text-[12px] text-slate-400">
+            Submitted on {banner.submittedDate}
           </span>
-        </div>
+        )}
 
-        {/* Subtitle */}
-        <p className="text-muted-foreground text-base leading-snug">
-          We&apos;ve prepared your plan based on your information. Please review
-          and accept to continue.
-        </p>
-
-        {/* Pet name + CTA */}
-        <div className="flex items-center justify-between gap-3 mt-1">
-          <span className="text-primary text-base font-medium truncate">
-            {petName} ({breed})
-          </span>
-          <Link href="/dashboard/quote" className="shrink-0">
-            <button className="shrink-0 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-              Check Quote
-            </button>
-          </Link>
-        </div>
-      </div>
-
-      {/* md+: overlay on top of bg image */}
-      <div className="hidden md:flex absolute inset-0 items-center justify-between px-6 lg:px-8">
-        {/* Left */}
-        <div className="flex flex-col gap-1 max-w-xl">
-          <div className="flex items-center gap-2">
-            <span className="text-secondary font-bold text-3xl">
-              Your Plan is Ready
-            </span>
-            <span className="flex items-center gap-1 text-xs text-primary border border-blue-200 bg-blue-50 rounded-full px-2 py-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-              Quote Ready
-            </span>
-          </div>
-          <p className="text-muted-foreground text-base">
-            We&apos;ve prepared your plan based on your information. Please
-            review and accept to continue.
-          </p>
-        </div>
-
-        {/* Right */}
-        <div className="flex flex-col items-center gap-3 shrink-0">
-          <span className="text-primary text-base font-medium">
-            {petName} ({breed})
-          </span>
-          <Link href="/dashboard/quote/review" className="shrink-0">
-            <button className="bg-primary cursor-pointer hover:bg-primary-hover active:bg-primary-active text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-              Check Quote
-            </button>
-          </Link>
-        </div>
+        {cfg.ctaLabel && cfg.ctaHref && (
+          <button
+            onClick={() => router.push(cfg.ctaHref!)}
+            className="bg-[#5C7FC4] cursor-pointer hover:bg-[#4A6BAF] active:bg-[#3D5A9C] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+          >
+            {cfg.ctaLabel}
+          </button>
+        )}
       </div>
     </div>
   );

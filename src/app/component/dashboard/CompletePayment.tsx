@@ -115,7 +115,7 @@ export default function CompletePayment() {
             <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-teal-50 border border-teal-100">
               <CheckCircle2
                 size={14}
-                className="text-teal-500 mt-0.5 flex-shrink-0"
+                className="text-teal-500 mt-0.5 shrink-0"
               />
               <p className="text-xs text-teal-700">
                 Your card details are entered and stored with Stripe, not in
