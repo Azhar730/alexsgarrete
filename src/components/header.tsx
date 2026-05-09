@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import Image from "next/image";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
+import { useGetMeQuery } from "@/redux/api/userApi";
 
 const poppins = Poppins({
 	subsets: ["latin"],
@@ -22,6 +23,8 @@ export const navLinks = [
 
 export function Header() {
 	const scrolled = useScroll(10);
+	const { data: session } = useGetMeQuery(undefined)
+	console.log("Session in Header:", session);
 
 	return (
 		<header className="sticky top-0 z-50 w-full transition-all duration-500 ease-in-out">
@@ -75,15 +78,15 @@ export function Header() {
 
 						{/* Right CTA Container */}
 						<div className="hidden items-center gap-4 md:flex flex-1 justify-end">
-							<Button 
-								variant="ghost" 
+							<Button
+								variant="ghost"
 								className={cn(poppins.className, "text-xl text-gray-700 hover:text-[#85A1D1] hover:bg-transparent px-3 rounded-full cursor-pointer transition-colors")}
 								render={<Link href="/login" />}
 								nativeButton={false}
 							>
 								Log In
 							</Button>
-							<Button 
+							<Button
 								className={cn(poppins.className, "text-xl bg-[#85A1D1] hover:bg-[#7a95c4] text-white rounded-full px-6 h-12 cursor-pointer border-transparent shadow-sm transition-transform hover:scale-105")}
 								render={<Link href="/signup" />}
 								nativeButton={false}

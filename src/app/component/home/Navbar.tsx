@@ -102,7 +102,7 @@
 //           </motion.div>
 //         )}
 //       </AnimatePresence>
-      
+
 //     </motion.header>
 //     </div>
 //   );
@@ -121,6 +121,7 @@ import { useRouter } from "next/navigation";
 import { NavLinks } from "../navbar/NavLinks";
 import { UserDropdown } from "../navbar/UserDropdown";
 import { MobileMenu } from "../navbar/MobileMenu";
+import { useGetMeQuery } from "@/redux/api/userApi";
 
 
 
@@ -128,7 +129,7 @@ import { MobileMenu } from "../navbar/MobileMenu";
 function useAuth() {
   // const user = { name: "Rahim Uddin", email: "rahim@gmail.com", image: "" };
   const user = null
-  const logout = async () => {};
+  const logout = async () => { };
   return { user, logout };
 }
 
@@ -136,7 +137,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
-
+  const { data: session } = useGetMeQuery(undefined)
+  console.log("Session in Navbar:", session);
   const handleLogout = async () => {
     await logout();
     router.push("/");
