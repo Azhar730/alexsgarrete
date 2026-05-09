@@ -13,16 +13,16 @@ import { useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
 
 // ─── Types ────────────────────────────────────────────────────
 interface DogProfile {
-  name: string;
-  gender: string;
-  spayedNeutered: string;
-  birthday: string;
-  primaryBreed: string;
-  additionalBreed: string;
-  colorCoat: string;
-  microchipped: string;
-  microchipNumber: string;
-  microchipId: string;
+  name?: string;
+  gender?: string;
+  spayedNeutered?: string;
+  birthday?: string;
+  primaryBreed?: string;
+  additionalBreed?: string;
+  colorCoat?: string;
+  microchipped?: string;
+  microchipNumber?: string;
+  microchipId?: string;
   imageUrl: string;
 }
 
@@ -35,7 +35,8 @@ function calcAge(dateStr: string): number | null {
   return Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000));
 }
 
-function capitalize(s: string) {
+function capitalize(s?: string) {
+  if (!s) return "N/A";
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 

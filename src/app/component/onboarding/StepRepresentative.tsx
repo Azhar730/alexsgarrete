@@ -51,7 +51,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
     },
     [data.representative, representativeInfo],
   );
-
+console.log("Representative default values:", defaultValues);
   const form = useForm<RepresentativeValues>({
     defaultValues,
     mode: "onSubmit",
@@ -65,8 +65,8 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
 
   const saveRepresentativeProfile = async (values: RepresentativeValues) => {
     try {
-      await updateRepresentative({
-        applicationId,
+      const reprasentativeData = {
+applicationId,
         fullName: values.fullName?.trim() || undefined,
         relationship: values.relationship?.trim() || undefined,
         email: values.email?.trim() || undefined,
@@ -77,7 +77,8 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         homePhone: values.homePhone?.trim() || undefined,
         workPhone: values.workPhone?.trim() || undefined,
         cellPhone: values.cellPhone?.trim() || undefined,
-      }).unwrap();
+      }
+      await updateRepresentative(reprasentativeData).unwrap();
 
       saveRepresentative(values);
       return true;
