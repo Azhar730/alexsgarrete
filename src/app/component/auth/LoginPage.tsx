@@ -15,6 +15,7 @@ import { AuthButton } from "./shared/AuthButton";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useStartApplicationMutation } from "@/redux/api/onboardingApi";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [login] = useLoginMutation();
+  const [startApplication] = useStartApplicationMutation();
   const router = useRouter();
 
   const form = useForm<LoginValues>({
@@ -45,14 +47,21 @@ export default function LoginPage() {
       if (response?.success) {
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
+
         router.push("/onboarding");
+        const startApplicationPayload = {
+          userId: response.data.user.id,
+          status: "DRAFT",
+        };
+        const startAppResponse=await startApplication(startApplicationPayload).unwrap();
+        if(startAppResponse?.success){
+          toast.success("Application started successfully:");
+        }
         setIsLoading(false);
       }
     } catch (error: any) {
       setIsLoading(false);
-      toast.error(
-        error?.message || "Login failed! Please try again.",
-      );
+      toast.error(error?.message || "Login failed! Please try again.");
     }
   };
 

@@ -1,23 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { User, Heart, Dog, Users } from "lucide-react";
+import { User, Heart, Users } from "lucide-react";
 import { useApplication } from "./application-context";
 import { ReviewRow, ReviewSection } from "./ReviewSection";
+import { useUpdateApplicationStatusMutation } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-export function StepReview() {
+export function StepReview({ applicationId }: { applicationId?: string }) {
   const { data, prevStep } = useApplication();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [updateApplicationStatus] = useUpdateApplicationStatusMutation();
+  const router = useRouter();
 
   const { personalInfo, dogs, representative, healthDetails } = data;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      console.log("Submitting application:", data);
-      await new Promise((r) => setTimeout(r, 1500));
-      setSubmitted(true);
+      const id = applicationId;
+      if (!id) {
+        toast.error("Missing application id");
+        return;
+      }
+      const payload = { applicationId: id, status: "UNDER_REVIEW" };
+      const res = await updateApplicationStatus(payload).unwrap();
+      if (res?.success) {
+        toast.success(res.message ?? "Application submitted successfully");
+        // router.push("/dashboard");
+        setSubmitted(true);
+      } else {
+        toast.error(res?.message ?? "Failed to submit application");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -34,7 +50,7 @@ export function StepReview() {
         </h2>
         <p className="text-sm text-gray-500 max-w-sm">
           Our team will review your application and generate a care plan quote.
-          We'll be in touch within 1-2 business days.
+          We&apos;ll be in touch within 1-2 business days.
         </p>
       </div>
     );

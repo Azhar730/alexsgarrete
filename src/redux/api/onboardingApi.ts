@@ -1,6 +1,6 @@
 import { baseApi } from "@/redux/api/baseApi";
 
-type PetPayload = {
+export type PetPayload = {
   applicationId: string;
   id?: string;
   species?: string;
@@ -9,12 +9,12 @@ type PetPayload = {
   isSpayedNeutered?: boolean;
   birthday?: string;
   primaryBreed?: string;
-  additionalBreed?: string;
+  additionalBreed?: string | null;
   colorsAndCoat?: string;
   isMicrochipped?: boolean;
-  microchipNumber?: string;
-  microchipId?: string;
-  photoUrl?: string;
+  microchipNumber?: string | null;
+  microchipId?: string | null;
+  photoUrl?: string | null;
 };
 
 type QueryArgs = Record<string, string | number | boolean | undefined>;
@@ -75,6 +75,14 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       providesTags: ["users"],
     }),
+    addPet: builder.mutation({
+      query: (payload: PetPayload) => ({
+        url: `/application/pet`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
     updatePet: builder.mutation({
       query: (payload: PetPayload) => ({
         url: `/application/pet`,
@@ -99,6 +107,40 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    updateApplicationStatus: builder.mutation({
+      query: (payload: { applicationId: string; status: string }) => ({
+        url: "/application/status",
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
+    getMyQuotes: builder.query({
+      query: () => ({
+        url: "/quote/my-quotes",
+        method: "GET",
+      }),
+      providesTags: ["users"],
+    }),
+    getPetDetails: builder.query({
+      query: (petId: string) => ({
+        url: `/application/pet/${petId}`,
+        method: "GET",
+      }),
+      providesTags: ["users"],
+    }),
+    reviewQuote: builder.mutation({
+      query: (payload: { 
+        quoteGroupId: string; 
+        action: "accept" | "reject"; 
+        rejectionReason?: string;
+      }) => ({
+        url: "/quote/review",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
   }),
 });
 export const {
@@ -112,4 +154,9 @@ export const {
   useUpdatePetMutation,
   useUpdateProfileMutation,
   useUpdateRepresentativeMutation,
+  useUpdateApplicationStatusMutation,
+  useGetMyQuotesQuery,
+  useGetPetDetailsQuery,
+  useReviewQuoteMutation,
+  useAddPetMutation
 } = onboardingApi;

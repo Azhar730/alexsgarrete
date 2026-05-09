@@ -3,51 +3,72 @@ import { Button } from "@/components/ui/button";
 import DogProfileCard from "./DogProfileCard";
 import { DogProfile } from ".";
 import { useState } from "react";
-import { AddDogModal, DogFormData } from "./AddDogModal";
+import { AddDogModal } from "./AddDogModal";
+import { useGetMeQuery } from "@/redux/api/userApi";
 
-const dogs: DogProfile[] = [
-  {
-    id: "1",
-    name: "Bella",
-    breed: "Golden Retriever",
-    age: 3,
-    imageUrl:
-      "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
-    status: "active",
-    monthlyFee: 45.0,
-    nextBilling: "Nov 12, 2026",
-  },
-  {
-    id: "2",
-    name: "Josh",
-    breed: "Golden Retriever",
-    age: 3,
-    imageUrl:
-      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop",
-    status: "in-progress",
-    monthlyFee: null,
-    nextBilling: null,
-  },
-  {
-    id: "3",
-    name: "Charlie",
-    breed: "Golden Retriever",
-    age: 3,
-    imageUrl:
-      "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=200&h=200&fit=crop",
-    status: "quote-ready",
-    monthlyFee: null,
-    nextBilling: null,
-  },
-];
+type ApiPet = {
+  id: string;
+  name: string;
+  primaryBreed?: string | null;
+  birthday?: string | null;
+  photoUrl?: string | null;
+  status?: string | null;
+  petCharge?: string | null;
+};
 
-export default function DogProfilesSection() {
+function calculateAge(birthday?: string | null): number {
+  if (!birthday) return 0;
+
+  const birthDate = new Date(birthday);
+  if (Number.isNaN(birthDate.getTime())) return 0;
+
+  const now = new Date();
+  let age = now.getFullYear() - birthDate.getFullYear();
+  const monthDiff = now.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
+    age -= 1;
+  }
+
+  return Math.max(age, 0);
+}
+
+function mapPetStatus(status?: string | null): DogProfile["status"] {
+  switch (status) {
+    case "QUOTE_ACCEPTED":
+      return "active";
+    case "QUOTE_READY":
+      return "quote-ready";
+    case "IN_PROGRESS":
+      return "in-progress";
+    default:
+      return "incomplete";
+  }
+}
+
+export default function DogProfilesSection({
+  applicationId,
+}: {
+  applicationId?: string;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
+  const { data: userData } = useGetMeQuery({});
 
-  const handleAddDog = (data: DogFormData) => {
-    console.log("New dog data:", data);
-    // তোমার API call বা state update এখানে
-  };
+  const pets: ApiPet[] = userData?.data?.pets || [];
+
+  const dogs: DogProfile[] = pets.map((pet) => ({
+    id: pet.id,
+    name: pet.name,
+    breed: pet.primaryBreed || "Unknown Breed",
+    age: calculateAge(pet.birthday),
+    imageUrl:
+      pet.photoUrl ||
+      "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
+    status: mapPetStatus(pet.status),
+    monthlyFee: pet.petCharge ? Number(pet.petCharge) : null,
+    nextBilling: pet.status === "QUOTE_ACCEPTED" ? "Active" : null,
+  }));
+
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -63,15 +84,19 @@ export default function DogProfilesSection() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {dogs.map((dog) => (
-          <DogProfileCard key={dog.id} dog={dog} />
-        ))}
+        {dogs.length > 0 ? (
+          dogs.map((dog) => <DogProfileCard key={dog.id} dog={dog} />)
+        ) : (
+          <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            No pets found.
+          </div>
+        )}
       </div>
 
       <AddDogModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSubmit={handleAddDog}
+        applicationId={applicationId}
       />
     </section>
   );

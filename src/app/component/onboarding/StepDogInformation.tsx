@@ -111,6 +111,7 @@ export function StepDogInformation({
   }, [form, initialDogs]);
 
   const onSubmit = async (values: DogsStepValues) => {
+    console.log("Submitting dog information:", values);
     const resolvedApplicationId = applicationId;
     if (!resolvedApplicationId) {
       toast.error("Application is not ready yet. Please try again.");

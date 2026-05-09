@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ApplicationProvider } from "@/app/component/onboarding/application-context";
 import { ApplicationFlow } from "@/app/component/onboarding/ApplicationFlow";
 import { useGetMyApplicationsQuery } from "@/redux/api/onboardingApi";
@@ -9,6 +11,13 @@ export default function ApplicationPage() {
   const { data: applicationsResponse } = useGetMyApplicationsQuery(undefined);
 
   const currentApplication = applicationsResponse?.data?.[0];
+  const router = useRouter();
+
+  useEffect(() => {
+    if (currentApplication?.status === "UNDER_REVIEW") {
+      router.push("/dashboard");
+    }
+  }, [currentApplication, router]);
   const initialData: ApplicationData | undefined = currentApplication
     ? {
         personalInfo: currentApplication.personInfo,
