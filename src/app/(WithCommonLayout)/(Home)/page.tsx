@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       <Header />
-{/* <Navbar/> */}
+      {/* <Navbar/> */}
       {/* Add pt-16 to offset fixed navbar */}
       <div>
         <HeroSection />

@@ -29,7 +29,6 @@ const statusConfig: Record<
 
 export default function DogProfileCard({ dog }: { dog: DogProfile }) {
   const status = statusConfig[dog.status];
-
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
       {/* Image + Name */}

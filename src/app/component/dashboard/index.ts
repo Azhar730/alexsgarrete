@@ -56,5 +56,6 @@ export interface TPlanBanner {
   dogName: string;
   dogBreed: string;
   ctaLabel: string;
-  submittedDate: string; // only for "In progress" 
+  petCount?: number;
+  submittedDate?: string; // only for "In progress" 
 }

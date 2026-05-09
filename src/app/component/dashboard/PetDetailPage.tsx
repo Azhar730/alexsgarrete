@@ -292,8 +292,8 @@ export default function PetDetailPage() {
           microchipped: dogData.microchipped,
           microchipNumber: dogData.microchipNumber || "",
           microchipId: dogData.microchipId || "",
-          currentImagePreview: dogData.imagePreview,
         }}
+        currentImageUrl={dogData.imagePreview}
       />
     </div>
   );

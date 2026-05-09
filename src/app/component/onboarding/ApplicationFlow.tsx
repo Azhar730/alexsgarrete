@@ -19,6 +19,7 @@ type OnboardingApplication = {
   personInfo?: Partial<PersonalInfoValues>;
   pets?: Partial<DogsStepValues>["dogs"];
   representative?: Partial<RepresentativeValues>;
+  questionnaire?: Record<string, unknown>;
 };
 
 // Success toast shown after signup
@@ -33,7 +34,7 @@ function SuccessBanner() {
 
 export function ApplicationFlow({ application }: { application?: OnboardingApplication }) {
   const { currentStep } = useApplication();
-
+console.log("application?.questionnaire", application?.questionnaire);
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -43,9 +44,9 @@ export function ApplicationFlow({ application }: { application?: OnboardingAppli
       case 3:
         return <StepRepresentative representativeInfo={application?.representative} applicationId={application?.id} />;
       case 4:
-        return <StepHealthDetails applicationId={application?.id} />;
+        return <StepHealthDetails MyGivenAnswareQuestionnaire={application?.questionnaire} applicationId={application?.id}  />;
       case 5:
-        return <StepReview />;
+        return <StepReview applicationId={application?.id} />;
       default:
         return <StepPersonalInfo />;
     }

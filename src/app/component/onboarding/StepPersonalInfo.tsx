@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Form } from "@/components/ui/form";
@@ -11,20 +11,6 @@ import { useGetMeQuery } from "@/redux/api/userApi";
 import { useUpdateProfileMutation } from "@/redux/api/onboardingApi";
 import { toast } from "sonner";
 
-const EMPTY_VALUES: PersonalInfoValues = {
-  firstName: "",
-  middleInitial: "",
-  lastName: "",
-  email: "",
-  ssnLast4: "",
-  streetAddress: "",
-  city: "",
-  state: "",
-  zipCode: "",
-  cellPhone: "",
-  homePhone: "",
-  workPhone: "",
-};
 
 function buildValues(
   email: string | undefined,
@@ -53,14 +39,9 @@ type OnboardingApplication = {
 
 export function StepPersonalInfo({ application }: { application?: OnboardingApplication }) {
 
-  const { data, savePersonalInfo, nextStep } = useApplication();
+  const { savePersonalInfo, nextStep } = useApplication();
   const router = useRouter();
-  const hydrationDone = useRef(false);
-  const {
-    data: meResponse,
-    isLoading: isMeLoading,
-    isFetching: isMeFetching,
-  } = useGetMeQuery({});
+  const { data: meResponse } = useGetMeQuery({});
   const [updateProfile] = useUpdateProfileMutation();
 
   const me = meResponse?.data ?? meResponse;
@@ -72,17 +53,14 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
   );
 
   const form = useForm<PersonalInfoValues>({
-    defaultValues: data.personalInfo ?? EMPTY_VALUES,
+    defaultValues,
     mode: "onTouched",
   });
-  useEffect(() => {
-    if (hydrationDone.current) return;
-    if (isMeLoading || isMeFetching) return;
-    if (!me && !existingPersonInfo) return;
 
+  // Reset form whenever the computed defaults change (e.g., application prop arrives)
+  useEffect(() => {
     form.reset(defaultValues);
-    hydrationDone.current = true;
-  }, [defaultValues, existingPersonInfo, form, isMeFetching, isMeLoading, me]);
+  }, [form, defaultValues]);
 
   const saveProfile = async (values: PersonalInfoValues) => {
     if (!applicationId) {

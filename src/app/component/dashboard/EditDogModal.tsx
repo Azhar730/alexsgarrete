@@ -36,10 +36,7 @@ const dogSchema = z.object({
   name: z.string().min(1, "Dog name is required"),
   gender: z.string().min(1, "Please select a gender"),
   spayedNeutered: z.string().min(1, "Please select an option"),
-  birthday: z
-    .string()
-    .min(1, "Birthday is required")
-    .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Format must be MM/DD/YYYY"),
+  birthday: z.string().min(1, "Birthday is required"),
   primaryBreed: z.string().min(1, "Primary breed is required"),
   additionalBreed: z.string().optional(),
   colorCoat: z.string().min(1, "Color & coat description is required"),
@@ -70,7 +67,7 @@ export function EditDogModal({
   currentImageUrl,
 }: EditDogModalProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(
-    currentImageUrl ?? null
+    currentImageUrl ?? null,
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -156,6 +153,12 @@ export function EditDogModal({
   const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
     setIsSubmitting(true);
     try {
+      console.log(
+        "Submitting form with values:",
+        values,
+        "and imageFile:",
+        imageFile,
+      );
       await onSubmit({ ...values, imageFile });
       handleClose();
     } finally {
