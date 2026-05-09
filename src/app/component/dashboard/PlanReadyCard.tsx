@@ -12,6 +12,7 @@ export interface PlanBanner {
   status: PlanStatus;
   dogName: string;
   dogBreed: string;
+  petCount?: number; // total number of pets in quote
   submittedDate?: string; // only for "In progress"
 }
 
@@ -71,13 +72,24 @@ const STATUS_CONFIG: Record<
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-interface PlanBannerSectionProps {
-  banner: TPlanBanner;
+// Helper: Map application status to PlanStatus
+function mapApplicationStatusToPlanStatus(applicationStatus?: string): PlanStatus {
+  if (applicationStatus === "DRAFT") return "Incomplete";
+  if (applicationStatus === "UNDER_REVIEW") return "In progress";
+  if (applicationStatus === "QUOTED") return "Quote Ready";
+  return "Quote Ready";
 }
 
-export function PlanBannerSection({ banner }: PlanBannerSectionProps) {
+interface PlanBannerSectionProps {
+  banner: TPlanBanner;
+  applicationStatus?: string; // e.g., "DRAFT", "UNDER_REVIEW", "REJECTED", etc.
+}
+
+export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSectionProps) {
   const router = useRouter();
-  const cfg = STATUS_CONFIG[banner.status];
+  // Determine status based on applicationStatus or fall back to banner.status
+  const status = applicationStatus ? mapApplicationStatusToPlanStatus(applicationStatus) : banner.status;
+  const cfg = STATUS_CONFIG[status];
 
   return (
     <div className="relative bg-white border border-slate-200 rounded-xl px-5 py-4 flex items-center justify-between overflow-hidden mb-6">
@@ -106,7 +118,10 @@ export function PlanBannerSection({ banner }: PlanBannerSectionProps) {
       <div className="relative z-10 flex flex-col items-end gap-2 shrink-0 ml-6">
         {cfg.showDogName && (
           <span className="text-[12px] font-medium text-[#5C7FC4]">
-            {banner.dogName} ({banner.dogBreed})
+            {banner.petCount && banner.petCount > 1 
+              ? `${banner.petCount} Pets` 
+              : `${banner.dogName} (${banner.dogBreed})`
+            }
           </span>
         )}
 

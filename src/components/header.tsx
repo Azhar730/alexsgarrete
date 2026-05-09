@@ -3,11 +3,15 @@ import { cn } from "@/lib/utils";
 import { useScroll } from "@/hooks/use-scroll";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/mobile-nav";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
 import { UserDropdown } from "@/app/component/navbar/UserDropdown";
 import { toast } from "sonner";
+import { useGetMeQuery } from "@/redux/api/userApi";
+import { useLogoutMutation } from "@/redux/api/authApi";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -24,11 +28,33 @@ export const navLinks = [
 
 export function Header() {
   const scrolled = useScroll(10);
-  // const user = {name: "John Doe", email: "john.doe@example.com"};
-  const user = null;
+  const router = useRouter();
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [logout] = useLogoutMutation();
+  const { data: userResponse, isLoading, isFetching } = useGetMeQuery({});
+  const userData = userResponse?.data ?? userResponse;
+  const user = !isLoggedOut && userData
+    ? {
+        name: userData.fullName ?? userData.name ?? "User",
+        email: userData.email ?? "",
+        image: userData.avatarUrl ?? userData.profilePicture ?? userData.image ?? undefined,
+        role: userData.role,
+      }
+    : null;
+
+  // const user = null;
   const handleLogout = async () => {
-    toast.success("Logged out successfully!");
+    setIsLoggedOut(true);
+    try {
+      await logout({}).unwrap();
+      toast.success("Logged out successfully!");
+      router.push("/");
+    } catch {
+      setIsLoggedOut(false);
+      toast.error("Logout failed. Please try again.");
+    }
   };
+  const isAuthLoading = isLoading || isFetching;
   return (
     <header className="sticky top-0 z-50 w-full transition-all duration-500 ease-in-out">
       <div
@@ -61,7 +87,7 @@ export function Header() {
                   width={228}
                   className={cn(
                     "w-auto transition-all duration-500 ease-in-out",
-                    scrolled ? "h-[45px]" : "h-[50px] md:h-[65px]",
+                    scrolled ? "h-11" : "h-12 md:h-16",
                   )}
                 />
               </Link>
@@ -87,7 +113,12 @@ export function Header() {
 
             {/* Right CTA Container */}
             <div className="hidden md:flex items-center gap-3">
-              {user ? (
+              {isAuthLoading ? (
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-24 animate-pulse rounded-full bg-slate-200" />
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200" />
+                </div>
+              ) : user ? (
                 <UserDropdown user={user} onLogout={handleLogout} />
               ) : (
                 <>

@@ -32,9 +32,17 @@ interface ApplicationContextValue {
 
 const ApplicationContext = createContext<ApplicationContextValue | null>(null);
 
-export function ApplicationProvider({ children }: { children: ReactNode }) {
-  const [currentStep, setCurrentStep] = useState<StepId>(1);
-  const [data, setData] = useState<ApplicationData>({});
+export function ApplicationProvider({
+  children,
+  initialData,
+  initialStep = 1,
+}: {
+  children: ReactNode;
+  initialData?: ApplicationData;
+  initialStep?: StepId;
+}) {
+  const [currentStep, setCurrentStep] = useState<StepId>(initialStep);
+  const [data, setData] = useState<ApplicationData>(initialData ?? {});
 
   const goToStep = useCallback((step: StepId) => setCurrentStep(step), []);
 

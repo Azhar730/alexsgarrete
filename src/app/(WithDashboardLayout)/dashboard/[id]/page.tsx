@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Pencil, CreditCard } from "lucide-react";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DogFormData, EditDogModal } from "@/app/component/dashboard/EditDogModal";
+import { useParams } from "next/navigation";
+import { useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
 
 // ─── Types ────────────────────────────────────────────────────
 interface DogProfile {
@@ -83,21 +85,47 @@ function BillingRow({
 export default function PetDetailsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [dog, setDog] = useState<DogProfile>({
-    name: "Max",
-    gender: "male",
-    spayedNeutered: "yes",
-    birthday: "04/12/2020",
-    primaryBreed: "Golden Retriever",
+    name: "",
+    gender: "",
+    spayedNeutered: "",
+    birthday: "",
+    primaryBreed: "",
     additionalBreed: "",
-    colorCoat: "Light golden, medium coat",
-    microchipped: "yes",
-    microchipNumber: "18002527894",
-    microchipId: "989879456654964",
-    imageUrl: "/dog-avatar.jpg", // replace with your image
+    colorCoat: "",
+    microchipped: "",
+    microchipNumber: "",
+    microchipId: "",
+    imageUrl: "",
   });
 
-  const age = calcAge(dog.birthday);
-  const ageLabel = age !== null ? `${age} years old` : dog.birthday;
+  const params = useParams();
+  const petId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const { data: petDetailsResponse } = useGetPetDetailsQuery(
+    petId || "",
+    { skip: !petId }
+  );
+
+  const mappedDogData = useMemo(() => {
+    if (!petDetailsResponse?.data) return null;
+    const pet = petDetailsResponse.data;
+    return {
+      name: pet.name || "",
+      gender: pet.gender || "",
+      spayedNeutered: pet.isSpayedNeutered ? "yes" : "no",
+      birthday: pet.birthday || "",
+      primaryBreed: pet.primaryBreed || "",
+      additionalBreed: pet.additionalBreed || "",
+      colorCoat: pet.colorsAndCoat || "",
+      microchipped: pet.isMicrochipped ? "yes" : "no",
+      microchipNumber: pet.microchipNumber || "",
+      microchipId: pet.microchipId || "",
+      imageUrl: pet.photoUrl || "/dog.png",
+    };
+  }, [petDetailsResponse]);
+
+  const currentDog = mappedDogData || dog;
+   const age = calcAge(currentDog.birthday);
+  const ageLabel = age !== null ? `${age} years old` : currentDog.birthday;
 
   const handleSave = async (data: DogFormData) => {
     // Simulate API call
@@ -140,24 +168,24 @@ export default function PetDetailsPage() {
         {/* ── Profile Header Card ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
+            <div className="relative w-18 h-18 rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
               <Image
                 src={"/dog.png"}
-                alt={dog.name}
+                alt={currentDog.name}
                 fill
                 className="object-cover"
               />
             </div>
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <h1 className="text-xl font-bold text-primary">{dog.name}</h1>
+                <h1 className="text-xl font-bold text-primary">{currentDog.name}</h1>
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-[11px] font-semibold px-2.5 rounded-full">
                   Active
                 </Badge>
               </div>
               <p className="text-sm text-secondary">
-                {dog.primaryBreed} • {ageLabel} •{" "}
-                {capitalize(dog.gender)}
+                {currentDog.primaryBreed} • {ageLabel} •{" "}
+                {capitalize(currentDog.gender)}
               </p>
             </div>
           </div>
@@ -177,38 +205,38 @@ export default function PetDetailsPage() {
             <h2 className="text-[15px] font-bold text-primary">Pet Details</h2>
           </div>
           <div className="px-6 grid grid-cols-1 sm:grid-cols-2">
-            <DetailRow label="Name of Dog" value={dog.name} />
-            <DetailRow label="Gender" value={capitalize(dog.gender)} />
+            <DetailRow label="Name of Dog" value={currentDog.name} />
+            <DetailRow label="Gender" value={capitalize(currentDog.gender)} />
             <DetailRow
               label="Spayed / Neutered"
-              value={capitalize(dog.spayedNeutered)}
+              value={capitalize(currentDog.spayedNeutered)}
             />
             <DetailRow
               label="Birthday / Age of Pet"
-              value={`${dog.birthday}${age !== null ? ` (${age} years)` : ""}`}
+              value={`${currentDog.birthday}${age !== null ? ` (${age} years)` : ""}`}
             />
-            <DetailRow label="Primary Breed" value={dog.primaryBreed} />
+            <DetailRow label="Primary Breed" value={currentDog.primaryBreed} />
             <DetailRow
               label="Additional Breed(s)"
-              value={dog.additionalBreed || "N/A"}
+              value={currentDog.additionalBreed || "N/A"}
             />
             <DetailRow
               label="Color(s) & Coat description"
-              value={dog.colorCoat}
+              value={currentDog.colorCoat}
             />
             <DetailRow
               label="Microchipped"
-              value={capitalize(dog.microchipped)}
+              value={capitalize(currentDog.microchipped)}
             />
             <DetailRow
               label="Microchip number"
               value={
-                dog.microchipped === "yes" ? dog.microchipNumber : "N/A"
+                currentDog.microchipped === "yes" ? currentDog.microchipNumber : "N/A"
               }
             />
             <DetailRow
               label="Microchip ID"
-              value={dog.microchipped === "yes" ? dog.microchipId : "N/A"}
+              value={currentDog.microchipped === "yes" ? currentDog.microchipId : "N/A"}
             />
           </div>
         </div>

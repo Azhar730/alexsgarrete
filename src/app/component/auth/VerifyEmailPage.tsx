@@ -62,23 +62,26 @@ export default function VerifyEmailPage() {
       toast.error(error.data.message || "Verification failed! Try again.");
       setIsLoading(false);
     }
-
-    // try {
-    //   console.log("Verify code:", values.code);
-    //   await new Promise((r) => setTimeout(r, 1200));
-    //   // router.push("/dashboard");
-    // } finally {
-    //   setIsLoading(false);
-    // }
   };
 
   const handleResend = async () => {
     setIsResending(true);
     try {
+      const payload = {
+        email: userEmail,
+        purpose: "email_verification",
+      };
+      const res = await verifyOtp(payload).unwrap();
+      if (res.success) {
+        toast.success("Verification code resent! Check your email.");
+      }
       await new Promise((r) => setTimeout(r, 800));
       setResent(true);
       form.reset();
       setTimeout(() => setResent(false), 3000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to resend verification code.");
     } finally {
       setIsResending(false);
     }
@@ -139,7 +142,7 @@ export default function VerifyEmailPage() {
             type="button"
             onClick={handleResend}
             disabled={isResending}
-            className="text-[#5C7FC4] font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            className="text-[#5C7FC4] cursor-pointer font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
             {isResending ? "Sending…" : "Resend"}
           </button>

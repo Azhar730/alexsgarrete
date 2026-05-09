@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Camera, X, Upload, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useAddPetMutation } from "@/redux/api/onboardingApi";
 
 // ─── Zod Schema ───────────────────────────────────────────────
 const dogSchema = z
@@ -38,8 +40,7 @@ const dogSchema = z
     spayedNeutered: z.string().min(1, "Please select an option"),
     birthday: z
       .string()
-      .min(1, "Birthday is required")
-      .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Format must be MM/DD/YYYY"),
+      .min(1, "Birthday is required"),
     primaryBreed: z.string().min(1, "Primary breed is required"),
     additionalBreed: z.string().optional(),
     colorCoat: z.string().min(1, "Color & coat description is required"),
@@ -56,17 +57,36 @@ export type DogFormData = z.infer<typeof dogSchema> & {
 interface AddDogModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: DogFormData) => Promise<void> | void;
+  applicationId?: string;
+}
+
+function parseBirthdayInput(birthday: string): string {
+  const trimmedBirthday = birthday.trim();
+
+  const dateParts = trimmedBirthday.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dateParts) {
+    const [, month, day, year] = dateParts;
+    return new Date(
+      `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T00:00:00.000Z`,
+    ).toISOString();
+  }
+
+  const parsedDate = new Date(trimmedBirthday);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return parsedDate.toISOString();
+  }
+
+  return trimmedBirthday;
 }
 
 // ─── Component ───────────────────────────────────────────────
-export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
+export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [addPet] = useAddPetMutation();
 
   const form = useForm<z.infer<typeof dogSchema>>({
     resolver: zodResolver(dogSchema),
@@ -100,7 +120,6 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
-      setImageFile(file);
     };
     reader.readAsDataURL(file);
   };
@@ -114,7 +133,6 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
 
   const removeImage = () => {
     setImagePreview(null);
-    setImageFile(null);
     setImageError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -123,8 +141,41 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
   const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...values, imageFile });
+      if (!applicationId) {
+        toast.error("Application is not ready yet. Please try again.");
+        return;
+      }
+
+      const payload = {
+        applicationId,
+        species: "Dog",
+        name: values.name,
+        gender: values.gender.toUpperCase(),
+        isSpayedNeutered: values.spayedNeutered === "yes",
+        birthday: parseBirthdayInput(values.birthday),
+        primaryBreed: values.primaryBreed,
+        additionalBreed: values.additionalBreed?.trim() || null,
+        colorsAndCoat: values.colorCoat,
+        isMicrochipped: values.microchipped === "yes",
+        microchipNumber:
+          values.microchipped === "yes" && values.microchipNumber?.trim()
+            ? values.microchipNumber.trim()
+            : null,
+        microchipId:
+          values.microchipped === "yes" && values.microchipId?.trim()
+            ? values.microchipId.trim()
+            : null,
+        photoUrl: null,
+      };
+
+      const response = await addPet(payload).unwrap();
+      if (response.success) {
+        toast.success("Dog added successfully!");
+      }
       handleClose();
+    } catch (error) {
+      console.error("Failed to submit dog form:", error);
+      toast.error("Could not add dog. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -139,7 +190,7 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-hidden">
+      <DialogContent className="sm:max-w-180 max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-hidden">
         {/* ── Header ── */}
         <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10">
           <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -452,7 +503,7 @@ export function AddDogModal({ open, onClose, onSubmit }: AddDogModalProps) {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-[140px]"
+                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-35"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">

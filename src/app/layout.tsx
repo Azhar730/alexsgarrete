@@ -5,6 +5,7 @@ import ReduxProvider from "@/redux/provider/ReduxProvider";
 
 import { inter, jetbrainsMono } from "./fonts";
 import { Header } from "@/components/header";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
