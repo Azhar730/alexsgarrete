@@ -6,9 +6,10 @@ import { ApplicationProvider } from "@/app/component/onboarding/application-cont
 import { ApplicationFlow } from "@/app/component/onboarding/ApplicationFlow";
 import { useGetMyApplicationsQuery } from "@/redux/api/onboardingApi";
 import type { ApplicationData, StepId } from "@/app/component/onboarding/application";
+import { Loading } from "@/components/ui/Loading";
 
 export default function ApplicationPage() {
-  const { data: applicationsResponse } = useGetMyApplicationsQuery(undefined);
+  const { data: applicationsResponse, isLoading } = useGetMyApplicationsQuery(undefined);
 
   const currentApplication = applicationsResponse?.data?.[0];
   const router = useRouter();
@@ -18,6 +19,16 @@ export default function ApplicationPage() {
       router.push("/dashboard");
     }
   }, [currentApplication, router]);
+
+  if (isLoading) {
+    return (
+      <Loading 
+        message="Preparing your application" 
+        subMessage="Connecting to secure servers..." 
+      />
+    );
+  }
+
   const initialData: ApplicationData | undefined = currentApplication
     ? {
         personalInfo: currentApplication.personInfo,

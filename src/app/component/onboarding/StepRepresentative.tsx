@@ -23,11 +23,11 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const US_STATES = [
-  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID",
-  "IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS",
-  "MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK",
-  "OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV",
-  "WI","WY",
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID",
+  "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS",
+  "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK",
+  "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV",
+  "WI", "WY",
 ].map((s) => ({ value: s, label: s }));
 
 export function StepRepresentative({ representativeInfo, applicationId }: { representativeInfo?: Partial<RepresentativeValues>; applicationId?: string }) {
@@ -51,7 +51,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
     },
     [data.representative, representativeInfo],
   );
-
+  console.log("Representative default values:", defaultValues);
   const form = useForm<RepresentativeValues>({
     defaultValues,
     mode: "onSubmit",
@@ -65,7 +65,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
 
   const saveRepresentativeProfile = async (values: RepresentativeValues) => {
     try {
-      await updateRepresentative({
+      const reprasentativeData = {
         applicationId,
         fullName: values.fullName?.trim() || undefined,
         relationship: values.relationship?.trim() || undefined,
@@ -77,7 +77,8 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         homePhone: values.homePhone?.trim() || undefined,
         workPhone: values.workPhone?.trim() || undefined,
         cellPhone: values.cellPhone?.trim() || undefined,
-      }).unwrap();
+      }
+      await updateRepresentative(reprasentativeData).unwrap();
 
       saveRepresentative(values);
       return true;

@@ -173,7 +173,7 @@ export function StepDogInformation({
         <StepNav
           onBack={prevStep}
           backLabel="← Back to Health Details"
-          onSaveExit={() => {}}
+          onSaveExit={() => { }}
           onNext={nextStep}
           nextLabel="Representative →"
           isSubmitting={form.formState.isSubmitting}

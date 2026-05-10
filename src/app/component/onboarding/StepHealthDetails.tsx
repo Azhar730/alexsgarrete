@@ -2,7 +2,10 @@
 "use client";
 
 import { useMemo, useEffect, useRef } from "react";
-import { useForm, useWatch, Controller } from "react-hook-form";
+import { useForm, useWatch, Controller, SubmitHandler } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -17,12 +20,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useApplication } from "./application-context";
 import { SectionDivider, StepNav } from "./FormFields";
+import { Loading } from "@/components/ui/Loading";
+import { cn } from "@/lib/utils";
 import {
   useGetActiveQuestionnaireQuery,
   useGiveAnswerMutation,
   useFamilyHealthHistoryMutation,
 } from "@/redux/api/onboardingApi";
-import type { HealthDetailsValues } from "./application";
+import { HealthDetailsValues, healthDetailsSchema } from "./application";
 import { toast } from "sonner";
 
 // ─── API types ────────────────────────────────────────────────────────────────
@@ -84,10 +89,14 @@ type QuestionAnswer = {
   tobaccoLastUsed?: string; // hardcoded follow-up when tobaccoCurrentUser === "No"
 };
 
-type HealthStepFormValues = {
-  hipaaAcknowledged?: true;
-  answers: Record<string, QuestionAnswer>;
-};
+type HealthStepFormValues = z.infer<typeof healthStepSchema>;
+
+const healthStepSchema = z.object({
+  hipaaAcknowledged: z.literal(true, {
+    message: "You must acknowledge the HIPAA disclaimer",
+  }),
+  answers: z.record(z.string(), z.any()),
+});
 
 // ─── HIPAA text ───────────────────────────────────────────────────────────────
 
@@ -154,13 +163,13 @@ function buildDefaultAnswers(
           cancerAgeOnset:
             existing?.cancerAgeOnset ??
             (familyHistory?.approxAgeOfOnset !== undefined &&
-            familyHistory?.approxAgeOfOnset !== null
+              familyHistory?.approxAgeOfOnset !== null
               ? String(familyHistory.approxAgeOfOnset)
               : ""),
           cancerAgeAtDeath:
             existing?.cancerAgeAtDeath ??
             (familyHistory?.ageAtDeath !== undefined &&
-            familyHistory?.ageAtDeath !== null
+              familyHistory?.ageAtDeath !== null
               ? String(familyHistory.ageAtDeath)
               : ""),
           tobaccoCurrentUser:
@@ -173,7 +182,10 @@ function buildDefaultAnswers(
       {},
     ) ?? {};
 
-  return { hipaaAcknowledged: saved?.hipaaAcknowledged, answers };
+  return {
+    hipaaAcknowledged: saved?.hipaaAcknowledged,
+    answers,
+  } as unknown as HealthStepFormValues;
 }
 
 function mapToHealthDetails(
@@ -203,16 +215,19 @@ function YesNoInline({
   value,
   onChange,
   name,
+  disabled,
 }: {
   value?: "Yes" | "No";
   onChange: (v: "Yes" | "No") => void;
   name: string;
+  disabled?: boolean;
 }) {
   return (
     <RadioGroup
       value={value ?? ""}
       onValueChange={(v) => onChange(v as "Yes" | "No")}
-      className="flex items-center gap-6"
+      disabled={disabled}
+      className={cn("flex items-center gap-6", disabled && "opacity-50 grayscale-[0.5]")}
     >
       {(["Yes", "No"] as const).map((opt) => (
         <div key={opt} className="flex items-center gap-2">
@@ -225,7 +240,10 @@ function YesNoInline({
           />
           <Label
             htmlFor={`${name}-${opt}`}
-            className="text-sm text-gray-700 cursor-pointer font-normal select-none"
+            className={cn(
+              "text-sm text-gray-700 font-normal select-none",
+              disabled ? "cursor-not-allowed" : "cursor-pointer"
+            )}
           >
             {opt}
           </Label>
@@ -249,9 +267,15 @@ interface QuestionBlockProps {
   question: Question;
   form: ReturnType<typeof useForm<HealthStepFormValues>>;
   watchedAnswers: Record<string, QuestionAnswer> | undefined;
+  disabled?: boolean;
 }
 
-function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
+function QuestionBlock({
+  question,
+  form,
+  watchedAnswers,
+  disabled,
+}: QuestionBlockProps) {
   const isCANCER = question.category === "CANCER";
   const isHEALTH = question.category === "HEALTH";
   // Tobacco = has nested questions but NOT CANCER
@@ -260,7 +284,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
   const answerVal = watchedAnswers?.[question.id]?.answer;
 
   console.log("Rendering QuestionBlock", question.id, "answer:", answerVal);
-  
+
   const tobaccoCurrentUser = watchedAnswers?.[question.id]?.tobaccoCurrentUser;
 
   // The one nested question from API for tobacco: "If yes, are you a current user?"
@@ -285,6 +309,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
             name={`q-${question.id}`}
             value={field.value}
             onChange={field.onChange}
+            disabled={disabled}
           />
         )}
       />
@@ -304,11 +329,12 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
               <Textarea
                 {...field}
                 rows={3}
+                disabled={disabled}
                 placeholder="Diagnosed with early-stage condition in Jan 2022. Currently undergoing routine monitoring."
-                className="w-full border border-gray-200 rounded-lg text-sm text-gray-700
-                           placeholder:text-gray-400 resize-none
-                           focus-visible:ring-1 focus-visible:ring-[#5C7FC4]
-                           focus-visible:border-[#5C7FC4]"
+                className={cn(
+                  "w-full border border-gray-200 rounded-lg text-sm text-gray-700 placeholder:text-gray-400 resize-none focus-visible:ring-1 focus-visible:ring-[#5C7FC4] focus-visible:border-[#5C7FC4]",
+                  disabled && "opacity-50 cursor-not-allowed bg-gray-50"
+                )}
               />
             )}
           />
@@ -330,7 +356,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
                 control={form.control}
                 name={`answers.${question.id}.cancerRelation`}
                 render={({ field }) => (
-                  <Input {...field} className={inputCls} />
+                  <Input {...field} disabled={disabled} className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")} />
                 )}
               />
             </div>
@@ -342,7 +368,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
                 control={form.control}
                 name={`answers.${question.id}.cancerDiagnosis`}
                 render={({ field }) => (
-                  <Input {...field} className={inputCls} />
+                  <Input {...field} disabled={disabled} className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")} />
                 )}
               />
             </div>
@@ -357,7 +383,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
                 control={form.control}
                 name={`answers.${question.id}.cancerAgeOnset`}
                 render={({ field }) => (
-                  <Input {...field} className={inputCls} />
+                  <Input {...field} disabled={disabled} className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")} />
                 )}
               />
             </div>
@@ -369,7 +395,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
                 control={form.control}
                 name={`answers.${question.id}.cancerAgeAtDeath`}
                 render={({ field }) => (
-                  <Input {...field} className={inputCls} />
+                  <Input {...field} disabled={disabled} className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")} />
                 )}
               />
             </div>
@@ -401,6 +427,7 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
                   name={`tobacco-current-${question.id}`}
                   value={field.value}
                   onChange={field.onChange}
+                  disabled={disabled}
                 />
               )}
             />
@@ -419,8 +446,9 @@ function QuestionBlock({ question, form, watchedAnswers }: QuestionBlockProps) {
                 render={({ field }) => (
                   <Input
                     {...field}
+                    disabled={disabled}
                     placeholder="August 2019"
-                    className={inputCls}
+                    className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")}
                   />
                 )}
               />
@@ -442,7 +470,8 @@ export function StepHealthDetails({
   applicationId?: string;
 }) {
   const { data, saveHealthDetails, nextStep, prevStep } = useApplication();
-  const { data: questionnaireResponse } =
+  const router = useRouter();
+  const { data: questionnaireResponse, isLoading } =
     useGetActiveQuestionnaireQuery(undefined);
   const questionnaire = normalizeQuestionnaire(questionnaireResponse);
 
@@ -457,6 +486,7 @@ export function StepHealthDetails({
   );
 
   const form = useForm<HealthStepFormValues>({
+    resolver: zodResolver(healthStepSchema),
     defaultValues,
     mode: "onChange",
   });
@@ -466,6 +496,11 @@ export function StepHealthDetails({
   }, [form, defaultValues]);
 
   const watchedAnswers = useWatch({ control: form.control, name: "answers" });
+  const isAcknowledged = useWatch({
+    control: form.control,
+    name: "hipaaAcknowledged",
+  });
+  const isDisabled = isAcknowledged !== true;
 
   const [giveAnswer] = useGiveAnswerMutation();
   const [familyHealthHistory] = useFamilyHealthHistoryMutation();
@@ -473,6 +508,7 @@ export function StepHealthDetails({
   const previousAnswersRef = useRef<Record<string, QuestionAnswer> | undefined>(
     undefined,
   );
+
   console.log("MyGivenAnswareQuestionnaire", MyGivenAnswareQuestionnaire);
 
   // Effect to submit only CHANGED answers (not all answers at once)
@@ -491,7 +527,7 @@ export function StepHealthDetails({
         if (
           prevAnswer?.answer !== currentAnswer?.answer ||
           prevAnswer?.nested?.explanation !==
-            currentAnswer?.nested?.explanation ||
+          currentAnswer?.nested?.explanation ||
           prevAnswer?.cancerDiagnosis !== currentAnswer?.cancerDiagnosis ||
           prevAnswer?.cancerRelation !== currentAnswer?.cancerRelation ||
           prevAnswer?.cancerAgeOnset !== currentAnswer?.cancerAgeOnset ||
@@ -581,6 +617,14 @@ export function StepHealthDetails({
     familyHealthHistory,
   ]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loading />
+      </div>
+    );
+  }
+
   const onSubmit = (values: HealthStepFormValues) => {
     if (values.hipaaAcknowledged !== true) {
       toast.error("Please acknowledge the HIPAA disclaimer before continuing.");
@@ -593,6 +637,17 @@ export function StepHealthDetails({
     );
     saveHealthDetails(mapped);
     nextStep();
+  };
+
+  const handleSaveExit = () => {
+    const values = form.getValues();
+    const mapped = mapToHealthDetails(
+      questionnaire,
+      values.answers,
+      values.hipaaAcknowledged,
+    );
+    saveHealthDetails(mapped);
+    router.push("/"); // Redirect to dashboard/home
   };
 
   return (
@@ -653,6 +708,7 @@ export function StepHealthDetails({
               question={question}
               form={form}
               watchedAnswers={watchedAnswers}
+              disabled={isDisabled}
             />
           ))
         ) : (
@@ -667,7 +723,7 @@ export function StepHealthDetails({
         <StepNav
           onBack={prevStep}
           backLabel="← Back to Personal Info"
-          onSaveExit={() => {}}
+          onSaveExit={handleSaveExit}
           onNext={nextStep}
           nextLabel="Dog Information →"
           isSubmitting={form.formState.isSubmitting}
