@@ -1,10 +1,8 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,21 +29,20 @@ import {
 } from "@/components/ui/form";
 import { Camera, X, Upload, Loader2 } from "lucide-react";
 
-// ─── Schema ───────────────────────────────────────────────────
-const dogSchema = z.object({
-  name: z.string().min(1, "Dog name is required"),
-  gender: z.string().min(1, "Please select a gender"),
-  spayedNeutered: z.string().min(1, "Please select an option"),
-  birthday: z.string().min(1, "Birthday is required"),
-  primaryBreed: z.string().min(1, "Primary breed is required"),
-  additionalBreed: z.string().optional(),
-  colorCoat: z.string().min(1, "Color & coat description is required"),
-  microchipped: z.string().min(1, "Please select an option"),
-  microchipNumber: z.string().optional(),
-  microchipId: z.string().optional(),
-});
+export type DogFormValues = {
+  name: string;
+  gender: string;
+  spayedNeutered: string;
+  birthday: string;
+  primaryBreed: string;
+  additionalBreed?: string;
+  colorCoat: string;
+  microchipped: string;
+  microchipNumber?: string;
+  microchipId?: string;
+};
 
-export type DogFormData = z.infer<typeof dogSchema> & {
+export type DogFormData = DogFormValues & {
   imageFile: File | null;
 };
 
@@ -54,7 +51,7 @@ interface EditDogModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: DogFormData) => Promise<void> | void;
-  defaultValues?: Partial<z.infer<typeof dogSchema>>;
+  defaultValues?: Partial<DogFormValues>;
   currentImageUrl?: string;
 }
 
@@ -66,20 +63,8 @@ export function EditDogModal({
   defaultValues,
   currentImageUrl,
 }: EditDogModalProps) {
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    currentImageUrl ?? null,
-  );
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-
-  const form = useForm<z.infer<typeof dogSchema>>({
-    resolver: zodResolver(dogSchema),
-    defaultValues: {
+  const resolvedDefaultValues = useMemo(
+    () => ({
       name: "",
       gender: "",
       spayedNeutered: "",
@@ -91,7 +76,23 @@ export function EditDogModal({
       microchipNumber: "",
       microchipId: "",
       ...defaultValues,
-    },
+    }),
+    [defaultValues],
+  );
+
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    currentImageUrl ?? null,
+  );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  const form = useForm<DogFormValues>({
+    defaultValues: resolvedDefaultValues,
   });
 
   const microchipped = form.watch("microchipped");
@@ -139,6 +140,16 @@ export function EditDogModal({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    form.reset(resolvedDefaultValues);
+    setImagePreview(currentImageUrl ?? null);
+    setImageFile(null);
+    setImageError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [open, currentImageUrl, resolvedDefaultValues, form]);
+
   const handleDialogWheel = useCallback((e: React.WheelEvent) => {
     const el = contentRef.current;
     if (!el) return;
@@ -150,7 +161,7 @@ export function EditDogModal({
   }, []);
 
   // ─── Submit ──────────────────────────────────────────────
-  const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
+  const handleFormSubmit = async (values: DogFormValues) => {
     setIsSubmitting(true);
     try {
       console.log(
@@ -167,8 +178,11 @@ export function EditDogModal({
   };
 
   const handleClose = () => {
-    form.reset();
-    removeImage();
+    form.reset(resolvedDefaultValues);
+    setImagePreview(currentImageUrl ?? null);
+    setImageFile(null);
+    setImageError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     onClose();
   };
 
@@ -178,7 +192,7 @@ export function EditDogModal({
         ref={contentRef}
         onWheel={handleDialogWheel}
         tabIndex={0}
-        className="hide-scrollbar sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-y-auto overscroll-contain"
+        className="hide-scrollbar sm:max-w-180 max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-y-auto overscroll-contain"
       >
         {/* Header */}
         <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white shrink-0 z-10 sticky top-0">
@@ -536,7 +550,7 @@ export function EditDogModal({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-[140px]"
+                className="rounded-full px-8 h-12 bg-[#5B6BBF] hover:bg-[#4a5aa8] text-white font-semibold shadow-lg shadow-[#5B6BBF]/20 transition-all active:scale-95 min-w-35"
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
