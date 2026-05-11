@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DogFormData, EditDogModal } from "@/app/component/dashboard/EditDogModal";
 import { useParams } from "next/navigation";
-import { useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
+import { useEditPetMutation, useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
 
 // ─── Types ────────────────────────────────────────────────────
 interface DogProfile {
@@ -85,6 +85,7 @@ function BillingRow({
 // ─── Page ────────────────────────────────────────────────────
 export default function PetDetailsPage() {
   const [editOpen, setEditOpen] = useState(false);
+  const [editPet] = useEditPetMutation();
   const [dog, setDog] = useState<DogProfile>({
     name: "",
     gender: "",
@@ -125,33 +126,54 @@ export default function PetDetailsPage() {
   }, [petDetailsResponse]);
 
   const currentDog = mappedDogData || dog;
-   const age = calcAge(currentDog.birthday);
+  const age = calcAge(currentDog.birthday);
   const ageLabel = age !== null ? `${age} years old` : currentDog.birthday;
 
   const handleSave = async (data: DogFormData) => {
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 800));
-
-    let imageUrl = dog.imageUrl;
-    if (data.imageFile) {
-      imageUrl = URL.createObjectURL(data.imageFile);
+    if (!petId) {
+      toast.error("Pet id is missing.");
+      return;
     }
 
-    setDog({
-      name: data.name,
-      gender: data.gender,
-      spayedNeutered: data.spayedNeutered,
-      birthday: data.birthday,
-      primaryBreed: data.primaryBreed,
-      additionalBreed: data.additionalBreed ?? "",
-      colorCoat: data.colorCoat,
-      microchipped: data.microchipped,
-      microchipNumber: data.microchipNumber ?? "",
-      microchipId: data.microchipId ?? "",
-      imageUrl,
-    });
+    try {
+      await editPet({
+        petId,
+        payload: {
+          name: data.name,
+          gender: data.gender,
+          isSpayedNeutered: data.spayedNeutered === "yes",
+          birthday: data.birthday,
+          primaryBreed: data.primaryBreed,
+          additionalBreed: data.additionalBreed || "",
+          colorsAndCoat: data.colorCoat,
+          isMicrochipped: data.microchipped === "yes",
+          microchipNumber: data.microchipNumber || "",
+          microchipId: data.microchipId || "",
+        },
+      }).unwrap();
 
-    toast.success("Profile updated successfully!");
+      const imageUrl = data.imageFile
+        ? URL.createObjectURL(data.imageFile)
+        : currentDog.imageUrl;
+
+      setDog({
+        name: data.name,
+        gender: data.gender,
+        spayedNeutered: data.spayedNeutered,
+        birthday: data.birthday,
+        primaryBreed: data.primaryBreed,
+        additionalBreed: data.additionalBreed ?? "",
+        colorCoat: data.colorCoat,
+        microchipped: data.microchipped,
+        microchipNumber: data.microchipNumber ?? "",
+        microchipId: data.microchipId ?? "",
+        imageUrl,
+      });
+
+      toast.success("Profile updated successfully!");
+    } catch {
+      toast.error("Could not update profile. Please try again.");
+    }
   };
 
   return (
@@ -279,18 +301,18 @@ export default function PetDetailsPage() {
         onClose={() => setEditOpen(false)}
         onSubmit={handleSave}
         defaultValues={{
-          name: dog.name,
-          gender: dog.gender,
-          spayedNeutered: dog.spayedNeutered,
-          birthday: dog.birthday,
-          primaryBreed: dog.primaryBreed,
-          additionalBreed: dog.additionalBreed,
-          colorCoat: dog.colorCoat,
-          microchipped: dog.microchipped,
-          microchipNumber: dog.microchipNumber,
-          microchipId: dog.microchipId,
+          name: currentDog.name,
+          gender: currentDog.gender,
+          spayedNeutered: currentDog.spayedNeutered,
+          birthday: currentDog.birthday,
+          primaryBreed: currentDog.primaryBreed,
+          additionalBreed: currentDog.additionalBreed,
+          colorCoat: currentDog.colorCoat,
+          microchipped: currentDog.microchipped,
+          microchipNumber: currentDog.microchipNumber,
+          microchipId: currentDog.microchipId,
         }}
-        currentImageUrl={dog.imageUrl}
+        currentImageUrl={currentDog.imageUrl}
       />
     </div>
   );

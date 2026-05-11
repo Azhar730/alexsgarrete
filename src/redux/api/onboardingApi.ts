@@ -17,6 +17,10 @@ export type PetPayload = {
   photoUrl?: string | null;
 };
 
+export type EditPetPayload = Omit<PetPayload, "applicationId"> & {
+  applicationId?: string;
+};
+
 type QueryArgs = Record<string, string | number | boolean | undefined>;
 
 const onboardingApi = baseApi.injectEndpoints({
@@ -91,6 +95,15 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    editPet: builder.mutation({
+      query: ({ payload, petId }: { payload: EditPetPayload; petId: string }) => ({
+        url: `/application/pet/${petId}`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
+
     updateProfile: builder.mutation({
       query: (payload) => ({
         url: `/application/profile`,
@@ -158,5 +171,6 @@ export const {
   useGetMyQuotesQuery,
   useGetPetDetailsQuery,
   useReviewQuoteMutation,
-  useAddPetMutation
+  useAddPetMutation,
+  useEditPetMutation
 } = onboardingApi;
