@@ -55,7 +55,7 @@ export default function DogProfilesSection({
   const { data: userData } = useGetMeQuery({});
 
   const pets: ApiPet[] = userData?.data?.pets || [];
-
+  console.log("Pets data in DogProfilesSection:", pets);
   const dogs: DogProfile[] = pets.map((pet) => ({
     id: pet.id,
     name: pet.name,
@@ -68,6 +68,7 @@ export default function DogProfilesSection({
     monthlyFee: pet.petCharge ? Number(pet.petCharge) : null,
     nextBilling: pet.status === "QUOTE_ACCEPTED" ? "Active" : null,
   }));
+
 
   return (
     <section className="mb-8">
