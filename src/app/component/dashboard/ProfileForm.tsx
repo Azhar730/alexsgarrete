@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useUpdateProfileMutation } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
+import { useGetMeQuery } from "@/redux/api/userApi";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -25,25 +28,45 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
-
+  const [updateProfile] = useUpdateProfileMutation();
+const {data:user} = useGetMeQuery({});
+  const userData = user?.data;
+  console.log("User data in ProfileForm:", userData);
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: "Sarah",
-      lastName: "Jenkins",
-      email: "sarah.j@example.com",
+      firstName: userData?.fullName || "Sarah",
+      lastName: userData?.fullName || "Jenkins",
+      email: userData?.email || "sarah.j@example.com",
     },
   });
 
-  const onSubmit = (data: ProfileFormValues) => {
-    console.log("Profile updated:", data);
-    setIsEditing(false);
+  const onSubmit = async (data: ProfileFormValues) => {
+    const payload = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+    };
+    try {
+      const response = await updateProfile(payload).unwrap();
+      console.log("Update response:", response);
+      if (response.success) {
+        toast.success("Profile updated successfully!");
+      }
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile.");
+      setIsEditing(false);
+    }
   };
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
       <div className="mb-5">
-        <h3 className="text-lg font-bold text-secondary">Profile Information</h3>
+        <h3 className="text-lg font-bold text-secondary">
+          Profile Information
+        </h3>
         <p className="text-base text-muted-foreground mt-0.5">
           Update your personal details and contact information.
         </p>

@@ -30,6 +30,7 @@ const declineReasons = [
 export default function QuoteReviewCard() {
   const router = useRouter();
   const { data: quotesResponse, isLoading } = useGetMyQuotesQuery(undefined);
+  console.log("Quotes response:", quotesResponse);
   const [reviewQuote, { isLoading: isReviewing }] = useReviewQuoteMutation();
   const [showConfirmDecline, setShowConfirmDecline] = useState(false);
   const [showDeclinedSuccess, setShowDeclinedSuccess] = useState(false);
