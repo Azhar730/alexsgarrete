@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { DogFormData, EditDogModal } from "@/app/component/dashboard/EditDogModal";
 import { useParams } from "next/navigation";
 import { useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
+import AppLayout from "@/app/component/dashboard/AppLayout";
 
 // ─── Types ────────────────────────────────────────────────────
 interface DogProfile {
@@ -155,8 +156,8 @@ export default function PetDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f4f8]">
-      <div className="max-w-3xl mx-auto px-4 py-7 space-y-4">
+    <AppLayout>
+      <div className=" mx-auto space-y-4">
         {/* Back link */}
         <Link
           href="/dashboard"
@@ -171,7 +172,7 @@ export default function PetDetailsPage() {
           <div className="flex items-center gap-4">
             <div className="relative w-18 h-18 rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
               <Image
-                src={"/dog.png"}
+                src={currentDog.imageUrl || "/dog.png"}
                 alt={currentDog.name}
                 fill
                 className="object-cover"
@@ -180,9 +181,22 @@ export default function PetDetailsPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <h1 className="text-xl font-bold text-primary">{currentDog.name}</h1>
-                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-[11px] font-semibold px-2.5 rounded-full">
-                  Active
-                </Badge>
+                {(() => {
+                  const statusMap: Record<string, { label: string; className: string }> = {
+                    ACTIVE: { label: "Active", className: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" },
+                    QUOTE_READY: { label: "Quote Ready", className: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
+                    QUOTE_ACCEPTED: { label: "Quote Accepted", className: "bg-teal-100 text-teal-700 hover:bg-teal-100" },
+                    QUOTE_REJECTED: { label: "Quote Rejected", className: "bg-rose-100 text-rose-700 hover:bg-rose-100" },
+                    IN_PROGRESS: { label: "In Progress", className: "bg-amber-100 text-amber-700 hover:bg-amber-100" },
+                  };
+                  const currentStatus = petDetailsResponse?.data?.status || "ACTIVE";
+                  const cfg = statusMap[currentStatus] || statusMap.ACTIVE;
+                  return (
+                    <Badge className={`${cfg.className} text-[11px] font-semibold px-2.5 rounded-full`}>
+                      {cfg.label}
+                    </Badge>
+                  );
+                })()}
               </div>
               <p className="text-sm text-secondary">
                 {currentDog.primaryBreed} • {ageLabel} •{" "}
@@ -199,6 +213,49 @@ export default function PetDetailsPage() {
             Edit Profile
           </Button>
         </div>
+
+        {/* ── Quote & Payment Action Section ── */}
+        {petDetailsResponse?.data?.status === "QUOTE_READY" && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-ping" />
+                Insurance Plan Ready for Review!
+              </h2>
+              <p className="text-sm text-slate-600">
+                We have prepared a personalized quote of <span className="font-bold text-slate-900">${Number(petDetailsResponse?.data?.petCharge || 0).toFixed(2)}/mo</span> for <span className="font-semibold">{currentDog.name}</span>. Please review and accept to continue to payment.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end">
+              <Link href="/dashboard/quote/review" className="w-full md:w-auto">
+                <Button className="bg-[#5C7FC4] hover:bg-[#4A6BAF] text-white font-semibold rounded-xl px-5 py-2.5 text-sm w-full cursor-pointer transition-colors">
+                  Review & Accept Quote
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {petDetailsResponse?.data?.status === "QUOTE_ACCEPTED" && (
+          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-teal-600 animate-ping" />
+                Quote Accepted! Next Step: Sign Agreement
+              </h2>
+              <p className="text-sm text-slate-600">
+                You've successfully accepted the quote for <span className="font-semibold">{currentDog.name}</span>. Please sign the final agreement to proceed.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end">
+              <Link href="/dashboard/quote/agreement" className="w-full md:w-auto">
+                <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm w-full cursor-pointer transition-colors">
+                  Sign Agreement
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* ── Pet Details Card ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -256,19 +313,46 @@ export default function PetDetailsPage() {
             </Button>
           </div>
           <div className="px-6">
-            <BillingRow label="Monthly Premium" value="$45.00" />
+            <BillingRow 
+              label="Monthly Premium" 
+              value={petDetailsResponse?.data?.petCharge ? `$${Number(petDetailsResponse.data.petCharge).toFixed(2)}` : "N/A"} 
+            />
+            {petDetailsResponse?.data?.sendQuotes?.[0]?.setupFee && (
+              <BillingRow 
+                label="Policy Setup Fee" 
+                value={`$${Number(petDetailsResponse.data.sendQuotes[0].setupFee).toFixed(2)}`} 
+              />
+            )}
             <BillingRow label="Add-ons (Wellness)" value="$0.00" />
             <BillingRow
               label="Payment Method"
               value={
-                <span className="flex items-center gap-1.5 font-semibold">
-                  <CreditCard className="w-4 h-4 text-gray-400" />
-                  •••• 4242
-                </span>
+                petDetailsResponse?.data?.status === "ACTIVE" ? (
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <CreditCard className="w-4 h-4 text-gray-400" />
+                    Stripe Card (Connected)
+                  </span>
+                ) : (
+                  <span className="text-slate-400 italic">Not connected yet</span>
+                )
               }
             />
-            <BillingRow label="Total Monthly" value="$45.00" bold />
-            <BillingRow label="Next Payment Date" value="Nov 12, 2026" />
+            <BillingRow 
+              label="Total Monthly" 
+              value={petDetailsResponse?.data?.petCharge ? `$${Number(petDetailsResponse.data.petCharge).toFixed(2)}` : "N/A"} 
+              bold 
+            />
+            <BillingRow 
+              label="Coverage Next Steps" 
+              value={(() => {
+                const status = petDetailsResponse?.data?.status || "ACTIVE";
+                if (status === "ACTIVE") return <span className="text-emerald-600 font-bold">Policy Active</span>;
+                if (status === "QUOTE_READY") return <span className="text-blue-600 font-bold">Awaiting Quote Acceptance</span>;
+                if (status === "QUOTE_ACCEPTED") return <span className="text-teal-600 font-bold">Awaiting Signed Agreement & Payment</span>;
+                if (status === "IN_PROGRESS") return <span className="text-amber-600 font-bold">Under Review</span>;
+                return <span className="text-slate-500 font-bold">Pending Setup</span>;
+              })()} 
+            />
           </div>
         </div>
       </div>
@@ -292,6 +376,6 @@ export default function PetDetailsPage() {
         }}
         currentImageUrl={dog.imageUrl}
       />
-    </div>
+    </AppLayout>
   );
 }

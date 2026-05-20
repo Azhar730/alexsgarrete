@@ -22,20 +22,20 @@ export default function ApplicationPage() {
 
   if (isLoading) {
     return (
-      <Loading 
-        message="Preparing your application" 
-        subMessage="Connecting to secure servers..." 
+      <Loading
+        message="Preparing your application"
+        subMessage="Connecting to secure servers..."
       />
     );
   }
 
   const initialData: ApplicationData | undefined = currentApplication
     ? {
-        personalInfo: currentApplication.personInfo,
-        dogs: currentApplication.pets,
-        representative: currentApplication.representative,
-        healthDetails: currentApplication.questionnaire ?? undefined,
-      }
+      personalInfo: currentApplication.personInfo,
+      dogs: currentApplication.pets,
+      representative: currentApplication.representative,
+      healthDetails: currentApplication.questionnaire ?? undefined,
+    }
     : undefined;
 
   const initialStep: StepId = !currentApplication

@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Info } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { useApplication } from "./application-context";
-import { RepresentativeValues } from "./application";
+import { RepresentativeValues, representativeSchema } from "./application";
 import { FormInput, FormSelect, SectionDivider, StepHeader, StepNav } from "./FormFields";
 import { useUpdateRepresentativeMutation } from "@/redux/api/onboardingApi";
 import { toast } from "sonner";
@@ -55,6 +56,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
   const form = useForm<RepresentativeValues>({
     defaultValues,
     mode: "onSubmit",
+    resolver: zodResolver(representativeSchema),
   });
 
   useEffect(() => {
@@ -67,17 +69,17 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
     try {
       const reprasentativeData = {
         applicationId,
-        fullName: values.fullName?.trim() || undefined,
-        relationship: values.relationship?.trim() || undefined,
-        email: values.email?.trim() || undefined,
-        phoneNumber: values.phoneNumber?.trim() || undefined,
-        city: values.city?.trim() || undefined,
-        state: values.state?.trim() || undefined,
-        zipCode: values.zipCode?.trim() || undefined,
-        homePhone: values.homePhone?.trim() || undefined,
-        workPhone: values.workPhone?.trim() || undefined,
-        cellPhone: values.cellPhone?.trim() || undefined,
-      }
+        fullName: values.fullName?.trim() || "",
+        relationship: values.relationship?.trim() || "",
+        email: values.email?.trim() || "",
+        phoneNumber: values.phoneNumber?.trim() || "",
+        city: values.city?.trim() || "",
+        state: values.state?.trim() || "",
+        zipCode: values.zipCode?.trim() || "",
+        homePhone: values.homePhone?.trim() || "",
+        workPhone: values.workPhone?.trim() || "",
+        cellPhone: values.cellPhone?.trim() || "",
+      };
       await updateRepresentative(reprasentativeData).unwrap();
 
       saveRepresentative(values);
@@ -95,8 +97,11 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
   };
 
   const handleSaveExit = async () => {
-    const saved = await saveRepresentativeProfile(form.getValues());
-    if (saved) router.push("/");
+    const values = form.getValues();
+    if (values.fullName?.trim() || values.email?.trim()) {
+      await saveRepresentativeProfile(values as RepresentativeValues);
+    }
+    router.push("/dashboard");
   };
 
   return (

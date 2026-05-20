@@ -1,6 +1,7 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import {
   persistStore,
+  persistReducer,
   FLUSH,
   PAUSE,
   PERSIST,
@@ -8,13 +9,28 @@ import {
   REGISTER,
   REHYDRATE,
 } from "redux-persist";
+import storage from "redux-persist/lib/storage";
 import { baseApi } from "./api/baseApi";
+import authReducer from "./features/authSlice";
+import callReducer from "./features/callSlice";
+
+const rootReducer = combineReducers({
+  [baseApi.reducerPath]: baseApi.reducer,
+  auth: authReducer,
+  call: callReducer,
+});
+
+const persistConfig = {
+  key: "root",
+  storage,
+  whitelist: ["auth"],
+};
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const makeStore = () => {
   return configureStore({
-    reducer: {
-      [baseApi.reducerPath]: baseApi.reducer,
-    },
+    reducer: persistedReducer,
     middleware: (getDefaultMiddlewares) =>
       getDefaultMiddlewares({
         serializableCheck: {
@@ -26,7 +42,6 @@ export const makeStore = () => {
 
 export const store = makeStore();
 export const persistor = persistStore(store);
-
 
 export type AppStore = ReturnType<typeof makeStore>;
 export type RootState = ReturnType<AppStore["getState"]>;

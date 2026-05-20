@@ -6,6 +6,7 @@ import ReduxProvider from "@/redux/provider/ReduxProvider";
 import { inter, jetbrainsMono } from "./fonts";
 import { Header } from "@/components/header";
 import { Toaster } from "sonner";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -23,6 +24,7 @@ export default function RootLayout({
         <ReduxProvider>
           <SmoothScroll>
             {children}
+            <ChatWidget />
             <Toaster position="top-center" richColors />
           </SmoothScroll>
         </ReduxProvider>

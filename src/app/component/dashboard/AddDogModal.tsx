@@ -31,6 +31,7 @@ import {
 import { Camera, X, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAddPetMutation } from "@/redux/api/onboardingApi";
+import { useUploadFileMutation } from "@/redux/api/storageApi";
 
 // ─── Zod Schema ───────────────────────────────────────────────
 const dogSchema = z
@@ -87,6 +88,8 @@ export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addPet] = useAddPetMutation();
+  const [uploadFile] = useUploadFileMutation();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof dogSchema>>({
     resolver: zodResolver(dogSchema),
@@ -108,6 +111,7 @@ export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) 
 
   // ─── Image Handling ───────────────────────────────────────
   const handleImageFile = (file: File) => {
+    setSelectedFile(file);
     setImageError(null);
     if (!file.type.match(/image\/(jpeg|png|gif)/)) {
       setImageError("Only JPG, PNG or GIF files are allowed.");
@@ -133,6 +137,7 @@ export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) 
 
   const removeImage = () => {
     setImagePreview(null);
+    setSelectedFile(null);
     setImageError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -144,6 +149,14 @@ export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) 
       if (!applicationId) {
         toast.error("Application is not ready yet. Please try again.");
         return;
+      }
+
+      let photoUrl = "";
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("files", selectedFile);
+        const res = await uploadFile(formData).unwrap();
+        photoUrl = res.url;
       }
 
       const payload = {
@@ -165,7 +178,7 @@ export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) 
           values.microchipped === "yes" && values.microchipId?.trim()
             ? values.microchipId.trim()
             : null,
-        photoUrl: null,
+        photoUrl: photoUrl || null,
       };
 
       const response = await addPet(payload).unwrap();

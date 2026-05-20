@@ -200,20 +200,29 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
           onClick={prevStep}
           className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
         >
-          ← Back to Point of Contact
+          ← Back
         </button>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-[#5C7FC4] rounded-md hover:bg-[#4A6BAF] transition-colors disabled:opacity-60 shadow-sm"
-        >
-          {isSubmitting && (
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          )}
-          Submit Application →
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Save and Exit
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-[#5C7FC4] rounded-md hover:bg-[#4A6BAF] transition-colors disabled:opacity-60 shadow-sm"
+          >
+            {isSubmitting && (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            )}
+            Submit Application →
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,18 @@
 "use client";
 
-import { useRef } from "react";
+import { useState, useRef } from "react";
 import { Camera, X } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import { DogsStepValues } from "./application";
 import { FormInput, FormSelect } from "./FormFields";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 const GENDER_OPTIONS = [
@@ -26,6 +34,8 @@ interface DogFormProps {
 export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
   const form = useFormContext<DogsStepValues>();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const today = new Date().toISOString().split("T")[0];
 
   const prefix = `dogs.${index}` as const;
 
@@ -35,7 +45,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       {canRemove && (
         <button
           type="button"
-          onClick={onRemove}
+          onClick={() => setConfirmOpen(true)}
           className="absolute top-4 right-4 text-gray-400 hover:text-red-400 transition-colors"
           aria-label="Remove dog"
         >
@@ -94,7 +104,8 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
           control={form.control}
           name={`${prefix}.birthday` as any}
           label="Birthday / Age of Pet"
-          placeholder="04/12/2020 (3 years)"
+          type="date"
+          max={today}
         />
       </div>
 
@@ -146,6 +157,37 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
           placeholder="989879456854964"
         />
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete dog profile?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this dog profile? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(false)}
+              className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              No, keep it
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onRemove?.();
+                setConfirmOpen(false);
+              }}
+              className="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+            >
+              Yes, delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

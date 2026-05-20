@@ -3,37 +3,45 @@ import { z } from "zod";
 // ─── Step schemas ─────────────────────────────────────────────────────────────
 
 export const personalInfoSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  middleInitial: z.string().max(1, "Only one character allowed").optional(),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Enter a valid email"),
+  firstName: z.string().trim().min(1, "First name is required"),
+  middleInitial: z.string().trim().max(1, "Only one character allowed").optional(),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  email: z.string().trim().email("Enter a valid email"),
   ssnLast4: z
     .string()
+    .trim()
     .length(4, "Must be exactly 4 digits")
     .regex(/^\d{4}$/, "Digits only"),
-  streetAddress: z.string().min(1, "Street address is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(2, "State is required"),
+  streetAddress: z.string().trim().min(1, "Street address is required"),
+  city: z.string().trim().min(1, "City is required"),
+  state: z.string().trim().min(2, "State is required"),
   zipCode: z
     .string()
+    .trim()
     .regex(/^\d{5}(-\d{4})?$/, "Enter a valid ZIP code"),
-  cellPhone: z.string().min(10, "Enter a valid phone number"),
-  homePhone: z.string().optional(),
-  workPhone: z.string().optional(),
+  cellPhone: z.string().trim().min(10, "Enter a valid phone number"),
+  homePhone: z.string().trim().optional(),
+  workPhone: z.string().trim().optional(),
 });
 
 export const dogSchema = z.object({
+  id: z.string().optional(),
   photoUrl: z.string().optional(),
-  name: z.string().min(1, "Dog name is required"),
+  name: z.string().trim().min(1, "Dog name is required"),
   gender: z.enum(["Male", "Female"]),
   spayedNeutered: z.enum(["Yes", "No"]),
-  birthday: z.string().min(1, "Birthday is required"),
-  primaryBreed: z.string().min(1, "Primary breed is required"),
-  additionalBreeds: z.string().optional(),
-  colorCoatDescription: z.string().min(1, "Color/coat description is required"),
+  birthday: z
+    .string()
+    .trim()
+    .min(1, "Birthday is required")
+    .refine((value) => !Number.isNaN(Date.parse(value)), "Select a valid date")
+    .refine((value) => new Date(value) <= new Date(), "Birthday cannot be in the future"),
+  primaryBreed: z.string().trim().min(1, "Primary breed is required"),
+  additionalBreeds: z.string().trim().optional(),
+  colorCoatDescription: z.string().trim().min(1, "Color/coat description is required"),
   microchipped: z.enum(["Yes", "No"]),
-  microchipNumber: z.string().optional(),
-  microchipId: z.string().optional(),
+  microchipNumber: z.string().trim().optional(),
+  microchipId: z.string().trim().optional(),
 });
 
 export const dogsStepSchema = z.object({
@@ -74,20 +82,7 @@ export const healthDetailsSchema = z.object({
 
 // ─── Combined form data ───────────────────────────────────────────────────────
 
-export interface PersonalInfoValues {
-  firstName?: string;
-  middleInitial?: string;
-  lastName?: string;
-  email?: string;
-  ssnLast4?: string;
-  streetAddress?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  cellPhone?: string;
-  homePhone?: string;
-  workPhone?: string;
-}
+export type PersonalInfoValues = z.infer<typeof personalInfoSchema>;
 
 export type DogValues = z.infer<typeof dogSchema> & {
   id?: string;
@@ -115,7 +110,7 @@ export interface HealthDetailsValues {
 }
 
 export interface ApplicationData {
-  personalInfo?: PersonalInfoValues;
+  personalInfo?: Partial<PersonalInfoValues>;
   dogs?: DogValues[];
   representative?: RepresentativeValues;
   healthDetails?: HealthDetailsValues;

@@ -45,6 +45,30 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    updateFamilyHealthHistory: builder.mutation({
+      query: ({ id, ...payload }) => ({
+        url: `/family-health-history/${id}`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
+
+    deleteFamilyHealthHistory: builder.mutation({
+      query: (id: string) => ({
+        url: `/family-health-history/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["users"],
+    }),
+
+    getFamilyHealthHistoryByQuestion: builder.query({
+      query: (questionId: string) => ({
+        url: `/family-health-history/question/${questionId}`,
+        method: "GET",
+      }),
+      providesTags: ["users"],
+    }),
     getActiveQuestionnaire: builder.query({
       query: () => ({
         url: "/admin/questionnaire/active",
@@ -91,6 +115,13 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    deletePet: builder.mutation({
+      query: (petId: string) => ({
+        url: `/application/pet/${petId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["users"],
+    }),
     updateProfile: builder.mutation({
       query: (payload) => ({
         url: `/application/profile`,
@@ -130,9 +161,9 @@ const onboardingApi = baseApi.injectEndpoints({
       providesTags: ["users"],
     }),
     reviewQuote: builder.mutation({
-      query: (payload: { 
-        quoteGroupId: string; 
-        action: "accept" | "reject"; 
+      query: (payload: {
+        quoteGroupId: string;
+        action: "accept" | "reject";
         rejectionReason?: string;
       }) => ({
         url: "/quote/review",
@@ -140,6 +171,13 @@ const onboardingApi = baseApi.injectEndpoints({
         body: payload,
       }),
       invalidatesTags: ["users"],
+    }),
+    getAgreementDocuments: builder.query({
+      query: () => ({
+        url: "/admin/agreement-document",
+        method: "GET",
+      }),
+      providesTags: ["users"],
     }),
   }),
 });
@@ -152,11 +190,16 @@ export const {
   useGetAnswerByNestedQuestionQuery,
   useGetMyApplicationsQuery,
   useUpdatePetMutation,
+  useDeletePetMutation,
   useUpdateProfileMutation,
   useUpdateRepresentativeMutation,
   useUpdateApplicationStatusMutation,
   useGetMyQuotesQuery,
   useGetPetDetailsQuery,
   useReviewQuoteMutation,
-  useAddPetMutation
+  useAddPetMutation,
+  useDeleteFamilyHealthHistoryMutation,
+  useGetFamilyHealthHistoryByQuestionQuery,
+  useUpdateFamilyHealthHistoryMutation,
+  useGetAgreementDocumentsQuery
 } = onboardingApi;

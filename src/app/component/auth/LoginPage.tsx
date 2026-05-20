@@ -15,7 +15,8 @@ import { AuthButton } from "./shared/AuthButton";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useStartApplicationMutation } from "@/redux/api/onboardingApi";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/features/authSlice";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
@@ -30,8 +31,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [login] = useLoginMutation();
-  const [startApplication] = useStartApplicationMutation();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -45,18 +46,14 @@ export default function LoginPage() {
       const response = await login(values).unwrap();
       console.log("Login response:", response);
       if (response?.success) {
+        dispatch(setUser({ 
+          user: response.data.user, 
+          token: response.data.token 
+        }));
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
 
-        router.push("/onboarding");
-        const startApplicationPayload = {
-          userId: response.data.user.id,
-          status: "DRAFT",
-        };
-        const startAppResponse=await startApplication(startApplicationPayload).unwrap();
-        if(startAppResponse?.success){
-          toast.success("Application started successfully:");
-        }
+        router.push("/dashboard");
         setIsLoading(false);
       }
     } catch (error: any) {

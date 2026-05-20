@@ -29,6 +29,8 @@ interface FormInputProps<T extends FieldValues> {
   disabled?: boolean;
   className?: string;
   autoComplete?: string;
+  min?: string;
+  max?: string;
 }
 
 export function FormInput<T extends FieldValues>({
@@ -40,6 +42,8 @@ export function FormInput<T extends FieldValues>({
   disabled,
   className,
   autoComplete,
+  min,
+  max,
 }: FormInputProps<T>) {
   return (
     <FormField
@@ -59,6 +63,8 @@ export function FormInput<T extends FieldValues>({
               placeholder={placeholder}
               disabled={disabled}
               autoComplete={autoComplete}
+              min={min}
+              max={max}
               className="h-10 rounded-md border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-[#5C7FC4]/30 focus-visible:border-[#5C7FC4] transition-all"
             />
           </FormControl>

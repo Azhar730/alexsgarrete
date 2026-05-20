@@ -21,6 +21,14 @@ const statusConfig: Record<
     label: "Quote Ready",
     className: "bg-blue-100 text-blue-700 border-blue-200",
   },
+  "quote-accepted": {
+    label: "Quote Accepted",
+    className: "bg-teal-100 text-teal-700 border-teal-200",
+  },
+  "quote-rejected": {
+    label: "Quote Rejected",
+    className: "bg-rose-100 text-rose-700 border-rose-200",
+  },
   incomplete: {
     label: "Incomplete",
     className: "bg-slate-100 text-slate-600 border-slate-200",
@@ -28,6 +36,7 @@ const statusConfig: Record<
 };
 
 export default function DogProfileCard({ dog }: { dog: DogProfile }) {
+  console.log("Dog Profile", dog)
   const status = statusConfig[dog.status];
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
@@ -73,15 +82,33 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
         </div>
       </div>
 
-      <Link href={`/dashboard/${dog.id}`}>
-      <Button
-        variant="ghost"
-        size="lg"
-        className="w-full text-primary cursor-pointer hover:text-slate-700 hover:bg-slate-50 mt-auto"
-      >
-        See Details
-      </Button>
-      </Link>
+      <div className="flex gap-2 mt-auto">
+        <Link href={`/dashboard/${dog.id}`} className="flex-1">
+          <Button
+            variant="ghost"
+            size="lg"
+            className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer border border-slate-200 rounded-xl text-sm font-semibold py-2 h-auto"
+          >
+            See Details
+          </Button>
+        </Link>
+        {(dog.status === "quote-ready" || dog.status === "quote-accepted") && (
+          <Link 
+            href={dog.status === "quote-ready" ? "/dashboard/quote/review" : "/dashboard/quote/agreement"} 
+            className="flex-1"
+          >
+            <Button
+              size="lg"
+              className={cn(
+                "w-full cursor-pointer rounded-xl text-sm font-semibold py-2 h-auto text-white transition-colors shadow-sm",
+                dog.status === "quote-ready" ? "bg-[#5C7FC4] hover:bg-[#4A6BAF]" : "bg-teal-600 hover:bg-teal-700"
+              )}
+            >
+              {dog.status === "quote-ready" ? "Accept Quote" : "Sign"}
+            </Button>
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

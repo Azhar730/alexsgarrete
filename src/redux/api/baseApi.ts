@@ -9,6 +9,6 @@ export const baseApi = createApi({
     baseUrl: `${process.env.NEXT_PUBLIC_BASE_API}`,
     credentials: "include"
   }),
-  tagTypes: ["users"],
+  tagTypes: ["users", "Agreement", "Storage", "Payment", "Activity", "Conversations", "Messages"],
   endpoints: () => ({}),
 });

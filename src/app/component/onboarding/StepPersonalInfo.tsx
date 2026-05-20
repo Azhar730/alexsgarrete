@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Form } from "@/components/ui/form";
 import { useApplication } from "./application-context";
-import { PersonalInfoValues } from "./application";
+import { PersonalInfoValues, personalInfoSchema } from "./application";
 import { FormInput, SectionDivider, StepHeader, StepNav } from "./FormFields";
 import { useGetMeQuery } from "@/redux/api/userApi";
 import { useUpdateProfileMutation } from "@/redux/api/onboardingApi";
@@ -55,6 +56,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
   const form = useForm<PersonalInfoValues>({
     defaultValues,
     mode: "onTouched",
+    resolver: zodResolver(personalInfoSchema),
   });
 
   // Reset form whenever the computed defaults change (e.g., application prop arrives)
@@ -102,8 +104,10 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
 
   const handleSaveExit = async () => {
     const values = form.getValues();
-    const saved = await saveProfile(values);
-    if (saved) router.push("/");
+    if (values.firstName?.trim() || values.lastName?.trim()) {
+      await saveProfile(values);
+    }
+    router.push("/dashboard");
   };
 
   return (

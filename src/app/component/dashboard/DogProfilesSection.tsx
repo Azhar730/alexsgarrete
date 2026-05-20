@@ -5,6 +5,7 @@ import { DogProfile } from ".";
 import { useState } from "react";
 import { AddDogModal } from "./AddDogModal";
 import { useGetMeQuery } from "@/redux/api/userApi";
+import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 
 type ApiPet = {
   id: string;
@@ -35,8 +36,12 @@ function calculateAge(birthday?: string | null): number {
 
 function mapPetStatus(status?: string | null): DogProfile["status"] {
   switch (status) {
-    case "QUOTE_ACCEPTED":
+    case "ACTIVE":
       return "active";
+    case "QUOTE_ACCEPTED":
+      return "quote-accepted";
+    case "QUOTE_REJECTED":
+      return "quote-rejected";
     case "QUOTE_READY":
       return "quote-ready";
     case "IN_PROGRESS":
@@ -53,7 +58,8 @@ export default function DogProfilesSection({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const { data: userData } = useGetMeQuery({});
-
+  const { data: myPayments } = useGetMyPaymentsQuery(undefined);
+  console.log("myPayments", myPayments)
   const pets: ApiPet[] = userData?.data?.pets || [];
 
   const dogs: DogProfile[] = pets.map((pet) => ({
@@ -66,7 +72,7 @@ export default function DogProfilesSection({
       "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
     status: mapPetStatus(pet.status),
     monthlyFee: pet.petCharge ? Number(pet.petCharge) : null,
-    nextBilling: pet.status === "QUOTE_ACCEPTED" ? "Active" : null,
+    nextBilling: pet.status === "ACTIVE" ? "Active" : null,
   }));
 
   return (

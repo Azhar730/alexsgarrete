@@ -2,13 +2,16 @@
 
 import { useEffect, useMemo } from "react";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { DogForm } from "./DogForm";
 import { useApplication } from "./application-context";
-import { DogValues, DogsStepValues } from "./application";
+import { DogValues, DogsStepValues, dogsStepSchema } from "./application";
 import { StepHeader, StepNav } from "./FormFields";
 import { toast } from "sonner";
-import { useUpdatePetMutation } from "@/redux/api/onboardingApi";
+import { useAddPetMutation, useDeletePetMutation } from "@/redux/api/onboardingApi";
+import { useGetMeQuery } from "@/redux/api/userApi";
 
 const DEFAULT_DOG = {
   photoUrl: "",
@@ -41,13 +44,22 @@ type BackendPet = {
 };
 
 function mapBackendPet(pet: Partial<BackendPet>): DogValues {
+  let birthdayStr = "";
+  if (pet.birthday) {
+    try {
+      birthdayStr = new Date(pet.birthday).toISOString().split("T")[0];
+    } catch (e) {
+      birthdayStr = "";
+    }
+  }
+
   return {
     id: pet.id,
     photoUrl: pet.photoUrl ?? undefined,
     name: pet.name ?? DEFAULT_DOG.name,
     gender: pet.gender === "Female" || pet.gender === "FEMALE" ? "Female" : "Male",
     spayedNeutered: pet.isSpayedNeutered ? "Yes" : "No",
-    birthday: pet.birthday ?? "",
+    birthday: birthdayStr,
     primaryBreed: pet.primaryBreed ?? "",
     additionalBreeds: pet.additionalBreed ?? "",
     colorCoatDescription: pet.colorsAndCoat ?? "",
@@ -60,7 +72,7 @@ function mapBackendPet(pet: Partial<BackendPet>): DogValues {
 function buildPetPayload(applicationId: string, dog: DogValues, id?: string) {
   return {
     applicationId,
-    ...(id ? { id } : {}),
+    ...(id ? { id, petId: id } : {}),
     species: "Dog",
     name: dog.name,
     gender: dog.gender === "Female" ? "FEMALE" : "MALE",
@@ -83,10 +95,22 @@ export function StepDogInformation({
   applicationId?: string;
   pets?: Partial<BackendPet>[];
 }) {
+  console.log("Rendering StepDogInformation with applicationId:", applicationId, "and pets:", pets);
   const { data, saveDogs, nextStep, prevStep } = useApplication();
-  const [updatePet] = useUpdatePetMutation();
+  const router = useRouter();
+  const [addPet] = useAddPetMutation();
+  const [deletePet] = useDeletePetMutation();
+  const { data: userData } = useGetMeQuery({});
+  const userPets = userData?.data?.pets || [];
+
   const initialDogs: DogValues[] = useMemo(() => {
-    const backendDogs = pets?.length ? pets.map((dog) => mapBackendPet(dog)) : [];
+    let backendDogs = pets?.length ? pets.map((dog) => mapBackendPet(dog)) : [];
+
+    // Fallback to pets from user profile if not passed in props
+    if (!backendDogs.length && userPets.length) {
+      backendDogs = userPets.map((dog: any) => mapBackendPet(dog));
+    }
+
     if (backendDogs.length) return backendDogs;
 
     if (data.dogs?.length) {
@@ -94,11 +118,12 @@ export function StepDogInformation({
     }
 
     return [DEFAULT_DOG];
-  }, [data.dogs, pets]);
+  }, [data.dogs, pets, userPets]);
 
   const form = useForm<DogsStepValues>({
     defaultValues: { dogs: initialDogs } as DogsStepValues,
     mode: "onTouched",
+    resolver: zodResolver(dogsStepSchema),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -110,18 +135,34 @@ export function StepDogInformation({
     form.reset({ dogs: initialDogs } as DogsStepValues);
   }, [form, initialDogs]);
 
-  const onSubmit = async (values: DogsStepValues) => {
-    console.log("Submitting dog information:", values);
-    const resolvedApplicationId = applicationId;
-    if (!resolvedApplicationId) {
+  const handleRemoveDog = async (index: number) => {
+    const dog = form.getValues(`dogs.${index}`);
+
+    if (dog?.id) {
+      try {
+        await deletePet(dog.id).unwrap();
+        toast.success("Dog profile deleted.");
+      } catch (error) {
+        console.error("deletePet error:", error);
+        toast.error("Could not delete dog profile. Please try again.");
+        return;
+      }
+    }
+
+    remove(index);
+  };
+
+  const saveDogProfiles = async (values: DogsStepValues) => {
+    console.log("Saving dog information:", values);
+    if (!applicationId) {
       toast.error("Application is not ready yet. Please try again.");
-      return;
+      return false;
     }
 
     try {
       const savedDogs = await Promise.all(
         values.dogs.map(async (dog) => {
-          const response = await updatePet(buildPetPayload(resolvedApplicationId, dog, dog.id)).unwrap();
+          const response = await addPet(buildPetPayload(applicationId, dog, dog.id)).unwrap();
           const savedDog = (response as { data?: Partial<BackendPet> } | undefined)?.data;
 
           return {
@@ -132,16 +173,31 @@ export function StepDogInformation({
       );
 
       saveDogs(savedDogs);
-      nextStep();
+      return true;
     } catch (error) {
-      console.error("updatePet error:", error);
+      console.error("addPet error:", error);
       toast.error("Could not save dog details. Please try again.");
+      return false;
     }
+  };
+
+  const onFormSubmit = async (values: DogsStepValues) => {
+    const saved = await saveDogProfiles(values);
+    if (saved) nextStep();
+  };
+
+  const handleSaveExit = async () => {
+    const values = form.getValues();
+    const validDogs = values.dogs.filter(dog => dog.name?.trim() && dog.primaryBreed?.trim());
+    if (validDogs.length > 0) {
+      await saveDogProfiles({ dogs: validDogs } as DogsStepValues);
+    }
+    router.push("/dashboard");
   };
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onFormSubmit)}>
         <StepHeader
           step={2}
           title="Dog Information"
@@ -155,7 +211,7 @@ export function StepDogInformation({
               key={field.id}
               index={index}
               canRemove={fields.length > 1}
-              onRemove={() => remove(index)}
+              onRemove={() => handleRemoveDog(index)}
             />
           ))}
         </div>
@@ -173,7 +229,7 @@ export function StepDogInformation({
         <StepNav
           onBack={prevStep}
           backLabel="← Back to Health Details"
-          onSaveExit={() => { }}
+          onSaveExit={handleSaveExit}
           onNext={nextStep}
           nextLabel="Representative →"
           isSubmitting={form.formState.isSubmitting}
@@ -182,3 +238,4 @@ export function StepDogInformation({
     </FormProvider>
   );
 }
+

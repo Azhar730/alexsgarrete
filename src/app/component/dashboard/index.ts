@@ -6,7 +6,7 @@ export interface DogProfile {
   breed: string;
   age: number;
   imageUrl: string;
-  status: "active" | "in-progress" | "quote-ready" | "incomplete";
+  status: "active" | "in-progress" | "quote-ready" | "quote-accepted" | "quote-rejected" | "incomplete";
   monthlyFee: number | null;
   nextBilling: string | null;
 }
@@ -51,11 +51,15 @@ export type DogStatus = "Active" | "In progress" | "Quote Ready" | "Incomplete";
 
 export interface TPlanBanner {
   title: string;
-  status: "Quote Ready" | "In progress" | "Incomplete";
+  status: "Quote Ready" | "In progress" | "Incomplete" | "Active" | "Rejected" | "Not Started";
   description: string;
   dogName: string;
   dogBreed: string;
-  ctaLabel: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaAction?: () => void;
+  secondaryCtaHref?: string;
   petCount?: number;
   submittedDate?: string; // only for "In progress" 
 }

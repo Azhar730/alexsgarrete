@@ -3,20 +3,80 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Lock, CheckCircle2 } from "lucide-react";
+import { Lock, CheckCircle2, Loader2 } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 import PaymentHeader from "./PamentHeader";
+import { useConnectStripeMutation, useCreateCheckoutSessionMutation, useGetConnectAccountQuery, useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
+import { useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 type StripeStatus = "not-connected" | "connected";
 
 export default function CompletePayment() {
   const router = useRouter();
-  const [stripeStatus, setStripeStatus] = useState<StripeStatus>("connected");
+  const { data: quotesData } = useGetMyQuotesQuery(undefined);
+  const { data: statusData, isLoading: isLoadingStatus } = useGetConnectAccountQuery(undefined);
+  const { data: myPayments } = useGetMyPaymentsQuery(undefined);
+  console.log(statusData);
+  const [triggerConnect, { isLoading: isConnecting }] = useConnectStripeMutation();
+  const [createCheckout, { isLoading: isCreatingSession }] = useCreateCheckoutSessionMutation();
 
-  const connectStripe = () => {
-    // Simulate Stripe connection
-    setStripeStatus("connected");
+  const stripeStatus = statusData?.data?.isStripeConnected ? "connected" : "not-connected";
+  const stripeDetails = statusData?.data;
+
+  // Auto-redirect if already paid
+  useEffect(() => {
+    if (myPayments?.data && myPayments.data.length > 0 && quotesData?.data) {
+      const activeQuoteGroup = quotesData.data[0];
+      const hasPaid = myPayments.data.some((p: any) => 
+        (p.status === "SUCCESS" || p.status === "PAID") && 
+        (p.quoteId === activeQuoteGroup?.quoteGroupId || 
+         activeQuoteGroup?.quotes?.some((pq: any) => pq.id === p.quoteId))
+      );
+      
+      if (hasPaid) {
+        toast.info("Payment already completed. Redirecting to dashboard...");
+        router.push("/dashboard");
+      }
+    }
+  }, [myPayments, quotesData, router]);
+
+
+  const connectStripe = async () => {
+    try {
+      const response = await triggerConnect().unwrap();
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to connect to Stripe");
+    }
   };
+
+  const handlePayment = async () => {
+    const activeQuote = quotesData?.data?.[0];
+    if (!activeQuote) {
+      toast.error("No active quote found to pay");
+      return;
+    }
+
+    try {
+      const response = await createCheckout({
+        quoteGroupId: activeQuote.quoteGroupId,
+        setupFee: activeQuote.setupFee,
+        totalMonthlyCharge: activeQuote.totalMonthlyCharge,
+      }).unwrap();
+
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create checkout session");
+    }
+  };
+
+
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4">
@@ -80,16 +140,19 @@ export default function CompletePayment() {
                 <span className="text-xs text-muted-foreground">Account Status</span>
               </div>
 
-              {stripeStatus === "connected" ? (
+              {isLoadingStatus ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="animate-spin text-primary" size={24} />
+                </div>
+              ) : stripeStatus === "connected" ? (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-500 mb-3">
                     Billing contact
                   </p>
                   {[
-                    { label: "Name", value: "Sarah Jenkins" },
-                    { label: "Email", value: "sarah.j@example.com" },
-                    { label: "Country", value: "United States" },
-                    { label: "ZIP code", value: "90210" },
+                    { label: "Customer ID", value: stripeDetails?.stripeCustomerId || "N/A" },
+                    { label: "Payment Method", value: stripeDetails?.hasSavedPaymentMethod ? "Saved" : "Not Found" },
+                    { label: "Connection", value: stripeDetails?.isStripeConnected ? "Active" : "Inactive" },
                   ].map(({ label, value }) => (
                     <div
                       key={label}
@@ -105,9 +168,17 @@ export default function CompletePayment() {
               ) : (
                 <Button
                   onClick={connectStripe}
+                  disabled={isConnecting}
                   className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
                 >
-                  Pay with Stripe
+                  {isConnecting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                      Redirecting to Stripe...
+                    </>
+                  ) : (
+                    "Connect Stripe"
+                  )}
                 </Button>
               )}
             </div>
@@ -145,7 +216,7 @@ export default function CompletePayment() {
                   Initial Setup Fee
                 </span>
                 <span className="text-sm font-semibold text-slate-700">
-                  $15.00
+                  ${quotesData?.data?.[0]?.setupFee?.toFixed(2) || "0.00"}
                 </span>
               </div>
               <div>
@@ -154,7 +225,7 @@ export default function CompletePayment() {
                     Monthly Premium
                   </span>
                   <span className="text-sm font-semibold text-slate-700">
-                    $45.00
+                    ${quotesData?.data?.[0]?.totalMonthlyCharge?.toFixed(2) || "0.00"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -166,14 +237,24 @@ export default function CompletePayment() {
               <span className="text-sm font-bold text-slate-700">
                 Due Today
               </span>
-              <span className="text-2xl font-bold text-slate-800">$15.00</span>
+              <span className="text-2xl font-bold text-slate-800">
+                ${quotesData?.data?.[0]?.setupFee?.toFixed(2) || "0.00"}
+              </span>
             </div>
 
             <Button
               className="w-full bg-primary cursor-pointer text-white font-semibold"
-              disabled={stripeStatus !== "connected"}
+              disabled={stripeStatus !== "connected" || isCreatingSession}
+              onClick={handlePayment}
             >
-              Pay $15.00
+              {isCreatingSession ? (
+                <>
+                  <Loader2 size={16} className="animate-spin mr-2" />
+                  Preparing Payment...
+                </>
+              ) : (
+                `Pay $${quotesData?.data?.[0]?.setupFee?.toFixed(2) || "0.00"}`
+              )}
             </Button>
 
             <div className="flex items-center justify-center gap-1.5 mt-3">
