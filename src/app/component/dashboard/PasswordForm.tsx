@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useUpdatePasswordMutation } from "@/redux/api/userApi";
+import { toast } from "sonner";
 
 const passwordSchema = z
   .object({
@@ -32,20 +34,30 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function PasswordForm() {
   const [isEditing, setIsEditing] = useState(false);
+  const [updatePassword, { isLoading }] = useUpdatePasswordMutation();
 
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      currentPassword: "••••••••",
+      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     },
   });
 
-  const onSubmit = (data: PasswordFormValues) => {
-    console.log("Password changed:", data);
-    setIsEditing(false);
-    form.reset({ currentPassword: "••••••••", newPassword: "", confirmPassword: "" });
+  const onSubmit = async (data: PasswordFormValues) => {
+    try {
+      await updatePassword({
+        oldPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      }).unwrap();
+
+      toast.success("Password updated successfully");
+      setIsEditing(false);
+      form.reset({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not update password");
+    }
   };
 
   return (
@@ -168,9 +180,10 @@ export default function PasswordForm() {
                 <Button
                   type="submit"
                   size="sm"
+                  disabled={isLoading}
                   className="bg-slate-700 hover:bg-slate-800 text-white"
                 >
-                  Save Changes
+                  {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
               </>
             )}

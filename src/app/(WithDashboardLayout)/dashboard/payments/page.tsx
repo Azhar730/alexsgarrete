@@ -1,14 +1,59 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import AppLayout from "@/app/component/dashboard/AppLayout";
 import { BillingHistory, PaymentMethod, PaymentSummaryCards } from "@/app/component/dashboard/PaymentComponents";
-import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
+import { useGetStripeOverviewQuery } from "@/redux/api/paymentApi";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+type PaymentFilter = "ALL" | "INITIAL" | "MONTHLY" | "SUCCESS" | "PENDING";
 
 export default function PaymentsPage() {
-  const { data: paymentsResponse, isLoading } = useGetMyPaymentsQuery(undefined);
-  const payments = paymentsResponse?.data || [];
+  const [filter, setFilter] = useState<PaymentFilter>("ALL");
+  const { data: overviewResponse, isLoading } = useGetStripeOverviewQuery();
+
+  const overviewData = overviewResponse?.data;
+  const payments = overviewData?.local?.allPayments || [];
+  const stripePaymentMethods = overviewData?.stripe?.paymentMethods || [];
+
+  const filteredPayments = useMemo(() => {
+    switch (filter) {
+      case "INITIAL":
+        return payments.filter((payment: any) => payment?.type === "SETUP_FEE");
+      case "MONTHLY":
+        return payments.filter((payment: any) => payment?.type === "MONTHLY_PREMIUM");
+      case "SUCCESS":
+        return payments.filter((payment: any) => {
+          const status = payment?.status?.toUpperCase?.();
+          return status === "SUCCESS" || status === "PAID";
+        });
+      case "PENDING":
+        return payments.filter((payment: any) => payment?.status?.toUpperCase?.() === "PENDING");
+      default:
+        return payments;
+    }
+  }, [filter, payments]);
+
+  const tabCount = {
+    ALL: payments.length,
+    INITIAL: payments.filter((payment: any) => payment?.type === "SETUP_FEE").length,
+    MONTHLY: payments.filter((payment: any) => payment?.type === "MONTHLY_PREMIUM").length,
+    SUCCESS: payments.filter((payment: any) => {
+      const status = payment?.status?.toUpperCase?.();
+      return status === "SUCCESS" || status === "PAID";
+    }).length,
+    PENDING: payments.filter((payment: any) => payment?.status?.toUpperCase?.() === "PENDING").length,
+  };
+
+  const filterTabs: { key: PaymentFilter; label: string }[] = [
+    { key: "ALL", label: "All" },
+    { key: "INITIAL", label: "Initial" },
+    { key: "MONTHLY", label: "Monthly" },
+    { key: "SUCCESS", label: "Success" },
+    { key: "PENDING", label: "Pending" },
+  ];
 
   if (isLoading) {
     return (
@@ -39,8 +84,29 @@ export default function PaymentsPage() {
         </div>
 
         <PaymentSummaryCards payments={payments} />
-        <PaymentMethod payments={payments} />
-        <BillingHistory payments={payments} />
+        <PaymentMethod payments={payments} stripePaymentMethods={stripePaymentMethods} />
+
+        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            {filterTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setFilter(tab.key)}
+                className={cn(
+                  "rounded-md border px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                  filter === tab.key
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                )}
+              >
+                {tab.label} ({tabCount[tab.key]})
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <BillingHistory payments={filteredPayments} />
       </div>
     </AppLayout>
   );

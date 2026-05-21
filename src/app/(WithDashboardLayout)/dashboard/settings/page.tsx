@@ -1,5 +1,4 @@
 import AppLayout from "@/app/component/dashboard/AppLayout";
-import MailingAddressForm from "@/app/component/dashboard/MailingAddressForm";
 import PasswordForm from "@/app/component/dashboard/PasswordForm";
 import ProfileForm from "@/app/component/dashboard/ProfileForm";
 
@@ -17,7 +16,6 @@ export default function SettingsPage() {
         <div className="space-y-5">
           <ProfileForm />
           <PasswordForm />
-          <MailingAddressForm />
         </div>
       </div>
     </AppLayout>

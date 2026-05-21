@@ -23,6 +23,38 @@ export interface ConnectStripeResponse {
   };
 }
 
+export interface StripeOverviewResponse {
+  success: boolean;
+  message: string;
+  data: {
+    stripe: {
+      isStripeConnected: boolean;
+      stripeCustomerId: string | null;
+      subscriptions: any[];
+      invoices: any[];
+      paymentMethods: any[];
+    };
+    local: {
+      allPayments: any[];
+      successfulPayments: any[];
+      pendingPayments: any[];
+      setupPayments: any[];
+      monthlyPayments: any[];
+      monthlySuccessfulPayments: any[];
+      monthlyPendingPayments: any[];
+      source: string;
+    };
+    summary: {
+      totalRecords: number;
+      successfulCount: number;
+      pendingCount: number;
+      setupCount: number;
+      monthlyCount: number;
+      source: string;
+    };
+  };
+}
+
 export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     connectStripe: builder.mutation<ConnectStripeResponse, void>({
@@ -54,6 +86,13 @@ export const paymentApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Payment"],
     }),
+    getStripeOverview: builder.query<StripeOverviewResponse, void>({
+      query: () => ({
+        url: "/payment/stripe-overview",
+        method: "GET",
+      }),
+      providesTags: ["Payment"],
+    }),
   }),
 });
 
@@ -62,4 +101,5 @@ export const {
   useCreateCheckoutSessionMutation,
   useGetConnectAccountQuery,
   useGetMyPaymentsQuery,
+  useGetStripeOverviewQuery,
 } = paymentApi;

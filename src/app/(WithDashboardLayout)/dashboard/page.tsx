@@ -15,11 +15,11 @@ import { useRouter } from "next/navigation";
 
 
 export default function DashboardPage() {
-  const { data: user, isLoading: isLoadingUser } = useGetMeQuery({});
-  const { data: applicationsResponse, isLoading: isLoadingApps } = useGetMyApplicationsQuery(undefined);
-  const { data: quotesResponse, isLoading: isLoadingQuotes } = useGetMyQuotesQuery(undefined);
-  const { data: paymentsResponse, isLoading: isLoadingPayments } = useGetMyPaymentsQuery(undefined);
-  const { data: agreementsResponse, isLoading: isLoadingAgreements } = useGetMyAgreementsQuery();
+  const { data: user, isLoading: isLoadingUser } = useGetMeQuery({}, { refetchOnMountOrArgChange: true });
+  const { data: applicationsResponse, isLoading: isLoadingApps, refetch: refetchApplications } = useGetMyApplicationsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: quotesResponse, isLoading: isLoadingQuotes, refetch: refetchQuotes } = useGetMyQuotesQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: paymentsResponse, isLoading: isLoadingPayments, refetch: refetchPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: agreementsResponse, isLoading: isLoadingAgreements, refetch: refetchAgreements } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true });
   const router = useRouter();
   const [startApplication] = useStartApplicationMutation();
 
@@ -101,15 +101,42 @@ export default function DashboardPage() {
     }
   }, [user, applicationsResponse, isLoadingUser, isLoadingApps, startApplication]);
 
+  // Refetch data when page becomes visible (e.g., returning from onboarding)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("Page became visible, refetching data...");
+        refetchApplications();
+        refetchQuotes();
+        refetchPayments();
+        refetchAgreements();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [refetchApplications, refetchQuotes, refetchPayments, refetchAgreements]);
+
   // Build banners array
   const banners: TPlanBanner[] = [];
 
   // Determine if application is submitted
   const isSubmitted = currentApplication?.status && !["DRAFT", "IN_PROGRESS"].includes(currentApplication.status);
 
-  // 1. Add "Active" banner if application has any active pet and payments
+  // 1. Add "Active" banner only when current application has active pets
+  // and at least one successful payment tied to the current application.
   const hasActivePetStatus = currentApplication?.pets?.some((p: any) => p.status === "ACTIVE");
-  if (hasActivePetStatus && payments.length > 0) {
+  const hasSuccessfulPaymentForCurrentApplication = payments.some((p: any) => {
+    const status = p.status?.toUpperCase();
+    const isSuccess = status === "SUCCESS" || status === "PAID";
+    const sameApplicationByPet = p.quoteInfo?.pet?.applicationId === currentApplication?.id;
+    const sameApplicationByQuote = quotes?.some((group: any) =>
+      group.quotes?.some((q: any) => q.id === p.quoteId && q.pet?.applicationId === currentApplication?.id)
+    );
+    return isSuccess && (sameApplicationByPet || sameApplicationByQuote);
+  });
+
+  if (hasActivePetStatus && hasSuccessfulPaymentForCurrentApplication) {
     banners.push({
       title: "Your Coverage is Active",
       status: "Active",

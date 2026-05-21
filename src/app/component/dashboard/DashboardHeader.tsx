@@ -82,7 +82,7 @@ export default function DashboardHeader() {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] md:hidden">
+        <div className="fixed inset-0 z-60 md:hidden">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"

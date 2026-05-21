@@ -53,7 +53,7 @@ export default function LoginPage() {
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
 
-        router.push("/dashboard");
+        router.push("/onboarding");
         setIsLoading(false);
       }
     } catch (error: any) {
