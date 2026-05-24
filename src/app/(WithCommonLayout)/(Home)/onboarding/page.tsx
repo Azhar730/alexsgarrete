@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ApplicationProvider } from "@/app/component/onboarding/application-context";
 import { ApplicationFlow } from "@/app/component/onboarding/ApplicationFlow";
-import { useGetMyApplicationsQuery } from "@/redux/api/onboardingApi";
+import { useGetMeQuery } from "@/redux/api/userApi";
+import { useGetMyApplicationsQuery, useStartApplicationMutation } from "@/redux/api/onboardingApi";
 import type { ApplicationData, StepId } from "@/app/component/onboarding/application";
 import { Loading } from "@/components/ui/Loading";
 
 export default function ApplicationPage() {
+  const { data: meResponse, isLoading: isLoadingMe } = useGetMeQuery({});
   const { data: applicationsResponse, isLoading } = useGetMyApplicationsQuery(undefined);
+  const [startApplication, { isLoading: isStartingApplication }] = useStartApplicationMutation();
+  const bootstrappedRef = useRef(false);
 
+  const userId = meResponse?.data?.id ?? meResponse?.id;
   const currentApplication = applicationsResponse?.data?.[0];
   const router = useRouter();
 
@@ -20,7 +25,22 @@ export default function ApplicationPage() {
     }
   }, [currentApplication, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (bootstrappedRef.current) return;
+    if (isLoadingMe || isLoading) return;
+    if (!userId || currentApplication) return;
+
+    bootstrappedRef.current = true;
+    startApplication({
+      userId,
+      status: "DRAFT",
+    }).unwrap().catch((error) => {
+      console.error("Failed to auto-start application:", error);
+      bootstrappedRef.current = false;
+    });
+  }, [currentApplication, isLoading, isLoadingMe, startApplication, userId]);
+
+  if (isLoading || isLoadingMe || isStartingApplication) {
     return (
       <Loading
         message="Preparing your application"

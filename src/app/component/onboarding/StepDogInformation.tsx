@@ -101,14 +101,14 @@ export function StepDogInformation({
   const [addPet] = useAddPetMutation();
   const [deletePet] = useDeletePetMutation();
   const { data: userData } = useGetMeQuery({});
-  const userPets = userData?.data?.pets || [];
+  const userPets: Partial<BackendPet>[] = userData?.data?.pets || [];
 
   const initialDogs: DogValues[] = useMemo(() => {
     let backendDogs = pets?.length ? pets.map((dog) => mapBackendPet(dog)) : [];
 
     // Fallback to pets from user profile if not passed in props
     if (!backendDogs.length && userPets.length) {
-      backendDogs = userPets.map((dog: any) => mapBackendPet(dog));
+      backendDogs = userPets.map((dog) => mapBackendPet(dog));
     }
 
     if (backendDogs.length) return backendDogs;

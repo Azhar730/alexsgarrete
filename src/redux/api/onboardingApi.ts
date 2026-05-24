@@ -102,7 +102,7 @@ const onboardingApi = baseApi.injectEndpoints({
     addPet: builder.mutation({
       query: (payload: PetPayload) => ({
         url: `/application/pet`,
-        method: "POST",
+        method: "PATCH",
         body: payload,
       }),
       invalidatesTags: ["users"],
