@@ -46,14 +46,15 @@ export default function LoginPage() {
       const response = await login(values).unwrap();
       console.log("Login response:", response);
       if (response?.success) {
+        const shouldGoToDashboard = Boolean(response.data.user?.isApplicationStarted);
         dispatch(setUser({ 
           user: response.data.user, 
           token: response.data.token 
         }));
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
-
-        router.push("/onboarding");
+      
+        router.push(shouldGoToDashboard ? "/dashboard" : "/onboarding");
         setIsLoading(false);
       }
     } catch (error: any) {
@@ -69,7 +70,7 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Welcome back
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-70 mx-auto">
           Enter your credentials to access your account.
         </p>
       </div>

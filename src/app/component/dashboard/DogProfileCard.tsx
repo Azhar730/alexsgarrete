@@ -35,9 +35,31 @@ const statusConfig: Record<
   },
 };
 
-export default function DogProfileCard({ dog }: { dog: DogProfile }) {
+export default function DogProfileCard({
+  dog,
+  acceptedQuoteSigned = false,
+}: {
+  dog: DogProfile;
+  acceptedQuoteSigned?: boolean;
+}) {
   console.log("Dog Profile", dog)
   const status = statusConfig[dog.status];
+  const showPayNow = dog.status === "quote-accepted" && acceptedQuoteSigned;
+  const actionHref = dog.status === "quote-ready"
+    ? `/dashboard/quote/review${dog.quoteGroupId ? `?quoteGroupId=${dog.quoteGroupId}` : ""}`
+    : showPayNow
+      ? `/dashboard/quote/payment${dog.quoteGroupId ? `?quoteGroupId=${dog.quoteGroupId}` : ""}`
+      : `/dashboard/quote/agreement${dog.quoteGroupId ? `?quoteGroupId=${dog.quoteGroupId}` : ""}`;
+  const actionLabel = dog.status === "quote-ready"
+    ? "Accept Quote"
+    : showPayNow
+      ? "Pay Now"
+      : "Sign";
+  const actionClassName = dog.status === "quote-ready"
+    ? "bg-[#5C7FC4] hover:bg-[#4A6BAF]"
+    : showPayNow
+      ? "bg-emerald-600 hover:bg-emerald-700"
+      : "bg-teal-600 hover:bg-teal-700";
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
       {/* Image + Name */}
@@ -93,18 +115,18 @@ export default function DogProfileCard({ dog }: { dog: DogProfile }) {
           </Button>
         </Link>
         {(dog.status === "quote-ready" || dog.status === "quote-accepted") && (
-          <Link 
-            href={dog.status === "quote-ready" ? "/dashboard/quote/review" : "/dashboard/quote/agreement"} 
+          <Link
+            href={actionHref}
             className="flex-1"
           >
             <Button
               size="lg"
               className={cn(
                 "w-full cursor-pointer rounded-xl text-sm font-semibold py-2 h-auto text-white transition-colors shadow-sm",
-                dog.status === "quote-ready" ? "bg-[#5C7FC4] hover:bg-[#4A6BAF]" : "bg-teal-600 hover:bg-teal-700"
+                actionClassName
               )}
             >
-              {dog.status === "quote-ready" ? "Accept Quote" : "Sign"}
+              {actionLabel}
             </Button>
           </Link>
         )}

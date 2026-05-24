@@ -8,7 +8,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type PaymentFilter = "ALL" | "INITIAL" | "MONTHLY" | "SUCCESS" | "PENDING";
+type PaymentFilter = "ALL" | "INITIAL" | "MONTHLY";
 
 export default function PaymentsPage() {
   const [filter, setFilter] = useState<PaymentFilter>("ALL");
@@ -24,13 +24,6 @@ export default function PaymentsPage() {
         return payments.filter((payment: any) => payment?.type === "SETUP_FEE");
       case "MONTHLY":
         return payments.filter((payment: any) => payment?.type === "MONTHLY_PREMIUM");
-      case "SUCCESS":
-        return payments.filter((payment: any) => {
-          const status = payment?.status?.toUpperCase?.();
-          return status === "SUCCESS" || status === "PAID";
-        });
-      case "PENDING":
-        return payments.filter((payment: any) => payment?.status?.toUpperCase?.() === "PENDING");
       default:
         return payments;
     }
@@ -40,19 +33,12 @@ export default function PaymentsPage() {
     ALL: payments.length,
     INITIAL: payments.filter((payment: any) => payment?.type === "SETUP_FEE").length,
     MONTHLY: payments.filter((payment: any) => payment?.type === "MONTHLY_PREMIUM").length,
-    SUCCESS: payments.filter((payment: any) => {
-      const status = payment?.status?.toUpperCase?.();
-      return status === "SUCCESS" || status === "PAID";
-    }).length,
-    PENDING: payments.filter((payment: any) => payment?.status?.toUpperCase?.() === "PENDING").length,
   };
 
   const filterTabs: { key: PaymentFilter; label: string }[] = [
     { key: "ALL", label: "All" },
     { key: "INITIAL", label: "Initial" },
     { key: "MONTHLY", label: "Monthly" },
-    { key: "SUCCESS", label: "Success" },
-    { key: "PENDING", label: "Pending" },
   ];
 
   if (isLoading) {

@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Shield, CheckCircle2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import StepIndicator from "./StepIndicator";
 import PaymentHeader from "./PamentHeader";
 import Image from "next/image";
@@ -29,6 +29,8 @@ const declineReasons = [
 
 export default function QuoteReviewCard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedQuoteGroupId = searchParams.get("quoteGroupId");
   const { data: quotesResponse, isLoading } = useGetMyQuotesQuery(undefined);
   const [reviewQuote, { isLoading: isReviewing }] = useReviewQuoteMutation();
   const [showConfirmDecline, setShowConfirmDecline] = useState(false);
@@ -37,7 +39,9 @@ export default function QuoteReviewCard() {
   const [additionalNotes, setAdditionalNotes] = useState("");
 
   const quotes = quotesResponse?.data || [];
-  const quoteGroup = quotes[0];
+  const quoteGroup = selectedQuoteGroupId 
+    ? quotes.find((q: any) => q.quoteGroupId === selectedQuoteGroupId) 
+    : quotes[0];
   const firstQuote = quoteGroup?.quotes?.[0];
   const pet = firstQuote?.pet;
   const petCount = quoteGroup?.quotes?.length || 0;
@@ -57,7 +61,7 @@ export default function QuoteReviewCard() {
         action: "accept",
       }).unwrap();
       toast.success("Quote accepted successfully");
-      router.push("/dashboard/quote/agreement");
+      router.push(`/dashboard/quote/agreement?quoteGroupId=${quoteGroupId}`);
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to accept quote");
     }
@@ -69,16 +73,16 @@ export default function QuoteReviewCard() {
         toast.error("Quote ID not found");
         return;
       }
-      
+
       // Get the label for the selected reason
       const reasonLabel = declineReasons.find(r => r.id === declineReason)?.label || declineReason;
-      
+
       await reviewQuote({
         quoteGroupId,
         action: "reject",
         rejectionReason: reasonLabel || additionalNotes || "No reason provided",
       }).unwrap();
-      
+
       setShowConfirmDecline(false);
       setShowDeclinedSuccess(true);
       toast.success("Quote declined");
@@ -114,7 +118,7 @@ export default function QuoteReviewCard() {
           Review Your Quote
         </h2>
         <p className="text-sm text-muted-foreground mb-6">
-          {petCount > 1 
+          {petCount > 1
             ? `Review coverage and payment summary for ${petCount} pets before you continue to the agreement and payment step.`
             : `Review ${pet.name}'s coverage and payment summary before you continue to the agreement and payment step.`
           }
@@ -133,7 +137,7 @@ export default function QuoteReviewCard() {
             <div>
               <p className="font-bold text-secondary">{pet.name}</p>
               <p className="text-xs text-muted-foreground">
-                {pet.primaryBreed} • {new Date(pet.birthday).getFullYear() !== new Date().getFullYear() 
+                {pet.primaryBreed} • {new Date(pet.birthday).getFullYear() !== new Date().getFullYear()
                   ? `${new Date().getFullYear() - new Date(pet.birthday).getFullYear()} years old`
                   : "Less than 1 year old"
                 }
@@ -199,7 +203,7 @@ export default function QuoteReviewCard() {
           </p>
         </div>
 
-        <Button 
+        <Button
           onClick={handleAccept}
           disabled={isReviewing}
           className="w-full bg-primary hover:bg-primary/90 cursor-pointer text-white font-semibold mb-3"

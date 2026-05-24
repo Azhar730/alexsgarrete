@@ -2,17 +2,21 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useGetMeQuery } from "@/redux/api/userApi";
 import { ApplicationProvider } from "@/app/component/onboarding/application-context";
 import { ApplicationFlow } from "@/app/component/onboarding/ApplicationFlow";
-import { useGetMyApplicationsQuery } from "@/redux/api/onboardingApi";
+import { useGetMyApplicationsQuery, useStartApplicationMutation } from "@/redux/api/onboardingApi";
 import type { ApplicationData, StepId } from "@/app/component/onboarding/application";
 import { Loading } from "@/components/ui/Loading";
 
 export default function ApplicationPage() {
   const { data: applicationsResponse, isLoading } = useGetMyApplicationsQuery(undefined);
+  const { data: meResponse, isLoading: isLoadingMe } = useGetMeQuery({}, { refetchOnMountOrArgChange: true });
+  const [startApplication, { isLoading: isStartingApplication }] = useStartApplicationMutation();
 
   const currentApplication = applicationsResponse?.data?.[0];
   const router = useRouter();
+  const me = meResponse?.data ?? meResponse;
 
   useEffect(() => {
     if (currentApplication?.status === "UNDER_REVIEW") {
@@ -20,7 +24,19 @@ export default function ApplicationPage() {
     }
   }, [currentApplication, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isLoadingMe || isLoading || isStartingApplication) return;
+
+    if (!currentApplication && me?.id) {
+      startApplication({ userId: me.id, status: "DRAFT" }).catch((err) => {
+        console.error("Failed to initialize draft application:", err);
+      });
+    }
+  }, [currentApplication, isLoading, isLoadingMe, isStartingApplication, me?.id, startApplication]);
+
+  const isInitializingDraft = !currentApplication && !!me?.id;
+
+  if (isLoading || isLoadingMe || isInitializingDraft) {
     return (
       <Loading
         message="Preparing your application"

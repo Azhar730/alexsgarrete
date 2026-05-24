@@ -9,6 +9,7 @@ export interface DogProfile {
   status: "active" | "in-progress" | "quote-ready" | "quote-accepted" | "quote-rejected" | "incomplete";
   monthlyFee: number | null;
   nextBilling: string | null;
+  quoteGroupId?: string;
 }
 
 export interface ActivityItem {

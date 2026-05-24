@@ -7,7 +7,7 @@ import { PlanBannerSection } from "@/app/component/dashboard/PlanReadyCard";
 import RecentActivity from "@/app/component/dashboard/RecentActivity";
 import { useGetMeQuery } from "@/redux/api/userApi";
 import { Loader2 } from "lucide-react";
-import { useGetMyApplicationsQuery, useGetMyQuotesQuery, useStartApplicationMutation } from "@/redux/api/onboardingApi";
+import { useGetMyApplicationsQuery, useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
 import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 import { useGetMyAgreementsQuery } from "@/redux/api/agreementApi";
 import { useEffect } from "react";
@@ -21,20 +21,6 @@ export default function DashboardPage() {
   const { data: paymentsResponse, isLoading: isLoadingPayments, refetch: refetchPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true });
   const { data: agreementsResponse, isLoading: isLoadingAgreements, refetch: refetchAgreements } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true });
   const router = useRouter();
-  const [startApplication] = useStartApplicationMutation();
-
-  const handleApplyAgain = async () => {
-    if (!user?.data?.id) return;
-    try {
-      await startApplication({
-        userId: user.data.id,
-        status: "DRAFT"
-      }).unwrap();
-      router.push("/onboarding");
-    } catch (err) {
-      console.error("Failed to start new application:", err);
-    }
-  };
   console.log("my applications", applicationsResponse);
   console.log("my quotes", quotesResponse);
   console.log("my payments", paymentsResponse);
@@ -82,24 +68,6 @@ export default function DashboardPage() {
       day: "numeric"
     })
     : undefined;
-
-  // Auto-create application if none exists
-  useEffect(() => {
-    if (!isLoadingUser && user?.data?.id && !isLoadingApps && (!applicationsResponse?.data || applicationsResponse.data.length === 0)) {
-      console.log("No application found. Auto-creating draft application...");
-      startApplication({
-        userId: user.data.id,
-        status: "DRAFT"
-      })
-        .unwrap()
-        .then((res) => {
-          console.log("Auto-created draft application successfully:", res);
-        })
-        .catch((err) => {
-          console.error("Failed to auto-create draft application:", err);
-        });
-    }
-  }, [user, applicationsResponse, isLoadingUser, isLoadingApps, startApplication]);
 
   // Refetch data when page becomes visible (e.g., returning from onboarding)
   useEffect(() => {
@@ -159,7 +127,7 @@ export default function DashboardPage() {
       );
 
       let ctaLabel = "Check Quote";
-      let ctaHref = "/dashboard/quote/review";
+      let ctaHref = `/dashboard/quote/review?quoteGroupId=${encodeURIComponent(quoteGroup.quoteGroupId)}`;
       let title = "Your Plan is Ready";
       let description = "We've prepared your plan based on your information. Please review and accept to continue.";
 
@@ -168,12 +136,12 @@ export default function DashboardPage() {
           title = "Complete Payment";
           description = "You've signed the agreement! Please complete the final payment step to activate your coverage.";
           ctaLabel = "Pay Now";
-          ctaHref = "/dashboard/quote/payment";
+          ctaHref = `/dashboard/quote/payment?quoteGroupId=${encodeURIComponent(quoteGroup.quoteGroupId)}`;
         } else {
           title = "Sign Agreement";
           description = "You've accepted your plan. Please sign the final agreement to proceed to payment.";
           ctaLabel = "Sign Now";
-          ctaHref = "/dashboard/quote/agreement";
+          ctaHref = `/dashboard/quote/agreement?quoteGroupId=${encodeURIComponent(quoteGroup.quoteGroupId)}`;
         }
       }
 
@@ -227,8 +195,6 @@ export default function DashboardPage() {
       dogBreed: currentApplication.pets?.[0]?.primaryBreed || "Unknown Breed",
       ctaLabel: "Contact Support",
       ctaHref: "/contact",
-      secondaryCtaLabel: "Apply Again",
-      secondaryCtaAction: handleApplyAgain,
     });
   }
 

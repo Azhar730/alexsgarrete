@@ -28,9 +28,15 @@ export function PaymentSummaryCards({ payments }: { payments: any[] }) {
   const latestMonthlyPayment = allPayments.find(
     (payment) => payment?.type === "MONTHLY_PREMIUM"
   );
-  const currentPlanAmount = asNumber(
-    latestMonthlyPayment?.amount ?? latestMonthlyPayment?.quoteInfo?.pet?.petCharge
+  const pendingMonthlyPayments = allPayments.filter(
+    (payment) => payment?.type === "MONTHLY_PREMIUM" && payment?.status === "PENDING"
   );
+
+  const currentPlanAmount = pendingMonthlyPayments.length > 0
+    ? pendingMonthlyPayments.reduce((sum, payment) => sum + asNumber(payment.amount), 0)
+    : asNumber(latestMonthlyPayment?.amount ?? latestMonthlyPayment?.quoteInfo?.pet?.petCharge);
+
+  const activeMonthlyCount = pendingMonthlyPayments.length;
 
   const paidPetNames = Array.from(
     new Set(
@@ -48,39 +54,43 @@ export function PaymentSummaryCards({ payments }: { payments: any[] }) {
     (payment) => payment?.type === "MONTHLY_PREMIUM"
   );
   const isAutoMonthlyBillingActive = Boolean(hasSuccessfulMonthlyPayment && (paymentMethod || hasMonthlySchedule));
-  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <p className="text-sm text-slate-500 font-medium mb-1">Current Plan Amount</p>
-        <p className="text-3xl font-bold text-slate-800">${currentPlanAmount.toFixed(2)}</p>
-        <p className="text-sm text-slate-500 mt-1">
-          {isAutoMonthlyBillingActive
-            ? "Billed monthly via saved Stripe card"
-            : hasMonthlySchedule
-              ? "Monthly billing is scheduled and waiting for first recurring charge"
-              : "Monthly billing not scheduled yet"}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" /><path d="M16 18h.01" /></svg>
+        </div>
+        <div className="flex justify-between items-start mb-1">
+          <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider">Total Monthly Premium</p>
+        </div>
+        <p className="text-4xl font-extrabold text-slate-800 mb-2">${currentPlanAmount.toFixed(2)}<span className="text-lg font-medium text-slate-500">/mo</span></p>
+        <p className="text-sm text-slate-600 mb-3 font-medium">
+          {activeMonthlyCount > 0
+            ? `Total across ${activeMonthlyCount} scheduled monthly payment${activeMonthlyCount > 1 ? 's' : ''}`
+            : "No active monthly schedules found"}
         </p>
-        <div className="mt-2">
+        <div className="mt-auto">
           <Badge
             className={cn(
-              "border-none text-[11px] uppercase px-2.5 py-0.5",
-              isAutoMonthlyBillingActive
+              "border-none text-[11px] uppercase px-3 py-1 font-bold",
+              isAutoMonthlyBillingActive || hasMonthlySchedule
                 ? "bg-emerald-100 text-emerald-700"
-                : "bg-amber-100 text-amber-700"
+                : "bg-slate-100 text-slate-600"
             )}
           >
-            {isAutoMonthlyBillingActive ? "Auto monthly billing active" : "Auto monthly billing pending"}
+            {isAutoMonthlyBillingActive || hasMonthlySchedule ? "Auto Monthly Billing Active" : "Billing Not Setup"}
           </Badge>
         </div>
       </div>
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <p className="text-sm text-slate-500 font-medium mb-1">Total Payments</p>
-        <p className="text-3xl font-bold text-slate-800">${totalPaidAmount.toFixed(2)}</p>
-        <p className="text-sm text-slate-500 mt-1">{successfulPayments.length} successful transactions</p>
-        <p className="text-sm text-slate-500 mt-1 truncate">
-          Paid for: {paidPetNames.length > 0 ? paidPetNames.join(", ") : "No pet linked yet"}
-        </p>
+        <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider mb-1">Total Paid To Date</p>
+        <p className="text-4xl font-extrabold text-slate-800 mb-2">${totalPaidAmount.toFixed(2)}</p>
+        <p className="text-sm text-slate-600 mb-2 font-medium">{successfulPayments.length} successful transactions</p>
+        <div className="text-sm text-slate-500 flex flex-col gap-1 mt-auto">
+          <span className="font-semibold">Paid for:</span>
+          <span className="truncate">{paidPetNames.length > 0 ? paidPetNames.join(", ") : "No pet linked yet"}</span>
+        </div>
       </div>
     </div>
   );
@@ -97,11 +107,11 @@ export function PaymentMethod({
 }) {
   const stripeMethod = stripePaymentMethods[0]
     ? {
-        provider: "stripe",
-        last4: stripePaymentMethods[0]?.last4,
-        expiryMonth: stripePaymentMethods[0]?.expMonth,
-        expiryYear: stripePaymentMethods[0]?.expYear,
-      }
+      provider: "stripe",
+      last4: stripePaymentMethods[0]?.last4,
+      expiryMonth: stripePaymentMethods[0]?.expMonth,
+      expiryYear: stripePaymentMethods[0]?.expYear,
+    }
     : null;
 
   const method = stripeMethod || payments.find((payment) => payment?.paymentMethod)?.paymentMethod;
@@ -120,7 +130,7 @@ export function PaymentMethod({
           </div>
         </div>
         <div className="h-8 w-8 flex items-center justify-center text-emerald-500 bg-emerald-50 rounded-full">
-           <Badge className="bg-emerald-100 text-emerald-700 border-none text-[10px] uppercase">Default</Badge>
+          <Badge className="bg-emerald-100 text-emerald-700 border-none text-[10px] uppercase">Default</Badge>
         </div>
       </div>
     </div>
@@ -165,6 +175,12 @@ export function BillingHistory({ payments }: { payments: any[] }) {
               const isExpanded = Boolean(expandedRows[record.id]);
               const petName = record.quoteInfo?.pet?.name || record.petName || "Policy payment";
 
+              const isScheduled = record.source === "stripe_subscription" && record.status === "PENDING";
+              const displayStatus = isScheduled ? "UPCOMING" : record.status;
+              const displayDate = isScheduled && record.nextBillingAt
+                ? new Date(Number(record.nextBillingAt) * 1000).toLocaleDateString()
+                : new Date(record.createdAt).toLocaleDateString();
+
               return (
                 <Fragment key={record.id}>
                   <tr>
@@ -179,7 +195,7 @@ export function BillingHistory({ payments }: { payments: any[] }) {
                       </button>
                     </td>
                     <td className="py-3 pr-4 text-slate-600 whitespace-nowrap text-sm">
-                      {new Date(record.createdAt).toLocaleDateString()}
+                      {displayDate}
                     </td>
                     <td className="py-3 pr-4 text-slate-700 font-medium text-sm">
                       {record.description || (record.type === "MONTHLY_PREMIUM" ? "Monthly premium payment" : "Initial setup fee and policy activation")}
@@ -195,9 +211,11 @@ export function BillingHistory({ payments }: { payments: any[] }) {
                         "text-[11px] uppercase px-2.5 py-0.5 border-none",
                         record.status === "SUCCESS" || record.status === "PAID"
                           ? "bg-emerald-100 text-emerald-700"
-                          : "bg-amber-100 text-amber-700"
+                          : displayStatus === "UPCOMING"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-amber-100 text-amber-700"
                       )}>
-                        {record.status}
+                        {displayStatus}
                       </Badge>
                     </td>
                   </tr>
