@@ -31,6 +31,7 @@ interface FormInputProps<T extends FieldValues> {
   autoComplete?: string;
   min?: string;
   max?: string;
+  numericType?: "digits" | "zip" | "phone";
 }
 
 export function FormInput<T extends FieldValues>({
@@ -44,6 +45,7 @@ export function FormInput<T extends FieldValues>({
   autoComplete,
   min,
   max,
+  numericType,
 }: FormInputProps<T>) {
   return (
     <FormField
@@ -65,6 +67,17 @@ export function FormInput<T extends FieldValues>({
               autoComplete={autoComplete}
               min={min}
               max={max}
+              onChange={(e) => {
+                let val = e.target.value;
+                if (numericType === "digits") {
+                  val = val.replace(/\D/g, "");
+                } else if (numericType === "zip") {
+                  val = val.replace(/[^0-9-]/g, "");
+                } else if (numericType === "phone") {
+                  val = val.replace(/[^0-9+\s()-]/g, "");
+                }
+                field.onChange(val);
+              }}
               className="h-10 rounded-md border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-[#5C7FC4]/30 focus-visible:border-[#5C7FC4] transition-all"
             />
           </FormControl>
@@ -159,7 +172,7 @@ export function FormSelect<T extends FieldValues>({
             disabled={disabled}
           >
             <FormControl>
-              <SelectTrigger className="h-10 rounded-md border-gray-200 bg-white text-sm text-gray-900 focus:ring-2 focus:ring-[#5C7FC4]/30 focus:border-[#5C7FC4]">
+              <SelectTrigger className="w-full h-10 rounded-md border-gray-200 bg-white text-sm text-gray-900 focus:ring-2 focus:ring-[#5C7FC4]/30 focus:border-[#5C7FC4]">
                 <SelectValue
                   placeholder={
                     placeholder && (

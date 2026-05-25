@@ -1,7 +1,5 @@
 "use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Lock, CheckCircle2, Loader2 } from "lucide-react";
 import StepIndicator from "./StepIndicator";
@@ -15,32 +13,41 @@ type StripeStatus = "not-connected" | "connected";
 
 export default function CompletePayment() {
   const router = useRouter();
-  const { data: quotesData } = useGetMyQuotesQuery(undefined);
+  const searchParams = useSearchParams();
+  const selectedQuoteGroupId = searchParams.get("quoteGroupId");
+  const { data: quotesData, isLoading: isLoadingQuotes } = useGetMyQuotesQuery(undefined);
   const { data: statusData, isLoading: isLoadingStatus } = useGetConnectAccountQuery(undefined);
-  const { data: myPayments } = useGetMyPaymentsQuery(undefined);
+  const { data: myPayments, isLoading: isLoadingPayments } = useGetMyPaymentsQuery(undefined);
+  
+  const isPageLoading = isLoadingQuotes || isLoadingPayments || isLoadingStatus;
   console.log(statusData);
   const [triggerConnect, { isLoading: isConnecting }] = useConnectStripeMutation();
   const [createCheckout, { isLoading: isCreatingSession }] = useCreateCheckoutSessionMutation();
 
   const stripeStatus = statusData?.data?.isStripeConnected ? "connected" : "not-connected";
   const stripeDetails = statusData?.data;
+  const activeQuote = quotesData?.data?.find((quoteGroup: any) => quoteGroup.quoteGroupId === selectedQuoteGroupId)
+    || quotesData?.data?.find((quoteGroup: any) => quoteGroup.isAccepted)
+    || quotesData?.data?.[0];
 
   // Auto-redirect if already paid
   useEffect(() => {
     if (myPayments?.data && myPayments.data.length > 0 && quotesData?.data) {
-      const activeQuoteGroup = quotesData.data[0];
-      const hasPaid = myPayments.data.some((p: any) => 
-        (p.status === "SUCCESS" || p.status === "PAID") && 
-        (p.quoteId === activeQuoteGroup?.quoteGroupId || 
-         activeQuoteGroup?.quotes?.some((pq: any) => pq.id === p.quoteId))
+      const activeQuoteGroup = activeQuote;
+      console.log("myPayments", myPayments)
+      console.log("activeQuoteGroup", activeQuoteGroup)
+      const hasPaid = myPayments.data.some((p: any) =>
+        (p.status === "SUCCESS" || p.status === "PAID") &&
+        (p.quoteId === activeQuoteGroup?.quoteGroupId ||
+          activeQuoteGroup?.quotes?.some((pq: any) => pq.id === p.quoteId))
       );
-      
+
       if (hasPaid) {
         toast.info("Payment already completed. Redirecting to dashboard...");
         router.push("/dashboard");
       }
     }
-  }, [myPayments, quotesData, router]);
+  }, [myPayments, quotesData, router, activeQuote]);
 
 
   const connectStripe = async () => {
@@ -55,7 +62,6 @@ export default function CompletePayment() {
   };
 
   const handlePayment = async () => {
-    const activeQuote = quotesData?.data?.[0];
     if (!activeQuote) {
       toast.error("No active quote found to pay");
       return;
@@ -76,7 +82,14 @@ export default function CompletePayment() {
     }
   };
 
-
+  if (isPageLoading) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 h-dvh w-screen">
+        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+        <p className="text-slate-500 font-medium animate-pulse">Loading payment details...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4">
@@ -92,8 +105,7 @@ export default function CompletePayment() {
               Complete Payment
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Please carefully review the policy documents and sign below to
-              proceed with Bella&apos;s coverage.
+              Please carefully review the policy documents and complete payment for the selected pet coverage.
             </p>
 
             <div className="mb-4">
@@ -113,7 +125,7 @@ export default function CompletePayment() {
                   <span className="text-white font-bold text-sm">S</span>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-secondary">
+                  <p className="textmd:text-lg font-bold text-secondary">
                     Stripe Payment
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -122,14 +134,13 @@ export default function CompletePayment() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-between mb-4 pb-3 border-b border-slate-100 gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      stripeStatus === "connected"
-                        ? "bg-emerald-500"
-                        : "bg-red-400"
-                    }`}
+                    className={`w-2 h-2 rounded-full ${stripeStatus === "connected"
+                      ? "bg-emerald-500"
+                      : "bg-red-400"
+                      }`}
                   />
                   <span className="text-xs text-muted-foreground">
                     {stripeStatus === "connected"
@@ -137,14 +148,10 @@ export default function CompletePayment() {
                       : "Not Connected"}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground">Account Status</span>
+                <span className="text-xs text-muted-foreground shrink-0 text-right">Account Status</span>
               </div>
 
-              {isLoadingStatus ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="animate-spin text-primary" size={24} />
-                </div>
-              ) : stripeStatus === "connected" ? (
+              {stripeStatus === "connected" ? (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-500 mb-3">
                     Billing contact
@@ -156,10 +163,10 @@ export default function CompletePayment() {
                   ].map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex justify-between items-center py-1.5"
+                      className="flex justify-between items-start py-1.5 gap-4"
                     >
-                      <span className="text-xs text-slate-500">{label}</span>
-                      <span className="text-xs font-semibold text-slate-700">
+                      <span className="text-xs text-slate-500 shrink-0">{label}</span>
+                      <span className="text-xs font-semibold text-slate-700 text-right break-all">
                         {value}
                       </span>
                     </div>
@@ -197,7 +204,7 @@ export default function CompletePayment() {
             <div className="flex justify-end mt-6">
               <Button
                 variant="ghost"
-                onClick={() => router.back()}
+                onClick={() => router.push("/dashboard")}
                 className="text-secondary cursor-pointer rounded border border-muted-foreground/20 bg-white px-4 py-2 text-sm font-medium"
               >
                 Cancel
@@ -216,7 +223,7 @@ export default function CompletePayment() {
                   Initial Setup Fee
                 </span>
                 <span className="text-sm font-semibold text-slate-700">
-                  ${quotesData?.data?.[0]?.setupFee?.toFixed(2) || "0.00"}
+                  ${activeQuote?.setupFee?.toFixed(2) || "0.00"}
                 </span>
               </div>
               <div>
@@ -225,7 +232,7 @@ export default function CompletePayment() {
                     Monthly Premium
                   </span>
                   <span className="text-sm font-semibold text-slate-700">
-                    ${quotesData?.data?.[0]?.totalMonthlyCharge?.toFixed(2) || "0.00"}
+                    ${activeQuote?.totalMonthlyCharge?.toFixed(2) || "0.00"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -238,7 +245,7 @@ export default function CompletePayment() {
                 Due Today
               </span>
               <span className="text-2xl font-bold text-slate-800">
-                ${quotesData?.data?.[0]?.setupFee?.toFixed(2) || "0.00"}
+                ${activeQuote?.setupFee?.toFixed(2) || "0.00"}
               </span>
             </div>
 
@@ -253,7 +260,7 @@ export default function CompletePayment() {
                   Preparing Payment...
                 </>
               ) : (
-                `Pay $${quotesData?.data?.[0]?.setupFee?.toFixed(2) || "0.00"}`
+                `Pay $${activeQuote?.setupFee?.toFixed(2) || "0.00"}`
               )}
             </Button>
 

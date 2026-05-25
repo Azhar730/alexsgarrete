@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Paperclip, Send, MoreVertical, User, MessageSquare, Info } from "lucide-react";
+import { Search, Paperclip, Send, MoreVertical, User, MessageSquare, Info, ArrowLeft, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,9 +23,19 @@ import { setUser } from "@/redux/features/authSlice";
 export default function MessagesPage() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const socket = useSocket();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   
   const auth = useSelector((state: any) => state.auth);
   const user = auth?.user;
@@ -41,17 +51,17 @@ export default function MessagesPage() {
   }, [meRes, user, dispatch]);
 
   const { data: supportAdmin } = useGetSupportAdminQuery(undefined);
-  const { data: convsRes, refetch: refetchConvs } = useGetConversationsQuery(undefined, {
+  const { data: convsRes, isLoading: isLoadingConvs, refetch: refetchConvs } = useGetConversationsQuery(undefined, {
     skip: !user && !meRes?.data
   });
   
   const conversations = convsRes || [];
-  const { data: messagesRes, refetch: refetchMessages } = useGetMessagesQuery(activeChat, {
+  const { data: messagesRes, isLoading: isLoadingMessages, refetch: refetchMessages } = useGetMessagesQuery(activeChat, {
     skip: !activeChat
   });
 
   const messages = messagesRes || [];
-  const [sendMessage] = useSendMessageMutation();
+  const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [markAsRead] = useMarkAsReadMutation();
   const [createConversation] = useCreateConversationMutation();
 
@@ -62,10 +72,10 @@ export default function MessagesPage() {
   const activeConversation = (conversations as any[]).find(c => c.id === activeChat);
 
   useEffect(() => {
-    if (conversations.length > 0 && !activeChat) {
+    if (!isMobile && conversations.length > 0 && !activeChat) {
       setActiveChat(conversations[0].id);
     }
-  }, [conversations, activeChat]);
+  }, [conversations, activeChat, isMobile]);
 
   useEffect(() => {
     if (activeChat) {
@@ -173,7 +183,10 @@ export default function MessagesPage() {
   return (
     <div className="flex h-[calc(100vh-12rem)] bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
       {/* Sidebar: Conversations List */}
-      <div className="w-80 shrink-0 border-r border-slate-50 flex flex-col bg-slate-50/20">
+      <div className={cn(
+        "w-full md:w-80 shrink-0 border-r border-slate-50 flex flex-col bg-slate-50/20",
+        activeChat ? "hidden md:flex" : "flex"
+      )}>
         <div className="p-4 border-b border-slate-50">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -183,8 +196,20 @@ export default function MessagesPage() {
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {conversations.length > 0 ? (
+        <div data-lenis-prevent className="flex-1 overflow-y-auto custom-scrollbar">
+          {isLoadingConvs ? (
+            <div className="p-4 space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 bg-slate-200 rounded w-2/3" />
+                    <div className="h-2.5 bg-slate-200 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : conversations.length > 0 ? (
             conversations.map((conv: any) => (
               <button
                 key={conv.id}
@@ -239,12 +264,23 @@ export default function MessagesPage() {
       </div>
 
       {/* Main: Chat Thread */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 bg-white",
+        activeChat ? "flex" : "hidden md:flex"
+      )}>
         {activeChat ? (
           <>
             {/* Header */}
-            <div className="h-16 border-b border-slate-50 flex items-center justify-between px-6">
-              <div className="flex items-center gap-3">
+            <div className="h-16 border-b border-slate-50 flex items-center justify-between px-4 sm:px-6 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveChat(null)}
+                  className="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-all"
+                  aria-label="Back to conversations"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
                     {activeConversation?.otherParticipant?.avatarUrl ? (
@@ -272,65 +308,95 @@ export default function MessagesPage() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/10 custom-scrollbar min-h-0">
-              {messages.map((msg: any) => {
-                const isMine = msg.senderId === user.id;
-                return (
-                  <div
-                    key={msg.id}
-                    className={cn("flex gap-3", isMine ? "flex-row-reverse" : "flex-row")}
-                  >
-                    <div className={cn("max-w-md", isMine ? "items-end flex flex-col" : "flex flex-col")}>
-                      <div
-                        className={cn(
-                          "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
-                          isMine
-                            ? "bg-primary text-white rounded-tr-sm"
-                            : "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
-                        )}
-                      >
-                        {msg.content}
+            {isLoadingMessages ? (
+              <div data-lenis-prevent className="flex-1 p-6 space-y-4 bg-slate-50/10 overflow-y-auto">
+                {[1, 2, 3, 4].map((i) => {
+                  const isMine = i % 2 === 0;
+                  return (
+                    <div
+                      key={i}
+                      className={cn("flex gap-3 animate-pulse", isMine ? "flex-row-reverse" : "flex-row")}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+                      <div className={cn("flex flex-col space-y-1.5", isMine ? "items-end" : "items-start")}>
+                        <div
+                          className={cn(
+                            "h-9 bg-slate-200 rounded-2xl w-48 sm:w-64",
+                            isMine ? "rounded-tr-sm" : "rounded-tl-sm"
+                          )}
+                        />
+                        <div className="h-2 bg-slate-200 rounded w-12" />
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-1.5 font-medium px-1">
-                        {format(new Date(msg.createdAt), "HH:mm")}
-                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div data-lenis-prevent className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/10 custom-scrollbar min-h-0">
+                {messages.map((msg: any) => {
+                  const isMine = msg.senderId === user.id;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={cn("flex gap-3", isMine ? "flex-row-reverse" : "flex-row")}
+                    >
+                      <div className={cn("max-w-md", isMine ? "items-end flex flex-col" : "flex flex-col")}>
+                        <div
+                          className={cn(
+                            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                            isMine
+                              ? "bg-primary text-white rounded-tr-sm"
+                              : "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
+                          )}
+                        >
+                          {msg.content}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1.5 font-medium px-1">
+                          {format(new Date(msg.createdAt), "HH:mm")}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {otherUserTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-white px-4 py-2 rounded-xl border border-slate-50 flex items-center gap-2 shadow-sm">
+                      <div className="flex gap-1">
+                        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0 }} className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }} className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }} className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-              
-              {otherUserTyping && (
-                <div className="flex justify-start">
-                  <div className="bg-white px-4 py-2 rounded-xl border border-slate-50 flex items-center gap-2 shadow-sm">
-                    <div className="flex gap-1">
-                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0 }} className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
-                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }} className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
-                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }} className="w-1.5 h-1.5 bg-primary/40 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} className="h-4 w-full shrink-0" />
-            </div>
+                )}
+                <div ref={messagesEndRef} className="h-4 w-full shrink-0" />
+              </div>
+            )}
 
             {/* Input Area */}
-            <form onSubmit={handleSend} className="p-4 border-t border-slate-50 flex items-center gap-2 bg-white">
+            <form onSubmit={handleSend} className="p-4 border-t border-slate-50 flex items-center gap-2 bg-white shrink-0">
               <Button variant="ghost" type="button" size="icon" className="h-10 w-10 text-slate-400 shrink-0 hover:bg-slate-50 rounded-xl">
                 <Paperclip size={18} />
               </Button>
               <Input
                 value={messageText}
                 onChange={handleTyping}
-                placeholder="Type your message..."
+                disabled={isSending}
+                placeholder={isSending ? "Sending..." : "Type your message..."}
                 className="flex-1 h-11 text-sm bg-slate-50/50 border-slate-100 placeholder:text-muted-foreground focus-visible:ring-primary/20 rounded-xl"
               />
               <Button
                 type="submit"
-                disabled={!messageText.trim()}
+                disabled={!messageText.trim() || isSending}
                 size="icon"
-                className="h-11 w-11 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 shrink-0 rounded-xl"
+                className="h-11 w-11 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 shrink-0 rounded-xl flex items-center justify-center"
               >
-                <Send size={18} className="text-white" />
+                {isSending ? (
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                ) : (
+                  <Send size={18} className="text-white" />
+                )}
               </Button>
             </form>
           </>

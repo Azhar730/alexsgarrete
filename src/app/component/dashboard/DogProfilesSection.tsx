@@ -5,7 +5,10 @@ import { DogProfile } from ".";
 import { useState } from "react";
 import { AddDogModal } from "./AddDogModal";
 import { useGetMeQuery } from "@/redux/api/userApi";
+import { useGetMyApplicationsQuery, useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
 import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
+import { useGetMyAgreementsQuery } from "@/redux/api/agreementApi";
 
 type ApiPet = {
   id: string;
@@ -58,22 +61,87 @@ export default function DogProfilesSection({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const { data: userData } = useGetMeQuery({});
+  const { data: applicationsResponse } = useGetMyApplicationsQuery(undefined);
+  const { data: quotesResponse } = useGetMyQuotesQuery(undefined);
+  const { data: agreementsResponse } = useGetMyAgreementsQuery(undefined);
   const { data: myPayments } = useGetMyPaymentsQuery(undefined);
+  console.log("userData", userData)
+  console.log("applicationsResponse", applicationsResponse)
+  console.log("quotesResponse", quotesResponse)
+  console.log("agreementsResponse", agreementsResponse)
   console.log("myPayments", myPayments)
   const pets: ApiPet[] = userData?.data?.pets || [];
 
-  const dogs: DogProfile[] = pets.map((pet) => ({
-    id: pet.id,
-    name: pet.name,
-    breed: pet.primaryBreed || "Unknown Breed",
-    age: calculateAge(pet.birthday),
-    imageUrl:
-      pet.photoUrl ||
-      "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
-    status: mapPetStatus(pet.status),
-    monthlyFee: pet.petCharge ? Number(pet.petCharge) : null,
-    nextBilling: pet.status === "ACTIVE" ? "Active" : null,
-  }));
+  const currentApplication = applicationsResponse?.data?.find((a: any) => a.id === applicationId) || applicationsResponse?.data?.[0];
+  const quoteGroups = quotesResponse?.data || [];
+  const agreements = agreementsResponse?.data || [];
+  const isQuoteSigned = (quoteGroupId: string | undefined) => {
+    if (!quoteGroupId) return false;
+    const group = quoteGroups.find((qg: any) => qg.quoteGroupId === quoteGroupId);
+    if (!group) return false;
+    if (!group.isAccepted) return false;
+    
+    return agreements.some((agreement: any) => {
+      const sameQuoteGroup = agreement.quoteId === group.quoteGroupId;
+      const sameQuote = group.quotes?.some((quote: any) => quote.id === agreement.quoteId);
+      const signed = agreement.isSigned === true;
+      return signed && (sameQuoteGroup || sameQuote);
+    });
+  };
+
+  function handleAddClick() {
+    console.log("Add new dog clicked - currentApplication:", currentApplication);
+    const status = currentApplication?.status;
+
+    if (!currentApplication) {
+      toast.error("Please complete your application first");
+      return;
+    }
+
+    if (status === "APPROVED") {
+      setModalOpen(true);
+      return;
+    }
+
+    // Draft or in-progress -> ask user to complete
+    if (status === "DRAFT" || status === "IN_PROGRESS") {
+      toast.error("Please complete your application before adding pets");
+      return;
+    }
+
+    // Submitted / Under review / Quote ready -> not approved yet
+    if (status === "SUBMITTED" || status === "UNDER_REVIEW") {
+      toast.error("Your application is not approved yet");
+      return;
+    }
+
+    if (status === "REJECTED") {
+      toast.error("Your application was declined. Please contact support");
+      return;
+    }
+
+    toast.error("Your application is not approved");
+  }
+
+  const dogs: DogProfile[] = pets.map((pet) => {
+    const dogQuoteGroup = quoteGroups.find((qg: any) => 
+      qg.quotes?.some((q: any) => q.petId === pet.id || q.pet?.id === pet.id)
+    );
+    
+    return {
+      id: pet.id,
+      name: pet.name,
+      breed: pet.primaryBreed || "Unknown Breed",
+      age: calculateAge(pet.birthday),
+      imageUrl:
+        pet.photoUrl ||
+        "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
+      status: mapPetStatus(pet.status),
+      monthlyFee: pet.petCharge ? Number(pet.petCharge) : null,
+      nextBilling: pet.status === "ACTIVE" ? "Active" : null,
+      quoteGroupId: dogQuoteGroup?.quoteGroupId,
+    };
+  });
 
   return (
     <section className="mb-8">
@@ -83,7 +151,20 @@ export default function DogProfilesSection({
           variant="outline"
           size="sm"
           className="border-primary text-primary cursor-pointer gap-1.5 text-base"
-          onClick={() => setModalOpen(true)}
+          onClick={handleAddClick}
+          title={
+            currentApplication
+              ? currentApplication.status === "APPROVED"
+                ? "Add new dog"
+                : currentApplication.status === "DRAFT" || currentApplication.status === "IN_PROGRESS"
+                  ? "Complete your application to add pets"
+                  : currentApplication.status === "SUBMITTED" || currentApplication.status === "UNDER_REVIEW"
+                    ? "Your application is under review"
+                    : currentApplication.status === "REJECTED"
+                      ? "Your application was declined"
+                      : "Your application is not approved"
+              : "Please complete your application first"
+          }
         >
           Add new dog
         </Button>
@@ -91,7 +172,13 @@ export default function DogProfilesSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {dogs.length > 0 ? (
-          dogs.map((dog) => <DogProfileCard key={dog.id} dog={dog} />)
+          dogs.map((dog) => (
+            <DogProfileCard
+              key={dog.id}
+              dog={dog}
+              acceptedQuoteSigned={isQuoteSigned(dog.quoteGroupId)}
+            />
+          ))
         ) : (
           <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
             No pets found.
@@ -102,7 +189,7 @@ export default function DogProfilesSection({
       <AddDogModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        applicationId={applicationId}
+        applicationId={currentApplication?.status === "APPROVED" ? currentApplication?.id : undefined}
       />
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +11,7 @@ import { AuthShell } from "./shared/AuthShell";
 import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
+import { useResendOtpMutation } from "@/redux/api/authApi";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const forgotSchema = z.object({
@@ -22,6 +24,8 @@ type ForgotValues = z.infer<typeof forgotSchema>;
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
+  const [sendOtp] = useResendOtpMutation();
 
   const form = useForm<ForgotValues>({
     resolver: zodResolver(forgotSchema),
@@ -32,10 +36,19 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (values: ForgotValues) => {
     setIsLoading(true);
     try {
-      console.log("Forgot password for:", values.email);
-      await new Promise((r) => setTimeout(r, 1200));
+      // Call backend to send OTP for password reset
+      const payload = { email: values.email, purpose: "password_reset" };
+      await sendOtp(payload).unwrap();
       setSubmitted(true);
-      // router.push("/verify-email");
+      // persist expiry so verify page resumes timer after reload
+      const expires = Date.now() + 30 * 1000;
+      try {
+        localStorage.setItem(`otp_expiry:password_reset:${values.email}`, String(expires));
+      } catch (e) {
+        // ignore storage errors
+      }
+      // Navigate to verify page and include purpose so verify uses password_reset flow
+      router.push(`/verify-email?email=${encodeURIComponent(values.email)}&purpose=password_reset`);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +80,7 @@ export default function ForgotPasswordPage() {
             . Check your inbox.
           </p>
           <Link
-            href="/verify-email"
+            href={`/verify-email?email=${encodeURIComponent(form.getValues("email"))}&purpose=password_reset`}
             className="block w-full h-11 bg-[#5C7FC4] hover:bg-[#4A6BAF] text-white font-semibold text-sm rounded-lg transition-all text-center leading-[44px]"
           >
             Enter verification code

@@ -5,7 +5,7 @@ import MessagesPage from "@/app/component/dashboard/MessagesPage";
 export default function Messages() {
   return (
     <AppLayout>
-      <div className="container mx-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-secondary">Messages</h1>
           <p className="text-base text-muted-foreground mt-1.5">

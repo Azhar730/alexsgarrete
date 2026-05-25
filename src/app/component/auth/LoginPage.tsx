@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
 import { useLoginMutation } from "@/redux/api/authApi";
+import { useGetMeQuery } from "@/redux/api/userApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [login] = useLoginMutation();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { data: meResponse, isLoading: isLoadingMe, isFetching: isFetchingMe } = useGetMeQuery({});
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -40,20 +42,31 @@ export default function LoginPage() {
     mode: "onTouched",
   });
 
+  const currentUser = meResponse?.data ?? meResponse;
+
+  // If the user becomes authenticated, redirect. But don't block rendering —
+  // show the login form immediately so navigation from other pages is instant.
+  useEffect(() => {
+    if (!isLoadingMe && !isFetchingMe && currentUser) {
+      router.replace("/");
+    }
+  }, [isLoadingMe, isFetchingMe, currentUser, router]);
+
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
       const response = await login(values).unwrap();
       console.log("Login response:", response);
       if (response?.success) {
+        const shouldGoToDashboard = Boolean(response.data.user?.isApplicationStarted);
         dispatch(setUser({ 
           user: response.data.user, 
           token: response.data.token 
         }));
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
-
-        router.push("/onboarding");
+      
+        router.push(shouldGoToDashboard ? "/dashboard" : "/onboarding");
         setIsLoading(false);
       }
     } catch (error: any) {
@@ -69,7 +82,7 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Welcome back
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-70 mx-auto">
           Enter your credentials to access your account.
         </p>
       </div>

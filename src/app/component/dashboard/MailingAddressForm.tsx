@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,8 +14,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useGetMeQuery } from "@/redux/api/userApi";
+import { useUpdateProfileMutation } from "@/redux/api/onboardingApi";
+import { toast } from "sonner";
 
 const addressSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   streetAddress: z.string().min(1, "Street address is required"),
   city: z.string().min(1, "City is required"),
   stateProvince: z.string().min(1, "State/Province is required"),
@@ -27,21 +32,79 @@ type AddressFormValues = z.infer<typeof addressSchema>;
 
 export default function MailingAddressForm() {
   const [isEditing, setIsEditing] = useState(false);
+  const { data: meResponse, isLoading } = useGetMeQuery({});
+  const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
+
+  const me = meResponse?.data ?? meResponse;
+  const applicationId = useMemo(() => {
+    const applications = me?.applications || [];
+    const sortedApplications = [...applications].sort((left: any, right: any) => {
+      const leftTime = new Date(left?.createdAt || 0).getTime();
+      const rightTime = new Date(right?.createdAt || 0).getTime();
+      return rightTime - leftTime;
+    });
+
+    return sortedApplications[0]?.id || null;
+  }, [me?.applications]);
+
+  const currentPersonInfo = useMemo(() => {
+    const applications = me?.applications || [];
+    const sortedApplications = [...applications].sort((left: any, right: any) => {
+      const leftTime = new Date(left?.createdAt || 0).getTime();
+      const rightTime = new Date(right?.createdAt || 0).getTime();
+      return rightTime - leftTime;
+    });
+
+    return sortedApplications[0]?.personInfo || null;
+  }, [me?.applications]);
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: {
-      streetAddress: "123 Meadow Lane",
-      city: "Portland",
-      stateProvince: "3R",
-      postalCode: "97205",
-      country: "United States",
+      firstName: currentPersonInfo?.firstName || "",
+      lastName: currentPersonInfo?.lastName || "",
+      streetAddress: currentPersonInfo?.streetAddress || "",
+      city: currentPersonInfo?.city || "",
+      stateProvince: currentPersonInfo?.state || "",
+      postalCode: currentPersonInfo?.zipCode || "",
+      country: currentPersonInfo?.country || "United States",
     },
   });
 
-  const onSubmit = (data: AddressFormValues) => {
-    console.log("Address updated:", data);
-    setIsEditing(false);
+  useEffect(() => {
+    form.reset({
+      firstName: currentPersonInfo?.firstName || "",
+      lastName: currentPersonInfo?.lastName || "",
+      streetAddress: currentPersonInfo?.streetAddress || "",
+      city: currentPersonInfo?.city || "",
+      stateProvince: currentPersonInfo?.state || "",
+      postalCode: currentPersonInfo?.zipCode || "",
+      country: currentPersonInfo?.country || "United States",
+    });
+  }, [currentPersonInfo, form]);
+
+  const onSubmit = async (data: AddressFormValues) => {
+    if (!applicationId) {
+      toast.error("No application found for this account.");
+      return;
+    }
+
+    try {
+      await updateProfile({
+        applicationId,
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        streetAddress: data.streetAddress.trim(),
+        city: data.city.trim(),
+        state: data.stateProvince.trim(),
+        zipCode: data.postalCode.trim(),
+      }).unwrap();
+
+      toast.success("Mailing address updated successfully");
+      setIsEditing(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not update mailing address");
+    }
   };
 
   const inputClass = (editing: boolean) =>
@@ -60,6 +123,47 @@ export default function MailingAddressForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
+                    First Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={!isEditing}
+                      className={inputClass(isEditing)}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
+                    Last Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={!isEditing}
+                      className={inputClass(isEditing)}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <FormField
             control={form.control}
             name="streetAddress"
@@ -186,9 +290,10 @@ export default function MailingAddressForm() {
                 <Button
                   type="submit"
                   size="sm"
+                  disabled={isSaving}
                   className="bg-slate-700 hover:bg-slate-800 text-white"
                 >
-                  Save Changes
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </>
             )}

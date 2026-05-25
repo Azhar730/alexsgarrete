@@ -38,6 +38,22 @@ const userApi = baseApi.injectEndpoints({
       }),
       providesTags:["users"]
     }),
+    updateMe: builder.mutation({
+      query: (payload) => ({
+        url: `/auth/me`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
+    updatePassword: builder.mutation({
+      query: (payload) => ({
+        url: `/auth/update-password`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
     switchRole: builder.mutation({
       query: (payload) => ({
         url: "/users/switch-role",
@@ -54,6 +70,13 @@ const userApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"]
     }),
+    logout: builder.mutation({
+      query: () => ({
+        url: "/auth/logout",
+        method: "POST",
+      }),
+      invalidatesTags: ["users"],
+    }),
   }),
 });
 export const {
@@ -62,6 +85,9 @@ export const {
   useGetContractorProfileQuery,
   useGetAllUserQuery,
   useGetMeQuery,
+  useUpdateMeMutation,
+  useUpdatePasswordMutation,
   useSwitchRoleMutation,
-  useAskQuestionMutation
+  useAskQuestionMutation,
+  useLogoutMutation
 } = userApi;

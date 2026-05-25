@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { OTPInput } from "./shared/OTPInput";
 import { AuthButton } from "./shared/AuthButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useVerifyOtpMutation } from "@/redux/api/authApi";
+import { useVerifyOtpMutation, useResendOtpMutation } from "@/redux/api/authApi";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const verifySchema = z.object({
@@ -28,11 +28,15 @@ export default function VerifyEmailPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const searchParams = useSearchParams();
   const router = useRouter();
   const [verifyOtp] = useVerifyOtpMutation();
+  const [resendOtp] = useResendOtpMutation();
   // In a real app, get this from router state / context
   const userEmail = searchParams.get("email");
+  const purpose = (searchParams.get("purpose") as "email_verification" | "password_reset") || "email_verification";
+  const storageKey = userEmail ? `otp_expiry:${purpose}:${userEmail}` : null;
 
   const form = useForm<VerifyValues>({
     resolver: zodResolver(verifySchema),
@@ -45,7 +49,7 @@ export default function VerifyEmailPage() {
 
     const payload = {
       email: userEmail,
-      purpose: "email_verification",
+      purpose,
       otp: values.code,
     };
     try {
@@ -54,6 +58,7 @@ export default function VerifyEmailPage() {
       console.log("verify-email", res);
       if (res.success) {
         toast.success("OTP verified successfully! You can now log in.");
+        if (storageKey) localStorage.removeItem(storageKey);
         router.push("/login");
         setIsLoading(false);
       }
@@ -65,19 +70,20 @@ export default function VerifyEmailPage() {
   };
 
   const handleResend = async () => {
+    if (!userEmail) return;
     setIsResending(true);
     try {
-      const payload = {
-        email: userEmail,
-        purpose: "email_verification",
-      };
-      const res = await verifyOtp(payload).unwrap();
-      if (res.success) {
+      const payload = { email: userEmail, purpose };
+      const res = await resendOtp(payload).unwrap();
+      if (res) {
         toast.success("Verification code resent! Check your email.");
       }
-      await new Promise((r) => setTimeout(r, 800));
-      setResent(true);
+      // reset OTP input and start countdown
       form.reset();
+      setResent(true);
+      const expires = Date.now() + 30 * 1000;
+      if (storageKey) localStorage.setItem(storageKey, String(expires));
+      setSecondsLeft(30);
       setTimeout(() => setResent(false), 3000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -86,6 +92,40 @@ export default function VerifyEmailPage() {
       setIsResending(false);
     }
   };
+
+  useEffect(() => {
+    if (!userEmail || !storageKey) return;
+    const stored = localStorage.getItem(storageKey);
+    const now = Date.now();
+    if (stored) {
+      const expires = Number(stored);
+      const diff = Math.ceil((expires - now) / 1000);
+      setSecondsLeft(diff > 0 ? diff : 0);
+    } else {
+      setSecondsLeft(0);
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key !== storageKey) return;
+      if (!e.newValue) {
+        setSecondsLeft(0);
+        return;
+      }
+      const expires = Number(e.newValue);
+      const diff = Math.ceil((expires - Date.now()) / 1000);
+      setSecondsLeft(diff > 0 ? diff : 0);
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [userEmail, storageKey]);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearInterval(id);
+  }, [secondsLeft]);
 
   return (
     <AuthShell slide={AUTH_SLIDES.verify}>
@@ -116,7 +156,14 @@ export default function VerifyEmailPage() {
                   disabled={isLoading}
                   hasError={!!fieldState.error}
                 />
-                <FormMessage className="text-xs text-red-500 text-center" />
+                <div className="flex items-center justify-center gap-3">
+                  <FormMessage className="text-xs text-red-500 text-center" />
+                  {secondsLeft > 0 ? (
+                    <span className="text-xs text-gray-500">Code expires in {secondsLeft}s</span>
+                  ) : (
+                    <span className="text-xs text-gray-500">Code expired</span>
+                  )}
+                </div>
               </FormItem>
             )}
           />
@@ -134,17 +181,15 @@ export default function VerifyEmailPage() {
       <p className="mt-4 text-center text-sm text-gray-500">
         Didn&apos;t receive the email?{" "}
         {resent ? (
-          <span className="text-emerald-600 font-semibold text-sm">
-            Sent! ✓
-          </span>
+          <span className="text-emerald-600 font-semibold text-sm">Sent! ✓</span>
         ) : (
           <button
             type="button"
             onClick={handleResend}
-            disabled={isResending}
+            disabled={isResending || secondsLeft > 0}
             className="text-[#5C7FC4] cursor-pointer font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
-            {isResending ? "Sending…" : "Resend"}
+            {isResending ? "Sending…" : secondsLeft > 0 ? `Resend in ${secondsLeft}s` : "Resend"}
           </button>
         )}
       </p>

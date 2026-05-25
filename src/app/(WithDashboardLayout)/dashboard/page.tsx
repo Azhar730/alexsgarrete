@@ -7,7 +7,7 @@ import { PlanBannerSection } from "@/app/component/dashboard/PlanReadyCard";
 import RecentActivity from "@/app/component/dashboard/RecentActivity";
 import { useGetMeQuery } from "@/redux/api/userApi";
 import { Loader2 } from "lucide-react";
-import { useGetMyApplicationsQuery, useGetMyQuotesQuery, useStartApplicationMutation } from "@/redux/api/onboardingApi";
+import { useGetMyApplicationsQuery, useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
 import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 import { useGetMyAgreementsQuery } from "@/redux/api/agreementApi";
 import { useEffect } from "react";
@@ -15,26 +15,12 @@ import { useRouter } from "next/navigation";
 
 
 export default function DashboardPage() {
-  const { data: user, isLoading: isLoadingUser } = useGetMeQuery({});
-  const { data: applicationsResponse, isLoading: isLoadingApps } = useGetMyApplicationsQuery(undefined);
-  const { data: quotesResponse, isLoading: isLoadingQuotes } = useGetMyQuotesQuery(undefined);
-  const { data: paymentsResponse, isLoading: isLoadingPayments } = useGetMyPaymentsQuery(undefined);
-  const { data: agreementsResponse, isLoading: isLoadingAgreements } = useGetMyAgreementsQuery();
+  const { data: user, isLoading: isLoadingUser } = useGetMeQuery({}, { refetchOnMountOrArgChange: true });
+  const { data: applicationsResponse, isLoading: isLoadingApps, refetch: refetchApplications } = useGetMyApplicationsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: quotesResponse, isLoading: isLoadingQuotes, refetch: refetchQuotes } = useGetMyQuotesQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: paymentsResponse, isLoading: isLoadingPayments, refetch: refetchPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const { data: agreementsResponse, isLoading: isLoadingAgreements, refetch: refetchAgreements } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true });
   const router = useRouter();
-  const [startApplication] = useStartApplicationMutation();
-
-  const handleApplyAgain = async () => {
-    if (!user?.data?.id) return;
-    try {
-      await startApplication({
-        userId: user.data.id,
-        status: "DRAFT"
-      }).unwrap();
-      router.push("/onboarding");
-    } catch (err) {
-      console.error("Failed to start new application:", err);
-    }
-  };
   console.log("my applications", applicationsResponse);
   console.log("my quotes", quotesResponse);
   console.log("my payments", paymentsResponse);
@@ -83,23 +69,21 @@ export default function DashboardPage() {
     })
     : undefined;
 
-  // Auto-create application if none exists
+  // Refetch data when page becomes visible (e.g., returning from onboarding)
   useEffect(() => {
-    if (!isLoadingUser && user?.data?.id && !isLoadingApps && (!applicationsResponse?.data || applicationsResponse.data.length === 0)) {
-      console.log("No application found. Auto-creating draft application...");
-      startApplication({
-        userId: user.data.id,
-        status: "DRAFT"
-      })
-        .unwrap()
-        .then((res) => {
-          console.log("Auto-created draft application successfully:", res);
-        })
-        .catch((err) => {
-          console.error("Failed to auto-create draft application:", err);
-        });
-    }
-  }, [user, applicationsResponse, isLoadingUser, isLoadingApps, startApplication]);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        console.log("Page became visible, refetching data...");
+        refetchApplications();
+        refetchQuotes();
+        refetchPayments();
+        refetchAgreements();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [refetchApplications, refetchQuotes, refetchPayments, refetchAgreements]);
 
   // Build banners array
   const banners: TPlanBanner[] = [];
@@ -107,9 +91,20 @@ export default function DashboardPage() {
   // Determine if application is submitted
   const isSubmitted = currentApplication?.status && !["DRAFT", "IN_PROGRESS"].includes(currentApplication.status);
 
-  // 1. Add "Active" banner if application has any active pet and payments
+  // 1. Add "Active" banner only when current application has active pets
+  // and at least one successful payment tied to the current application.
   const hasActivePetStatus = currentApplication?.pets?.some((p: any) => p.status === "ACTIVE");
-  if (hasActivePetStatus && payments.length > 0) {
+  const hasSuccessfulPaymentForCurrentApplication = payments.some((p: any) => {
+    const status = p.status?.toUpperCase();
+    const isSuccess = status === "SUCCESS" || status === "PAID";
+    const sameApplicationByPet = p.quoteInfo?.pet?.applicationId === currentApplication?.id;
+    const sameApplicationByQuote = quotes?.some((group: any) =>
+      group.quotes?.some((q: any) => q.id === p.quoteId && q.pet?.applicationId === currentApplication?.id)
+    );
+    return isSuccess && (sameApplicationByPet || sameApplicationByQuote);
+  });
+
+  if (hasActivePetStatus && hasSuccessfulPaymentForCurrentApplication) {
     banners.push({
       title: "Your Coverage is Active",
       status: "Active",
@@ -132,7 +127,7 @@ export default function DashboardPage() {
       );
 
       let ctaLabel = "Check Quote";
-      let ctaHref = "/dashboard/quote/review";
+      let ctaHref = `/dashboard/quote/review?quoteGroupId=${encodeURIComponent(quoteGroup.quoteGroupId)}`;
       let title = "Your Plan is Ready";
       let description = "We've prepared your plan based on your information. Please review and accept to continue.";
 
@@ -141,12 +136,12 @@ export default function DashboardPage() {
           title = "Complete Payment";
           description = "You've signed the agreement! Please complete the final payment step to activate your coverage.";
           ctaLabel = "Pay Now";
-          ctaHref = "/dashboard/quote/payment";
+          ctaHref = `/dashboard/quote/payment?quoteGroupId=${encodeURIComponent(quoteGroup.quoteGroupId)}`;
         } else {
           title = "Sign Agreement";
           description = "You've accepted your plan. Please sign the final agreement to proceed to payment.";
           ctaLabel = "Sign Now";
-          ctaHref = "/dashboard/quote/agreement";
+          ctaHref = `/dashboard/quote/agreement?quoteGroupId=${encodeURIComponent(quoteGroup.quoteGroupId)}`;
         }
       }
 
@@ -200,8 +195,6 @@ export default function DashboardPage() {
       dogBreed: currentApplication.pets?.[0]?.primaryBreed || "Unknown Breed",
       ctaLabel: "Contact Support",
       ctaHref: "/contact",
-      secondaryCtaLabel: "Apply Again",
-      secondaryCtaAction: handleApplyAgain,
     });
   }
 

@@ -35,6 +35,9 @@ const onboardingApi = baseApi.injectEndpoints({
         method: "POST",
         body: payload,
       }),
+      // Safe to invalidate: defaultValues is frozen in a ref so form.reset
+      // won't fire while the component is mounted (hasResetRef guard).
+      // This ensures fresh data when user navigates away and returns.
       invalidatesTags: ["users"],
     }),
     familyHealthHistory: builder.mutation({
@@ -63,8 +66,8 @@ const onboardingApi = baseApi.injectEndpoints({
     }),
 
     getFamilyHealthHistoryByQuestion: builder.query({
-      query: (questionId: string) => ({
-        url: `/family-health-history/question/${questionId}`,
+      query: ({ applicationId, questionId }: { applicationId: string; questionId: string }) => ({
+        url: `/family-health-history/application/${applicationId}/question/${questionId}`,
         method: "GET",
       }),
       providesTags: ["users"],
@@ -146,6 +149,14 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    acceptHipaa: builder.mutation({
+      query: ({ applicationId, hipaaAccepted }: { applicationId: string; hipaaAccepted: boolean }) => ({
+        url: `/application/${applicationId}/accept-hipaa`,
+        method: "PATCH",
+        body: { hipaaAccepted },
+      }),
+      invalidatesTags: ["users"],
+    }),
     getMyQuotes: builder.query({
       query: () => ({
         url: "/quote/my-quotes",
@@ -194,6 +205,7 @@ export const {
   useUpdateProfileMutation,
   useUpdateRepresentativeMutation,
   useUpdateApplicationStatusMutation,
+  useAcceptHipaaMutation,
   useGetMyQuotesQuery,
   useGetPetDetailsQuery,
   useReviewQuoteMutation,

@@ -16,7 +16,26 @@ export const activityApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Activity"],
     }),
+    clearAllActivities: builder.mutation<any, undefined>({
+      query: () => ({
+        url: "/activity/clear-all",
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Activity"],
+    }),
+    deleteActivity: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/activity/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Activity"],
+    }),
   }),
 });
 
-export const { useGetMyActivitiesQuery, useMarkActivityAsReadMutation } = activityApi;
+export const { 
+  useGetMyActivitiesQuery, 
+  useMarkActivityAsReadMutation, 
+  useClearAllActivitiesMutation,
+  useDeleteActivityMutation
+} = activityApi;

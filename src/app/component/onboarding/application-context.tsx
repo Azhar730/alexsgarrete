@@ -77,7 +77,16 @@ export function ApplicationProvider({
       if (step === 1) return !!data.personalInfo;
       if (step === 2) return !!data.dogs?.length;
       if (step === 3) return !!data.representative;
-      if (step === 4) return !!data.healthDetails;
+      if (step === 4) {
+        const hd = data.healthDetails;
+        if (!hd) return false;
+        if (hd.hipaaAcknowledged === true) return true;
+        if (hd.questions && Array.isArray(hd.questions)) {
+          if (hd.questions.length === 0) return true;
+          return hd.questions.every((q: any) => q.answers && q.answers.length > 0);
+        }
+        return false;
+      }
       return false;
     },
     [data]

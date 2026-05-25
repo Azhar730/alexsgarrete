@@ -71,8 +71,12 @@ export const healthDetailsSchema = z.object({
   familyCancer: z.enum(["Yes", "No"]),
   cancerRelation: z.string().optional(),
   cancerDiagnosis: z.string().optional(),
-  cancerAgeOnset: z.string().optional(),
-  cancerAgeAtDeath: z.string().optional(),
+  cancerAgeOnset: z.string().optional().refine((v) => v === undefined || v === "" || /^\d+$/.test(v), {
+    message: "Enter a valid age (digits only)",
+  }),
+  cancerAgeAtDeath: z.string().optional().refine((v) => v === undefined || v === "" || /^\d+$/.test(v), {
+    message: "Enter a valid age (digits only)",
+  }),
   familyHeartDisease: z.enum(["Yes", "No"]),
   familyDiabetes: z.enum(["Yes", "No"]),
   tobaccoUse: z.enum(["Yes", "No"]),
@@ -92,7 +96,7 @@ export type DogsStepValues = {
 };
 export type RepresentativeValues = z.infer<typeof representativeSchema>;
 export interface HealthDetailsValues {
-  hipaaAcknowledged?: true;
+  hipaaAcknowledged?: boolean;
   chronicConditions?: "Yes" | "No";
   terminalConditions?: "Yes" | "No";
   terminalExplanation?: string;

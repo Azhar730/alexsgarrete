@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useMemo, useEffect, useRef } from "react";
-import { useForm, useWatch, Controller, SubmitHandler } from "react-hook-form";
+import { useMemo, useEffect, useRef, useState } from "react";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +26,7 @@ import {
   useGetActiveQuestionnaireQuery,
   useGiveAnswerMutation,
   useFamilyHealthHistoryMutation,
+  useAcceptHipaaMutation,
 } from "@/redux/api/onboardingApi";
 import { HealthDetailsValues, healthDetailsSchema } from "./application";
 import { toast } from "sonner";
@@ -68,6 +69,8 @@ type Questionnaire = {
   id: string;
   topicTitle?: string;
   description?: string;
+  disclaimerText?: string;
+  disclaimerLabel?: string;
   questions?: Question[];
 };
 
@@ -147,35 +150,48 @@ function buildDefaultAnswers(
         const nestedAnswer = getFirstAnswer(nestedQuestion);
         const familyHistory = answeredQuestion?.familyHistories?.[0];
 
+        // For HEALTH questions: backend stores the explanation in topLevelAnswer.inputValue
+        // Restore it into nested.explanation so the textarea populates
+        const restoredNested: Record<string, string> =
+          existing?.nested ??
+          (q.category === "HEALTH" && topLevelAnswer?.inputValue
+            ? { explanation: topLevelAnswer.inputValue }
+            : {});
+
+        // For TOBACCO: nestedAnswer.inputValue is "when did you last use nicotine"
+        // and nestedAnswer.answerBoolean is "are you a current user"
+        const restoredTobaccoCurrentUser =
+          existing?.tobaccoCurrentUser ?? toYesNo(nestedAnswer?.answerBoolean);
+        const restoredTobaccoLastUsed =
+          existing?.tobaccoLastUsed ?? nestedAnswer?.inputValue ?? "";
+
         acc[q.id] = {
           answer: existing?.answer ?? toYesNo(topLevelAnswer?.answerBoolean),
-          nested: existing?.nested ?? {},
+          nested: restoredNested,
           nestedAnswer:
             existing?.nestedAnswer ?? toYesNo(nestedAnswer?.answerBoolean),
           nestedInputValue:
             existing?.nestedInputValue ?? nestedAnswer?.inputValue ?? "",
           nestedDocumentUrl:
             existing?.nestedDocumentUrl ?? nestedAnswer?.documentUrl ?? "",
+          // CANCER detail fields — restored from FamilyHealthHistory table
           cancerRelation:
-            existing?.cancerRelation ?? familyHistory?.relation ?? "",
+              existing?.cancerRelation ?? familyHistory?.relation ?? "",
           cancerDiagnosis:
-            existing?.cancerDiagnosis ?? familyHistory?.diagnosis ?? "",
+              existing?.cancerDiagnosis ?? familyHistory?.diagnosis ?? "",
           cancerAgeOnset:
             existing?.cancerAgeOnset ??
-            (familyHistory?.approxAgeOfOnset !== undefined &&
-              familyHistory?.approxAgeOfOnset !== null
-              ? String(familyHistory.approxAgeOfOnset)
-              : ""),
+              (familyHistory?.approxAgeOfOnset !== undefined && familyHistory?.approxAgeOfOnset !== null
+                ? String(familyHistory.approxAgeOfOnset)
+                : ""),
           cancerAgeAtDeath:
             existing?.cancerAgeAtDeath ??
-            (familyHistory?.ageAtDeath !== undefined &&
-              familyHistory?.ageAtDeath !== null
-              ? String(familyHistory.ageAtDeath)
-              : ""),
-          tobaccoCurrentUser:
-            existing?.tobaccoCurrentUser ?? toYesNo(nestedAnswer?.answerBoolean),
-          tobaccoLastUsed:
-            existing?.tobaccoLastUsed ?? nestedAnswer?.inputValue ?? "",
+              (familyHistory?.ageAtDeath !== undefined && familyHistory?.ageAtDeath !== null
+                ? String(familyHistory.ageAtDeath)
+                : ""),
+          // TOBACCO nested fields
+          tobaccoCurrentUser: restoredTobaccoCurrentUser,
+          tobaccoLastUsed: restoredTobaccoLastUsed,
         };
         return acc;
       },
@@ -191,7 +207,7 @@ function buildDefaultAnswers(
 function mapToHealthDetails(
   questionnaire: Questionnaire | undefined,
   answers: Record<string, QuestionAnswer>,
-  hipaaAcknowledged: true,
+  hipaaAcknowledged: boolean | undefined,
 ): HealthDetailsValues {
   const cancerQ = questionnaire?.questions?.find(
     (q) => q.category === "CANCER",
@@ -268,6 +284,7 @@ interface QuestionBlockProps {
   form: ReturnType<typeof useForm<HealthStepFormValues>>;
   watchedAnswers: Record<string, QuestionAnswer> | undefined;
   disabled?: boolean;
+  saveState?: 'saving' | 'saved' | 'error';
 }
 
 function QuestionBlock({
@@ -275,6 +292,7 @@ function QuestionBlock({
   form,
   watchedAnswers,
   disabled,
+  saveState,
 }: QuestionBlockProps) {
   const isCANCER = question.category === "CANCER";
   const isHEALTH = question.category === "HEALTH";
@@ -282,8 +300,6 @@ function QuestionBlock({
   const isTOBACCO = (question.nestedQuestions?.length ?? 0) > 0 && !isCANCER;
 
   const answerVal = watchedAnswers?.[question.id]?.answer;
-
-  console.log("Rendering QuestionBlock", question.id, "answer:", answerVal);
 
   const tobaccoCurrentUser = watchedAnswers?.[question.id]?.tobaccoCurrentUser;
 
@@ -295,10 +311,37 @@ function QuestionBlock({
       {/* ── Divider ─────────────────────────────────────────────────── */}
       <div className="border-t border-gray-100 my-5" />
 
-      {/* ── Question text ───────────────────────────────────────────── */}
-      <p className="text-sm text-gray-700 leading-snug mb-2.5">
-        {question.questionText}
-      </p>
+      {/* ── Question text + save indicator ──────────────────────────── */}
+      <div className="flex items-start justify-between gap-2 mb-2.5">
+        <p className="text-sm text-gray-700 leading-snug">
+          {question.questionText}
+        </p>
+        {saveState === 'saving' && (
+          <span className="flex items-center gap-1 text-xs text-blue-500 shrink-0 font-medium">
+            <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            Saving…
+          </span>
+        )}
+        {saveState === 'saved' && (
+          <span className="flex items-center gap-1 text-xs text-emerald-600 shrink-0 font-medium">
+            <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Saved
+          </span>
+        )}
+        {saveState === 'error' && (
+          <span className="flex items-center gap-1 text-xs text-red-500 shrink-0 font-medium">
+            <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            Failed to save
+          </span>
+        )}
+      </div>
 
       {/* ── Top-level Yes / No ──────────────────────────────────────── */}
       <Controller
@@ -383,7 +426,26 @@ function QuestionBlock({
                 control={form.control}
                 name={`answers.${question.id}.cancerAgeOnset`}
                 render={({ field }) => (
-                  <Input {...field} disabled={disabled} className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")} />
+                  <Input
+                    {...field}
+                    disabled={disabled}
+                    type="number"
+                    inputMode="numeric"
+                    pattern="\\d*"
+                    min={0}
+                    step={1}
+                    onKeyDown={(e) => {
+                      // Prevent non-numeric characters like 'e', '+', '-', and '.'
+                      if (e.key === "e" || e.key === "+" || e.key === "-" || e.key === ".") {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData.getData("text");
+                      if (!/^\d+$/.test(paste)) e.preventDefault();
+                    }}
+                    className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")}
+                  />
                 )}
               />
             </div>
@@ -395,7 +457,25 @@ function QuestionBlock({
                 control={form.control}
                 name={`answers.${question.id}.cancerAgeAtDeath`}
                 render={({ field }) => (
-                  <Input {...field} disabled={disabled} className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")} />
+                  <Input
+                    {...field}
+                    disabled={disabled}
+                    type="number"
+                    inputMode="numeric"
+                    pattern="\\d*"
+                    min={0}
+                    step={1}
+                    onKeyDown={(e) => {
+                      if (e.key === "e" || e.key === "+" || e.key === "-" || e.key === ".") {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData.getData("text");
+                      if (!/^\d+$/.test(paste)) e.preventDefault();
+                    }}
+                    className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")}
+                  />
                 )}
               />
             </div>
@@ -465,9 +545,11 @@ function QuestionBlock({
 export function StepHealthDetails({
   MyGivenAnswareQuestionnaire,
   applicationId,
+  hipaaAccepted,
 }: {
   MyGivenAnswareQuestionnaire?: any;
   applicationId?: string;
+  hipaaAccepted?: boolean;
 }) {
   const { data, saveHealthDetails, nextStep, prevStep } = useApplication();
   const router = useRouter();
@@ -475,15 +557,44 @@ export function StepHealthDetails({
     useGetActiveQuestionnaireQuery(undefined);
   const questionnaire = normalizeQuestionnaire(questionnaireResponse);
 
-  const defaultValues = useMemo(
-    () =>
-      buildDefaultAnswers(
+  // ── Stable initial values ──────────────────────────────────────────────────
+  // We compute defaultValues ONCE from the first non-empty load of BOTH the
+  // questionnaire template AND the user's existing answers.
+  // After that, updates (from giveAnswer cache invalidation) don't re-derive
+  // defaults — preventing form.reset from wiping answers mid-save.
+  const initializedRef = useRef(false);
+  const stableDefaultsRef = useRef<HealthStepFormValues | null>(null);
+
+  // Key that changes when EITHER the questionnaire template OR real answer data arrives.
+  // Using total answer count means the key changes when backend answers load in.
+  const answeredQuestionnaire = normalizeQuestionnaire(MyGivenAnswareQuestionnaire);
+  const totalAnswerCount = answeredQuestionnaire?.questions?.reduce(
+    (sum, q) => sum + (q.answers?.length ?? 0) + (q.familyHistories?.length ?? 0),
+    0
+  ) ?? 0;
+  const answerDataKey = questionnaire?.id
+    ? `${questionnaire.id}:${totalAnswerCount}`
+    : null;
+
+  const defaultValues = useMemo(() => {
+    // Only compute once — when both questionnaire template and answer data are available
+    if (!initializedRef.current && questionnaire) {
+      const defaults = buildDefaultAnswers(
         questionnaire,
         data.healthDetails,
-        normalizeQuestionnaire(MyGivenAnswareQuestionnaire),
-      ),
-    [MyGivenAnswareQuestionnaire, data.healthDetails, questionnaire],
-  );
+        answeredQuestionnaire,
+      );
+      if (defaults.hipaaAcknowledged === undefined && hipaaAccepted !== undefined) {
+        defaults.hipaaAcknowledged = hipaaAccepted as any;
+      }
+      stableDefaultsRef.current = defaults;
+      initializedRef.current = true;
+      return defaults;
+    }
+    // Return already-frozen defaults (won't change on subsequent refetches)
+    return stableDefaultsRef.current ?? buildDefaultAnswers(questionnaire, data.healthDetails, undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answerDataKey]); // Re-derive only when key changes (new questionnaire or new answer count)
 
   const form = useForm<HealthStepFormValues>({
     resolver: zodResolver(healthStepSchema),
@@ -491,9 +602,14 @@ export function StepHealthDetails({
     mode: "onChange",
   });
 
+  // Reset form ONCE when questionnaire first loads — not on every refetch
+  const hasResetRef = useRef(false);
   useEffect(() => {
+    if (!questionnaire || hasResetRef.current) return;
     form.reset(defaultValues);
-  }, [form, defaultValues]);
+    hasResetRef.current = true;
+  }, [questionnaire, form, defaultValues]);
+
 
   const watchedAnswers = useWatch({ control: form.control, name: "answers" });
   const isAcknowledged = useWatch({
@@ -504,30 +620,71 @@ export function StepHealthDetails({
 
   const [giveAnswer] = useGiveAnswerMutation();
   const [familyHealthHistory] = useFamilyHealthHistoryMutation();
-  const submittedQuestions = useRef<Set<string>>(new Set());
+  const [acceptHipaa] = useAcceptHipaaMutation();
+
+  // Track save states per question: 'saving' | 'saved' | 'error' | undefined
+  const [saveStates, setSaveStates] = useState<Record<string, 'saving' | 'saved' | 'error'>>({})
+
+  const disclaimerText =
+    questionnaire?.disclaimerText ||
+    (MyGivenAnswareQuestionnaire as any)?.disclaimerText ||
+    HIPAA_TEXT;
+  const disclaimerLabel =
+    questionnaire?.disclaimerLabel ||
+    (MyGivenAnswareQuestionnaire as any)?.disclaimerLabel ||
+    "I acknowledge that I have read, understood, and agree to the Encore LLC HIPAA disclaimer";
+
+  // HIPAA acceptance saving state
+  const [isSavingHipaa, setIsSavingHipaa] = useState(false);
+
+  const handleHipaaChange = async (checked: boolean) => {
+    form.setValue("hipaaAcknowledged", checked ? true : undefined as any, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+
+    if (applicationId) {
+      setIsSavingHipaa(true);
+      try {
+        await acceptHipaa({
+          applicationId,
+          hipaaAccepted: checked,
+        }).unwrap();
+        // Also update local application context state
+        const values = form.getValues();
+        const mapped = mapToHealthDetails(
+          questionnaire,
+          values.answers,
+          checked as any,
+        );
+        saveHealthDetails(mapped);
+      } catch (err) {
+        console.error("Failed to update HIPAA acceptance in DB:", err);
+        toast.error("Failed to save HIPAA acceptance. Please try again.");
+      } finally {
+        setIsSavingHipaa(false);
+      }
+    }
+  };
   const previousAnswersRef = useRef<Record<string, QuestionAnswer> | undefined>(
     undefined,
   );
 
-  console.log("MyGivenAnswareQuestionnaire", MyGivenAnswareQuestionnaire);
-
-  // Effect to submit only CHANGED answers (not all answers at once)
+  // Effect to auto-save only CHANGED answers with debounce + save indicator
   useEffect(() => {
     if (!applicationId || !questionnaire?.id || !watchedAnswers) return;
 
     const timer = setTimeout(async () => {
-      // Find which question actually changed
+      // Find which questions actually changed
       const prevAnswers = previousAnswersRef.current ?? {};
       const changedQuestionIds: string[] = [];
 
       for (const [questionId, currentAnswer] of Object.entries(watchedAnswers)) {
         const prevAnswer = prevAnswers[questionId];
 
-        // Check if answer changed
         if (
           prevAnswer?.answer !== currentAnswer?.answer ||
-          prevAnswer?.nested?.explanation !==
-          currentAnswer?.nested?.explanation ||
+          prevAnswer?.nested?.explanation !== currentAnswer?.nested?.explanation ||
           prevAnswer?.cancerDiagnosis !== currentAnswer?.cancerDiagnosis ||
           prevAnswer?.cancerRelation !== currentAnswer?.cancerRelation ||
           prevAnswer?.cancerAgeOnset !== currentAnswer?.cancerAgeOnset ||
@@ -539,13 +696,24 @@ export function StepHealthDetails({
         }
       }
 
+      if (changedQuestionIds.length === 0) return;
+
+      // Mark changed questions as 'saving'
+      setSaveStates(prev => {
+        const next = { ...prev };
+        changedQuestionIds.forEach(id => { next[id] = 'saving'; });
+        return next;
+      });
+
       // Submit only changed answers
+      const errors: string[] = [];
       for (const questionId of changedQuestionIds) {
         const answer = watchedAnswers[questionId];
         const q = questionnaire.questions?.find((x) => x.id === questionId);
         if (!q) continue;
 
-        // Send main answer
+        // Send main answer (boolean only — for CANCER do NOT send inputValue here,
+        // cancer details go to FamilyHealthHistory table, not HealthAnswer)
         if (answer?.answer !== undefined) {
           try {
             await giveAnswer({
@@ -553,19 +721,18 @@ export function StepHealthDetails({
               questionnaireId: questionnaire.id,
               questionId,
               answerBoolean: answer.answer === "Yes",
-              inputValue:
-                // Prefer only main-question detail fields here.
-                (answer.nested?.explanation as string) ||
-                answer.cancerDiagnosis ||
-                undefined,
+              // Persist non-cancer explanation directly in HealthAnswer.
+              inputValue: q.category !== "CANCER"
+                ? ((answer.nested?.explanation as string) || undefined)
+                : undefined,
             }).unwrap();
-            submittedQuestions.current.add(questionId);
           } catch (e) {
             console.error("giveAnswer error", e);
+            errors.push(questionId);
           }
         }
 
-        // Send nested tobacco answer as a separate payload with nestedQuestionId only.
+        // Send nested tobacco answer
         if (q.nestedQuestions?.[0] && answer?.tobaccoCurrentUser !== undefined) {
           try {
             await giveAnswer({
@@ -580,33 +747,65 @@ export function StepHealthDetails({
           }
         }
 
-        // If cancer answer with details, save family health history
         if (
           q.category === "CANCER" &&
           answer?.answer === "Yes" &&
-          answer.cancerDiagnosis
+          (answer.cancerRelation !== undefined ||
+            answer.cancerDiagnosis !== undefined ||
+            answer.cancerAgeOnset !== undefined ||
+            answer.cancerAgeAtDeath !== undefined)
         ) {
           try {
-            await familyHealthHistory({
-              questionId,
-              relation: answer.cancerRelation || "",
-              diagnosis: answer.cancerDiagnosis || "",
-              approxAgeOfOnset: answer.cancerAgeOnset
-                ? parseInt(String(answer.cancerAgeOnset))
-                : undefined,
-              ageAtDeath: answer.cancerAgeAtDeath
-                ? parseInt(String(answer.cancerAgeAtDeath))
-                : undefined,
-            }).unwrap();
+            // Validate numeric-only ages (prevent accidental text)
+            const onsetVal = answer.cancerAgeOnset;
+            const deathVal = answer.cancerAgeAtDeath;
+            if (onsetVal && !/^\d+$/.test(String(onsetVal))) {
+              toast.error("Approximate age of onset must be a number");
+              errors.push(questionId);
+            } else if (deathVal && !/^\d+$/.test(String(deathVal))) {
+              toast.error("Age at death must be a number");
+              errors.push(questionId);
+            } else {
+              await familyHealthHistory({
+                applicationId,
+                questionId,
+                relation: answer.cancerRelation?.trim() || "",
+                diagnosis: answer.cancerDiagnosis?.trim() || undefined,
+                approxAgeOfOnset: answer.cancerAgeOnset ? parseInt(String(answer.cancerAgeOnset), 10) : undefined,
+                ageAtDeath: answer.cancerAgeAtDeath ? parseInt(String(answer.cancerAgeAtDeath), 10) : undefined,
+              }).unwrap();
+            }
           } catch (e) {
             console.error("familyHealthHistory error", e);
+            errors.push(questionId);
           }
         }
+
       }
+
+      // Update save states: saved or error per question
+      setSaveStates(prev => {
+        const next = { ...prev };
+        changedQuestionIds.forEach(id => {
+          next[id] = errors.includes(id) ? 'error' : 'saved';
+        });
+        return next;
+      });
+
+      // Clear 'saved' indicators after 2.5s
+      setTimeout(() => {
+        setSaveStates(prev => {
+          const next = { ...prev };
+          changedQuestionIds.forEach(id => {
+            if (next[id] === 'saved') delete next[id];
+          });
+          return next;
+        });
+      }, 2500);
 
       // Update reference for next comparison
       previousAnswersRef.current = JSON.parse(JSON.stringify(watchedAnswers));
-    }, 1000); // Increased debounce from 500ms to 1000ms
+    }, 900);
 
     return () => clearTimeout(timer);
   }, [
@@ -619,7 +818,7 @@ export function StepHealthDetails({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <Loading />
       </div>
     );
@@ -656,7 +855,7 @@ export function StepHealthDetails({
         {/* ── HIPAA ──────────────────────────────────────────────────── */}
         <div className="mb-6">
           <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-line mb-4">
-            {HIPAA_TEXT}
+            {disclaimerText}
           </div>
 
           <FormField
@@ -668,18 +867,31 @@ export function StepHealthDetails({
                   <FormControl>
                     <Checkbox
                       checked={field.value === true}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked === true ? true : undefined)
-                      }
+                      disabled={isSavingHipaa}
+                      onCheckedChange={(checked) => {
+                        const isChecked = checked === true;
+                        field.onChange(isChecked ? true : undefined);
+                        handleHipaaChange(isChecked);
+                      }}
                       className="mt-0.5 border-gray-400
                                  data-[state=checked]:bg-[#5C7FC4]
                                  data-[state=checked]:border-[#5C7FC4]"
                     />
                   </FormControl>
-                  <Label className="text-sm text-gray-700 font-medium cursor-pointer leading-snug">
-                    I acknowledge that I have read, understood, and agree to the
-                    Encore LLC HIPAA disclaimer
-                  </Label>
+                  <div className="flex-1 flex items-start justify-between gap-2">
+                    <Label className="text-sm text-gray-700 font-medium cursor-pointer leading-snug">
+                      {disclaimerLabel}
+                    </Label>
+                    {isSavingHipaa && (
+                      <span className="flex items-center gap-1 text-xs text-blue-500 shrink-0 font-medium">
+                        <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Saving…
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <FormMessage className="text-xs text-red-500 mt-1" />
               </FormItem>
@@ -709,6 +921,7 @@ export function StepHealthDetails({
               form={form}
               watchedAnswers={watchedAnswers}
               disabled={isDisabled}
+              saveState={saveStates[question.id]}
             />
           ))
         ) : (

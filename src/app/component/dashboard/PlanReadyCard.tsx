@@ -94,7 +94,7 @@ const STATUS_CONFIG: Record<
     badge: "bg-green-50 text-green-600 border border-green-200",
     label: "Active",
     ctaLabel: "View Policy",
-    ctaHref: "/dashboard/account",
+    ctaHref: "/privacy-policy",
     showDogName: false,
     showDate: false,
   },
@@ -129,18 +129,18 @@ export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSecti
   const cfg = STATUS_CONFIG[status];
 
   return (
-    <div className="relative bg-white border border-slate-200 rounded-xl px-5 py-4 flex items-center justify-between overflow-hidden mb-6">
+    <div className="relative bg-white border border-slate-200 rounded-xl px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between overflow-hidden mb-6 gap-4">
       {/* Decorative circles */}
-      <div className="absolute right-28 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-slate-100/80 pointer-events-none" />
-      <div className="absolute right-16 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-slate-200/60 pointer-events-none" />
+      <div className="absolute right-28 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-slate-100/80 pointer-events-none hidden sm:block" />
+      <div className="absolute right-16 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-slate-200/60 pointer-events-none hidden sm:block" />
 
       {/* Left — title + badge + description */}
-      <div className="relative z-10">
-        <div className="flex items-center gap-2.5 mb-1.5">
-          <h2 className="text-xl font-bold text-slate-900">{banner.title || cfg.title}</h2>
+      <div className="relative z-10 flex-1">
+        <div className="flex flex-wrap items-center gap-2.5 mb-2 sm:mb-1.5">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">{banner.title || cfg.title}</h2>
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full",
+              "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full shrink-0",
               cfg.badge
             )}
           >
@@ -152,9 +152,9 @@ export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSecti
       </div>
 
       {/* Right — dog info + optional CTA */}
-      <div className="relative z-10 flex flex-col items-end gap-2 shrink-0 ml-6">
+      <div className="relative z-10 flex flex-col sm:items-end gap-3 shrink-0 w-full sm:w-auto">
         {cfg.showDogName && (
-          <span className="text-[12px] font-medium text-[#5C7FC4]">
+          <span className="text-[12px] font-medium text-[#5C7FC4] sm:mt-0">
             {banner.petCount && banner.petCount > 1
               ? `${banner.petCount} Pets`
               : `${banner.dogName} (${banner.dogBreed})`
@@ -168,7 +168,7 @@ export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSecti
           </span>
         )}
 
-        <div className="flex gap-2.5">
+        <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
           {banner.secondaryCtaLabel && (banner.secondaryCtaHref || banner.secondaryCtaAction) && (
             <button
               onClick={() => {
@@ -178,7 +178,7 @@ export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSecti
                   router.push(banner.secondaryCtaHref);
                 }
               }}
-              className="border border-[#5C7FC4] text-[#5C7FC4] hover:bg-slate-50 cursor-pointer active:bg-slate-100 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+              className="border w-full sm:w-auto border-[#5C7FC4] text-[#5C7FC4] hover:bg-slate-50 cursor-pointer active:bg-slate-100 text-[13px] font-semibold px-4 py-2.5 sm:py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap text-center"
             >
               {banner.secondaryCtaLabel}
             </button>
@@ -187,7 +187,7 @@ export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSecti
           {(banner.ctaLabel || cfg.ctaLabel) && (banner.ctaHref || cfg.ctaHref) && (
             <button
               onClick={() => router.push((banner.ctaHref || cfg.ctaHref)!)}
-              className="bg-[#5C7FC4] cursor-pointer hover:bg-[#4A6BAF] active:bg-[#3D5A9C] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+              className="bg-[#5C7FC4] w-full sm:w-auto cursor-pointer hover:bg-[#4A6BAF] active:bg-[#3D5A9C] text-white text-[13px] font-semibold px-4 py-2.5 sm:py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap text-center"
             >
               {banner.ctaLabel || cfg.ctaLabel}
             </button>

@@ -161,6 +161,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             label="Last 4 of SSN"
             placeholder="4829"
             autoComplete="off"
+            numericType="digits"
           />
         </div>
 
@@ -199,6 +200,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             label="ZIP Code"
             placeholder="78701"
             autoComplete="postal-code"
+            numericType="zip"
           />
         </div>
 
@@ -213,6 +215,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             placeholder="(555) 123-4567"
             type="tel"
             autoComplete="tel"
+            numericType="phone"
           />
           <FormInput
             control={form.control}
@@ -220,6 +223,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             label="Home Phone"
             placeholder="Optional"
             type="tel"
+            numericType="phone"
           />
           <FormInput
             control={form.control}
@@ -227,6 +231,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             label="Work Phone"
             placeholder="Optional"
             type="tel"
+            numericType="phone"
           />
         </div>
 

@@ -20,6 +20,7 @@ type OnboardingApplication = {
   pets?: Partial<DogsStepValues>["dogs"];
   representative?: Partial<RepresentativeValues>;
   questionnaire?: Record<string, unknown>;
+  hipaaAccepted?: boolean;
 };
 
 // Success toast shown after signup
@@ -44,7 +45,7 @@ console.log("application?.questionnaire", application?.questionnaire);
       case 3:
         return <StepRepresentative representativeInfo={application?.representative} applicationId={application?.id} />;
       case 4:
-        return <StepHealthDetails MyGivenAnswareQuestionnaire={application?.questionnaire} applicationId={application?.id}  />;
+        return <StepHealthDetails MyGivenAnswareQuestionnaire={application?.questionnaire} applicationId={application?.id} hipaaAccepted={application?.hipaaAccepted}  />;
       case 5:
         return <StepReview applicationId={application?.id} />;
       default:

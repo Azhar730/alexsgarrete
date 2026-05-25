@@ -154,6 +154,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
             label="Phone Number"
             placeholder="(555) 987-6543"
             type="tel"
+            numericType="phone"
           />
         </div>
 
@@ -191,6 +192,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
             name="zipCode"
             label="ZIP Code"
             placeholder="78702"
+            numericType="zip"
           />
         </div>
 
@@ -202,6 +204,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
             label="Cell Phone"
             placeholder="(555) 987-6543"
             type="tel"
+            numericType="phone"
           />
           <FormInput
             control={form.control}
@@ -209,6 +212,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
             label="Home Phone"
             placeholder="Optional"
             type="tel"
+            numericType="phone"
           />
           <FormInput
             control={form.control}
@@ -216,6 +220,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
             label="Work Phone"
             placeholder="Optional"
             type="tel"
+            numericType="phone"
           />
         </div>
 

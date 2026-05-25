@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { DogFormData, EditDogModal } from "@/app/component/dashboard/EditDogModal";
 import { useParams } from "next/navigation";
 import { useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
@@ -69,14 +70,14 @@ function BillingRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between py-3.5 border-b border-gray-50 last:border-0 ${
+      className={`flex flex-col sm:flex-row sm:items-center justify-between py-3.5 border-b border-gray-50 last:border-0 gap-1 sm:gap-4 ${
         bold ? "font-bold" : ""
       }`}
     >
-      <span className={`text-sm ${bold ? "text-primary" : "text-secondary"}`}>
+      <span className={`text-sm shrink-0 ${bold ? "text-primary" : "text-secondary"}`}>
         {label}
       </span>
-      <span className={`text-sm ${bold ? "text-primary" : "text-primary font-semibold"}`}>
+      <span className={`text-sm sm:text-right break-words ${bold ? "text-primary" : "text-primary font-semibold"}`}>
         {value}
       </span>
     </div>
@@ -102,7 +103,7 @@ export default function PetDetailsPage() {
 
   const params = useParams();
   const petId = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const { data: petDetailsResponse } = useGetPetDetailsQuery(
+  const { data: petDetailsResponse, isLoading } = useGetPetDetailsQuery(
     petId || "",
     { skip: !petId }
   );
@@ -155,9 +156,20 @@ export default function PetDetailsPage() {
     toast.success("Profile updated successfully!");
   };
 
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-slate-500 font-medium animate-pulse">Loading pet details...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      <div className=" mx-auto space-y-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         {/* Back link */}
         <Link
           href="/dashboard"
@@ -168,9 +180,9 @@ export default function PetDetailsPage() {
         </Link>
 
         {/* ── Profile Header Card ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative w-18 h-18 rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
               <Image
                 src={currentDog.imageUrl || "/dog.png"}
                 alt={currentDog.name}
@@ -207,7 +219,7 @@ export default function PetDetailsPage() {
           <Button
             variant="outline"
             onClick={() => setEditOpen(true)}
-            className="rounded-xl border-gray-200 text-primary hover:bg-[#f0f3ff] hover:border-[#5B6BBF] font-semibold text-sm gap-2"
+            className="rounded-xl border-gray-200 text-primary hover:bg-[#f0f3ff] hover:border-[#5B6BBF] font-semibold text-sm gap-2 w-full sm:w-auto"
           >
             <Pencil className="w-3.5 h-3.5" />
             Edit Profile
@@ -216,10 +228,10 @@ export default function PetDetailsPage() {
 
         {/* ── Quote & Payment Action Section ── */}
         {petDetailsResponse?.data?.status === "QUOTE_READY" && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-ping" />
+                <span className="flex h-2.5 w-2.5 rounded-full bg-blue-600 animate-ping shrink-0" />
                 Insurance Plan Ready for Review!
               </h2>
               <p className="text-sm text-slate-600">
@@ -237,10 +249,10 @@ export default function PetDetailsPage() {
         )}
 
         {petDetailsResponse?.data?.status === "QUOTE_ACCEPTED" && (
-          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-teal-600 animate-ping" />
+                <span className="flex h-2.5 w-2.5 rounded-full bg-teal-600 animate-ping shrink-0" />
                 Quote Accepted! Next Step: Sign Agreement
               </h2>
               <p className="text-sm text-slate-600">

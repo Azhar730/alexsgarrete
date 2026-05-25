@@ -12,6 +12,9 @@ import { UserDropdown } from "@/app/component/navbar/UserDropdown";
 import { toast } from "sonner";
 import { useGetMeQuery } from "@/redux/api/userApi";
 import { useLogoutMutation } from "@/redux/api/authApi";
+import { useDispatch } from "react-redux";
+import { logout as clearAuth } from "@/redux/features/authSlice";
+import { baseApi } from "@/redux/api/baseApi";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,7 +32,9 @@ export const navLinks = [
 export function Header() {
   const scrolled = useScroll(10);
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logout] = useLogoutMutation();
   const { data: userResponse, isLoading, isFetching } = useGetMeQuery({});
   const userData = userResponse?.data ?? userResponse;
@@ -44,17 +49,27 @@ export function Header() {
 
   // const user = null;
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    const start = Date.now();
     setIsLoggedOut(true);
+    setIsLoggingOut(true);
     try {
       await logout({}).unwrap();
-      toast.success("Logged out successfully!");
+      // Immediately clear local auth and cached queries so guest CTAs appear without refresh
+      dispatch(clearAuth());
+      dispatch(baseApi.util.resetApiState());
+      const elapsed = Date.now() - start;
+      const seconds = (elapsed / 1000).toFixed(2);
+      toast.success(`Logged out successfully `);
       router.push("/");
     } catch {
       setIsLoggedOut(false);
       toast.error("Logout failed. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
-  const isAuthLoading = isLoading || isFetching;
+  const isAuthLoading = !isLoggedOut && !isLoggingOut && (isLoading || isFetching);
   return (
     <header className="sticky top-0 z-50 w-full transition-all duration-500 ease-in-out">
       <div
@@ -118,7 +133,7 @@ export function Header() {
                   <div className="h-10 w-24 animate-pulse rounded-full bg-slate-200" />
                   <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200" />
                 </div>
-              ) : user ? (
+              ) : user && !isLoggedOut && !isLoggingOut ? (
                 <UserDropdown user={user} onLogout={handleLogout} />
               ) : (
                 <>
@@ -126,12 +141,13 @@ export function Header() {
                     <Button
                       variant="ghost"
                       className="text-gray-700 hover:text-[#5B6BBF] cursor-pointer text-lg p-5"
+                      disabled={isLoggingOut}
                     >
-                      Log In
+                      {isLoggingOut ? "Signing out..." : "Log In"}
                     </Button>
                   </Link>
                   <Link href="/signup">
-                    <Button className="bg-primary text-white rounded-full p-5 cursor-pointer text-lg">
+                    <Button className="bg-primary text-white rounded-full p-5 cursor-pointer text-lg" disabled={isLoggingOut}>
                       Sign Up
                     </Button>
                   </Link>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
 import { useRegisterMutation } from "@/redux/api/authApi";
+import { useGetMeQuery } from "@/redux/api/userApi";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -34,12 +35,23 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [register] = useRegisterMutation();
   const router = useRouter();
+  const { data: meResponse, isLoading: isLoadingMe, isFetching: isFetchingMe } = useGetMeQuery({});
 
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: { fullName: "", email: "", password: "" },
     mode: "onTouched",
   });
+
+  const currentUser = meResponse?.data ?? meResponse;
+
+  // Redirect if user is already authenticated, but render the signup form immediately
+  // so clicking Sign up / Sign in from other pages feels instant.
+  useEffect(() => {
+    if (!isLoadingMe && !isFetchingMe && currentUser) {
+      router.replace("/");
+    }
+  }, [isLoadingMe, isFetchingMe, currentUser, router]);
 
   const onSubmit = async (values: SignupValues) => {
     setIsLoading(true);
@@ -48,12 +60,15 @@ export default function SignupPage() {
       const response = await register(values).unwrap();
       console.log("API response:", response);
       if (response?.success) {
-        toast.success(
-          response?.message ||
-            "Registration successful! Please check your email for verification.",
-        );
-        await new Promise((r) => setTimeout(r, 1200));
+        // persist expiry so verify page resumes timer after reload
+        const expires = Date.now() + 30 * 1000;
+        try {
+          localStorage.setItem(`otp_expiry:email_verification:${values.email}`, String(expires));
+        } catch (e) {}
+        // navigate immediately to the verify page
         router.push("/verify-email?email=" + encodeURIComponent(values.email));
+        // show success toast (navigation happens immediately)
+        toast.success(response?.message || "User registered successfully");
       } else {
         toast.error(response?.message || "Registration failed");
       }
@@ -72,7 +87,7 @@ export default function SignupPage() {
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           Create an account
         </h1>
-        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-[280px] mx-auto">
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-70 mx-auto">
           Enter your details below to start setting up your custom plan.
         </p>
       </div>

@@ -1,16 +1,19 @@
 import Image from "next/image";
+import Link from "next/link";
 
 function PaymentHeader() {
   return (
     <div className="w-full border-b border-gray-200 mb-4">
       <div className="flex items-center justify-center">
-        <Image
-          src="/payment-header.png"
-          alt="Encore Logo"
-          width={160}
-          height={63}
-          className="object-contain"
-        />
+        <Link href="/" className="cursor-pointer">
+          <Image
+            src="/payment-header.png"
+            alt="Encore Logo"
+            width={160}
+            height={63}
+            className="object-contain"
+          />
+        </Link>
       </div>
     </div>
   );
