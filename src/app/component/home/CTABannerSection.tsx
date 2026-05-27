@@ -20,8 +20,8 @@ const inter = Inter({
 
 export default function CTABannerSection() {
   return (
-    <div className="container mx-auto px-4 mt-4 sm:mt-20">
-      <section className="relative w-full min-h-[450px] sm:min-h-[500px] md:min-h-[626px] rounded-3xl flex items-center overflow-hidden">
+    <div id="cta" className="container mx-auto px-4 mt-4 sm:mt-20">
+      <section className="relative w-full min-h-112.5 sm:min-h-125 md:min-h-156.5 rounded-3xl flex items-center overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 z-0">
           <Image

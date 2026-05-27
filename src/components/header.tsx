@@ -6,7 +6,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
 import { UserDropdown } from "@/app/component/navbar/UserDropdown";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ export const navLinks = [
 
 export function Header() {
   const scrolled = useScroll(10);
+  const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
   const [isLoggedOut, setIsLoggedOut] = useState(false);
@@ -70,6 +71,12 @@ export function Header() {
     }
   };
   const isAuthLoading = !isLoggedOut && !isLoggingOut && (isLoading || isFetching);
+
+  const resolveNavHref = (href: string) => {
+    if (!href.startsWith("#")) return href;
+    return pathname === "/" ? href : `/${href}`;
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full transition-all duration-500 ease-in-out">
       <div
@@ -118,7 +125,7 @@ export function Header() {
                     poppins.className,
                     "text-gray-600 hover:text-[#5B6BBF] text-lg transition-colors font-medium  bg-transparent hover:bg-transparent px-0",
                   )}
-                  render={<Link href={link.href} />}
+                  render={<Link href={resolveNavHref(link.href)} />}
                   nativeButton={false}
                 >
                   {link.label}

@@ -14,6 +14,7 @@ import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { useGetMeQuery } from "@/redux/api/userApi";
+import { useStartApplicationMutation } from "@/redux/api/onboardingApi";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [login] = useLoginMutation();
+  const [startApplication] = useStartApplicationMutation();
   const router = useRouter();
   const dispatch = useDispatch();
   const { data: meResponse, isLoading: isLoadingMe, isFetching: isFetchingMe } = useGetMeQuery({});
@@ -48,7 +50,7 @@ export default function LoginPage() {
   // show the login form immediately so navigation from other pages is instant.
   useEffect(() => {
     if (!isLoadingMe && !isFetchingMe && currentUser) {
-      router.replace("/");
+      router.replace(currentUser.applications?.length ? "/dashboard" : "/onboarding");
     }
   }, [isLoadingMe, isFetchingMe, currentUser, router]);
 
@@ -58,15 +60,23 @@ export default function LoginPage() {
       const response = await login(values).unwrap();
       console.log("Login response:", response);
       if (response?.success) {
-        const shouldGoToDashboard = Boolean(response.data.user?.isApplicationStarted);
         dispatch(setUser({ 
           user: response.data.user, 
           token: response.data.token 
         }));
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
-      
-        router.push(shouldGoToDashboard ? "/dashboard" : "/onboarding");
+
+        if (!response.data.user?.isApplicationStarted) {
+          try {
+            await startApplication({ userId: response.data.user.id, status: "DRAFT" }).unwrap();
+          } catch (error) {
+            console.error("Failed to start application after login:", error);
+          }
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
         setIsLoading(false);
       }
     } catch (error: any) {

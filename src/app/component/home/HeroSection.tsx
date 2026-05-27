@@ -14,8 +14,8 @@ const fraunces = Fraunces({
 
 export default function HeroSection() {
   return (
-    <div className="px-4 py-2 container mx-auto">
-      <div className="relative rounded-3xl overflow-hidden w-full min-h-[480px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[700px] flex items-end">
+    <div id="home" className="px-4 py-2 container mx-auto">
+      <div className="relative rounded-3xl overflow-hidden w-full min-h-120 sm:min-h-137.5 md:min-h-150 lg:min-h-175 flex items-end">
         {/* Background Image Under Text */}
         <Image
           src="/hero-bg.png"

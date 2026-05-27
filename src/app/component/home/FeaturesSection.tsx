@@ -25,7 +25,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <div className="container mx-auto px-4 mt-4 sm:mt-20 ">
+    <div id="features" className="container mx-auto px-4 mt-4 sm:mt-20 ">
       <div className="bg-gray-100 p-6 md:p-10 rounded-3xl">
         <h2 className={`${inter.className} text-3xl md:text-4xl lg:text-5xl  text-center text-[#718EBE] mb-10`}>Features</h2>
 

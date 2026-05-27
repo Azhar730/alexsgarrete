@@ -80,18 +80,16 @@ const onboardingApi = baseApi.injectEndpoints({
       providesTags: ["users"],
     }),
     getAnswerByQuestion: builder.query({
-      query: (params: QueryArgs = {}) => ({
-        url: "/get-answer-by-question",
+      query: ({ applicationId, questionId }: { applicationId: string; questionId: string }) => ({
+        url: `/application/${applicationId}/answer/question/${questionId}`,
         method: "GET",
-        params,
       }),
       providesTags: ["users"],
     }),
     getAnswerByNestedQuestion: builder.query({
-      query: (params: QueryArgs = {}) => ({
-        url: "/get-answer-by-nested-question",
+      query: ({ applicationId, nestedQuestionId }: { applicationId: string; nestedQuestionId: string }) => ({
+        url: `/application/${applicationId}/answer/nested-question/${nestedQuestionId}`,
         method: "GET",
-        params,
       }),
       providesTags: ["users"],
     }),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -58,11 +58,6 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
     mode: "onTouched",
     resolver: zodResolver(personalInfoSchema),
   });
-
-  // Reset form whenever the computed defaults change (e.g., application prop arrives)
-  useEffect(() => {
-    form.reset(defaultValues);
-  }, [form, defaultValues]);
 
   const saveProfile = async (values: PersonalInfoValues) => {
     if (!applicationId) {

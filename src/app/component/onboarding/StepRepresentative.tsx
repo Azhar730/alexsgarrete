@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Info } from "lucide-react";
@@ -34,7 +34,6 @@ const US_STATES = [
 export function StepRepresentative({ representativeInfo, applicationId }: { representativeInfo?: Partial<RepresentativeValues>; applicationId?: string }) {
   const { data, saveRepresentative, nextStep, prevStep } = useApplication();
   const router = useRouter();
-  const hydratedRef = useRef(false);
   const [updateRepresentative] = useUpdateRepresentativeMutation();
 
   const defaultValues = useMemo(
@@ -52,18 +51,11 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
     },
     [data.representative, representativeInfo],
   );
-  console.log("Representative default values:", defaultValues);
   const form = useForm<RepresentativeValues>({
     defaultValues,
     mode: "onSubmit",
     resolver: zodResolver(representativeSchema),
   });
-
-  useEffect(() => {
-    if (hydratedRef.current) return;
-    hydratedRef.current = true;
-    form.reset(defaultValues);
-  }, [defaultValues, form]);
 
   const saveRepresentativeProfile = async (values: RepresentativeValues) => {
     try {

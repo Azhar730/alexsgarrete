@@ -18,7 +18,7 @@ const inter = Inter({
 
 export default function AboutSection() {
   return (
-    <section className="mt-4 sm:mt-20 bg-white p-4 container mx-auto px-4">
+    <section id="about" className="mt-4 sm:mt-20 bg-white p-4 container mx-auto px-4">
       <div className="flex flex-col md:flex-row items-stretch gap-4 md:gap-6">
 
         {/* Left card — dog photo with white text bottom-left */}

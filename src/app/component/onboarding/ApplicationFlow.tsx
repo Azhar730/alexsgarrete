@@ -35,7 +35,6 @@ function SuccessBanner() {
 
 export function ApplicationFlow({ application }: { application?: OnboardingApplication }) {
   const { currentStep } = useApplication();
-console.log("application?.questionnaire", application?.questionnaire);
   const renderStep = () => {
     switch (currentStep) {
       case 1:

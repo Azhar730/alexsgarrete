@@ -53,16 +53,27 @@ export default function SignAgreement() {
   const selectedAgreementDocuments = useMemo(() => {
     const docs = (selectedQuoteGroup?.quotes || [])
       .map((quote: any) => {
-        if (!quote.agrementUrl) return null;
+        const url = quote.agrementUrl || quote.agreementUrl || null;
+        if (!url) return null;
         return {
           id: `quote-agreement-${quote.id}`,
-          agreementDocURL: quote.agrementUrl,
+          agreementDocURL: url,
           title: quote.pet?.name ? `${quote.pet.name} Agreement` : "Pet Insurance Agreement",
         };
       })
-      .filter(Boolean);
+      .filter(Boolean) as any[];
 
-    return docs;
+    // Deduplicate documents by agreementDocURL to avoid rendering the same doc multiple times
+    const seen = new Set<string>();
+    const uniqueDocs: any[] = [];
+    for (const d of docs) {
+      if (!d || !d.agreementDocURL) continue;
+      if (seen.has(d.agreementDocURL)) continue;
+      seen.add(d.agreementDocURL);
+      uniqueDocs.push(d);
+    }
+
+    return uniqueDocs;
   }, [selectedQuoteGroup]);
   const firstSelectedDoc = selectedAgreementDocuments[0] || null;
   const isLoadingDocs = quotesData === undefined;
@@ -163,13 +174,18 @@ export default function SignAgreement() {
   };
 
   const getPreviewUrl = (url: string) => {
-    if (url.includes('/view') || url.includes('/preview')) {
-      return url.replace('/view', '/edit').replace('/preview', '/edit');
+    // Ensure we return a view-only/preview URL for embedded documents.
+    // Convert any Google Docs edit links into preview links so users cannot edit the doc in-place.
+    if (url.includes('/edit')) {
+      return url.replace('/edit', '/preview');
+    }
+    if (url.includes('/preview') || url.includes('/view')) {
+      return url;
     }
     if (url.includes('/d/')) {
       const docId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
       if (docId) {
-        return `https://docs.google.com/document/d/${docId}/edit`;
+        return `https://docs.google.com/document/d/${docId}/preview`;
       }
     }
     return url;
@@ -188,11 +204,11 @@ export default function SignAgreement() {
     <Form {...form}>
       <div className="fixed inset-0 z-50 h-dvh w-screen overflow-hidden bg-slate-50">
         <div className="flex h-full flex-col overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-            <div className="flex items-center gap-4">
+          {/* <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+            {/* <div className="flex items-center gap-4 lg:hidden">
               <PaymentHeader />
-            </div>
-            <Button
+            </div> */}
+            {/* <Button
               type="button"
               variant="ghost"
               size="icon"
@@ -201,7 +217,7 @@ export default function SignAgreement() {
             >
               <X className="h-5 w-5" />
             </Button>
-          </div>
+          </div> */} 
 
           <div className="flex justify-center px-4 pt-4 sm:px-6">
             <StepIndicator currentStep={2} />
@@ -289,16 +305,15 @@ export default function SignAgreement() {
 
               <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-primary/30 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-5 py-4">
-                  <h3 className="text-lg font-bold text-secondary">Sign in the modal</h3>
+                  <h3 className="text-lg font-bold text-secondary">Upload signed agreement</h3>
                   <p className="text-sm text-muted-foreground">
-                    Upload a document, review the terms, and confirm the agreement to continue.
+                    Upload the signed agreement or signature page (PDF/DOC). Review the document on the left — it is view-only and cannot be edited here.
                   </p>
                 </div>
 
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
                   <div className="min-h-0 flex-1 space-y-5 overflow-auto p-5">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Upload agreement document</p>
                       <div
                         onDragOver={(e) => { e.preventDefault(); setDragOverDoc(true); }}
                         onDragLeave={() => setDragOverDoc(false)}
@@ -309,11 +324,9 @@ export default function SignAgreement() {
                       >
                         <Upload size={18} className="mb-2 text-slate-400" />
                         <p className="text-xs font-medium text-slate-600">
-                          {agreementFile ? agreementFile.name : "Drop agreement PDF/DOC here"}
+                          {agreementFile ? agreementFile.name : "Drop signed agreement or signature page (PDF/DOC) here"}
                         </p>
-                        <p className="mt-1 text-[11px] text-slate-400">
-                          Or click anywhere in this box to choose a file.
-                        </p>
+                      
                         <input
                           id="doc-input"
                           type="file"
@@ -326,7 +339,7 @@ export default function SignAgreement() {
                         />
                       </div>
                       <p className="mt-2 text-xs text-slate-500">
-                        You must upload a document before you can agree and continue.
+                        You must upload the signed agreement or signature page before you can agree and continue.
                       </p>
                     </div>
 
