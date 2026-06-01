@@ -16,7 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useGetMeQuery, useUpdateMeMutation } from "@/redux/api/userApi";
 import { useUpdateProfileMutation } from "@/redux/api/onboardingApi";
+import { useUploadFileMutation } from "@/redux/api/storageApi";
 import { toast } from "sonner";
+import { Camera, Loader2, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -35,6 +38,7 @@ export default function ProfileForm() {
   const { data: meResponse, isLoading } = useGetMeQuery({});
   const [updateMe, { isLoading: isSaving }] = useUpdateMeMutation();
   const [updateProfile, { isLoading: isSavingMailingAddress }] = useUpdateProfileMutation();
+  const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
 
   const me = meResponse?.data ?? meResponse;
   const currentPersonInfo = useMemo(() => {
@@ -60,10 +64,10 @@ export default function ProfileForm() {
   }, [me?.applications]);
 
   const defaultValues = useMemo(() => {
-    const [firstName = "", ...rest] = (me?.fullName || "").split(" ");
+    const [splitFirst = "", ...splitRest] = (me?.fullName || "").split(" ");
     return {
-      firstName: firstName || "",
-      lastName: rest.join(" ") || "",
+      firstName: currentPersonInfo?.firstName || splitFirst || "",
+      lastName: currentPersonInfo?.lastName || splitRest.join(" ") || "",
       email: me?.email || "",
       streetAddress: currentPersonInfo?.streetAddress || "",
       city: currentPersonInfo?.city || "",
@@ -80,6 +84,54 @@ export default function ProfileForm() {
   useEffect(() => {
     form.reset(defaultValues);
   }, [defaultValues, form]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be under 5MB");
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please upload an image file (JPG, PNG, GIF, WEBP)");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("files", file);
+
+    try {
+      const response = await uploadFile(formData).unwrap();
+      if (response?.url) {
+        await updateMe({ avatarUrl: response.url }).unwrap();
+        toast.success("Profile picture updated successfully");
+      } else {
+        toast.error("Failed to upload image");
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to upload image");
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await updateMe({ avatarUrl: null }).unwrap();
+      toast.success("Profile picture removed successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to remove profile picture");
+    }
+  };
+
+  const displayName = me?.fullName || "User";
+  const initials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
@@ -129,6 +181,76 @@ export default function ProfileForm() {
         <p className="text-base text-muted-foreground mt-0.5">
           Update your personal details and mailing information.
         </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 mb-6 border-b border-slate-100">
+        <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-50 flex items-center justify-center shrink-0 shadow-sm">
+          {isUploading ? (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : null}
+          {me?.avatarUrl ? (
+            <img
+              src={me.avatarUrl}
+              alt={displayName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-2xl font-bold text-slate-500">{initials}</span>
+          )}
+          
+          <label
+            htmlFor="avatar-upload"
+            className={cn(
+              "absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] font-medium gap-1",
+              isUploading && "pointer-events-none"
+            )}
+          >
+            <Camera className="w-5 h-5" />
+            <span>Change</span>
+          </label>
+          <input
+            type="file"
+            id="avatar-upload"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isUploading}
+          />
+        </div>
+        
+        <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+          <h4 className="text-sm font-semibold text-secondary">Profile Picture</h4>
+          <p className="text-xs text-muted-foreground mt-1 mb-3">
+            PNG, JPG or WEBP. Max 5MB.
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-slate-200 text-muted-foreground relative h-8 px-3 text-xs"
+              onClick={() => document.getElementById("avatar-upload")?.click()}
+              disabled={isUploading}
+            >
+              Upload Picture
+            </Button>
+            {me?.avatarUrl ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 px-3 text-xs flex items-center gap-1"
+                onClick={handleRemoveAvatar}
+                disabled={isUploading}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Remove
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <Form {...form}>
@@ -194,12 +316,8 @@ export default function ProfileForm() {
                   <Input
                     {...field}
                     type="email"
-                    disabled={!isEditing}
-                    className={
-                      isEditing
-                        ? "border-slate-300 focus-visible:ring-slate-400 text-base"
-                        : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
-                    }
+                    disabled={true}
+                    className="border-dashed border-slate-200 bg-gray-50/50 cursor-not-allowed text-secondary text-base opacity-70"
                   />
                 </FormControl>
                 <FormMessage className="text-xs" />

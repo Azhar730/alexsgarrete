@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import {
   useGetActiveQuestionnaireQuery,
   useGetAnswerByNestedQuestionQuery,
-  useGetFamilyHealthHistoryByQuestionQuery,
+  useGetFamilyHealthHistoryByApplicationQuery,
   useGiveAnswerMutation,
   useFamilyHealthHistoryMutation,
   useAcceptHipaaMutation,
@@ -42,6 +42,14 @@ type NestedQuestion = {
   inputLabelText?: string;
   isInputRequired?: boolean;
   isDocumentNeeded?: boolean;
+  answers?: Array<{
+    id: string;
+    questionId?: string | null;
+    nestedQuestionId?: string | null;
+    answerBoolean?: boolean | null;
+    inputValue?: string | null;
+    documentUrl?: string | null;
+  }>;
 };
 
 type Question = {
@@ -92,6 +100,14 @@ type QuestionAnswer = {
   // TOBACCO nested
   tobaccoCurrentUser?: "Yes" | "No"; // from nested Q1 "If yes, are you a current user?"
   tobaccoLastUsed?: string; // hardcoded follow-up when tobaccoCurrentUser === "No"
+  // GENERIC NESTED
+  nestedAnswers?: Record<
+    string,
+    {
+      answer?: "Yes" | "No";
+      value?: string;
+    }
+  >;
 };
 
 type SavedAnswerRecord = {
@@ -162,7 +178,7 @@ function buildDefaultAnswers(
   saved?: HealthDetailsValues,
   answeredQuestionnaire?: Questionnaire,
   nestedAnswer?: SavedAnswerRecord,
-  familyHistory?: SavedFamilyHistoryRecord,
+  familyHistories?: SavedFamilyHistoryRecord[],
 ): HealthStepFormValues {
   const savedResponses =
     (saved?.responses as Record<string, QuestionAnswer> | undefined) ?? {};
@@ -177,6 +193,8 @@ function buildDefaultAnswers(
         const topLevelAnswer = getFirstAnswer(answeredQuestion);
         const nestedQuestion = answeredQuestion?.nestedQuestions?.[0];
         const nestedQuestionAnswer = nestedAnswer ?? getFirstAnswer(nestedQuestion);
+        const qFamilyHistory = familyHistories?.find((fh) => fh.questionId === q.id);
+
         // For HEALTH questions: backend stores the explanation in topLevelAnswer.inputValue
         // Restore it into nested.explanation so the textarea populates
         const restoredNested: Record<string, string> =
@@ -192,6 +210,22 @@ function buildDefaultAnswers(
         const restoredTobaccoLastUsed =
           existing?.tobaccoLastUsed ?? nestedQuestionAnswer?.inputValue ?? "";
 
+        // For general nested questions
+        const nestedAnswers: Record<string, { answer?: "Yes" | "No"; value?: string }> = {};
+        q.nestedQuestions?.forEach((nq) => {
+          const answeredQuestion = answeredQuestionnaire?.questions?.find(
+            (item) => item.id === q.id,
+          );
+          const answeredNestedQ = answeredQuestion?.nestedQuestions?.find(
+            (item: any) => item.id === nq.id,
+          );
+          const ans = answeredNestedQ?.answers?.[0];
+          nestedAnswers[nq.id] = {
+            answer: existing?.nestedAnswers?.[nq.id]?.answer ?? toYesNo(ans?.answerBoolean),
+            value: existing?.nestedAnswers?.[nq.id]?.value ?? ans?.inputValue ?? "",
+          };
+        });
+
         acc[q.id] = {
           answer: existing?.answer ?? toYesNo(topLevelAnswer?.answerBoolean),
           nested: restoredNested,
@@ -201,24 +235,26 @@ function buildDefaultAnswers(
             existing?.nestedInputValue ?? nestedQuestionAnswer?.inputValue ?? "",
           nestedDocumentUrl:
             existing?.nestedDocumentUrl ?? nestedQuestionAnswer?.documentUrl ?? "",
-          // CANCER detail fields — restore from saved form state or latest family-history answer
+          // CANCER detail fields — restore from saved form state or matching family-history answer
           cancerRelation:
-            existing?.cancerRelation ?? familyHistory?.relation ?? "",
+            existing?.cancerRelation ?? qFamilyHistory?.relation ?? "",
           cancerDiagnosis:
-            existing?.cancerDiagnosis ?? familyHistory?.diagnosis ?? "",
+            existing?.cancerDiagnosis ?? qFamilyHistory?.diagnosis ?? "",
           cancerAgeOnset:
             existing?.cancerAgeOnset ??
-            (familyHistory?.approxAgeOfOnset !== undefined && familyHistory?.approxAgeOfOnset !== null
-              ? String(familyHistory.approxAgeOfOnset)
+            (qFamilyHistory?.approxAgeOfOnset !== undefined && qFamilyHistory?.approxAgeOfOnset !== null
+              ? String(qFamilyHistory.approxAgeOfOnset)
               : ""),
           cancerAgeAtDeath:
             existing?.cancerAgeAtDeath ??
-            (familyHistory?.ageAtDeath !== undefined && familyHistory?.ageAtDeath !== null
-              ? String(familyHistory.ageAtDeath)
+            (qFamilyHistory?.ageAtDeath !== undefined && qFamilyHistory?.ageAtDeath !== null
+              ? String(qFamilyHistory.ageAtDeath)
               : ""),
           // TOBACCO nested fields
           tobaccoCurrentUser: restoredTobaccoCurrentUser,
           tobaccoLastUsed: restoredTobaccoLastUsed,
+          // GENERIC NESTED
+          nestedAnswers,
         };
         return acc;
       },
@@ -323,8 +359,8 @@ function QuestionBlock({
 }: QuestionBlockProps) {
   const isCANCER = question.category === "CANCER";
   const isHEALTH = question.category === "HEALTH";
-  // Tobacco = has nested questions but NOT CANCER
-  const isTOBACCO = (question.nestedQuestions?.length ?? 0) > 0 && !isCANCER;
+  const isTOBACCO = (question.questionText.toLowerCase().includes("tobacco") || question.questionText.toLowerCase().includes("nicotine")) && (question.nestedQuestions?.length ?? 0) > 0;
+  const isGENERIC_NESTED = (question.nestedQuestions?.length ?? 0) > 0 && !isCANCER && !isTOBACCO;
 
   const answerVal = watchedAnswers?.[question.id]?.answer;
 
@@ -515,9 +551,9 @@ function QuestionBlock({
 
           Top-level answer = Yes →
             Show nested Q from API: "If yes, are you a current user?" (Yes/No radio)
-              tobaccoCurrentUser = Yes  → nothing more
-              tobaccoCurrentUser = No   → show hardcoded text input:
-                                          "If no, when did you last use nicotine products?"
+              tobaccoCurrentUser = Yes  → show hardcoded text input:
+                                          "If yes, when did you last use nicotine products?"
+              tobaccoCurrentUser = No   → nothing more
       ══════════════════════════════════════════════════════════════ */}
       {isTOBACCO && answerVal === "Yes" && tobaccoNestedQ && (
         <div className="mt-4 border-l-2 border-gray-100 pl-4 flex flex-col gap-3">
@@ -540,12 +576,12 @@ function QuestionBlock({
             />
           </div>
 
-          {/* "If no, when did you last use nicotine products?" */}
-          {/* Shown only when tobaccoCurrentUser = No */}
-          {tobaccoCurrentUser === "No" && (
+          {/* "If yes, when did you last use nicotine products?" */}
+          {/* Shown only when tobaccoCurrentUser = Yes */}
+          {tobaccoCurrentUser === "Yes" && (
             <div className="flex flex-col gap-1.5">
               <p className="text-sm text-gray-600 leading-snug">
-                If no, when did you last use nicotine products?
+                If yes, when did you last use nicotine products?
               </p>
               <Controller
                 control={form.control}
@@ -553,14 +589,62 @@ function QuestionBlock({
                 render={({ field }) => (
                   <Input
                     {...field}
+                    type="date"
                     disabled={disabled}
-                    placeholder="August 2019"
                     className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")}
                   />
                 )}
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          GENERIC NESTED questions block:
+          Shown only when parent answer = Yes
+      ══════════════════════════════════════════════════════════════ */}
+      {isGENERIC_NESTED && answerVal === "Yes" && question.nestedQuestions && (
+        <div className="mt-4 border-l-2 border-gray-100 pl-4 flex flex-col gap-4">
+          {question.nestedQuestions.map((nestedQ) => {
+            return (
+              <div key={nestedQ.id} className="flex flex-col gap-3">
+                {/* Nested Question Text */}
+                <p className="text-sm text-gray-600 leading-snug">
+                  {nestedQ.questionText}
+                </p>
+
+                {/* Yes/No Radio or Text Input depending on isInputRequired */}
+                {!nestedQ.isInputRequired ? (
+                  <Controller
+                    control={form.control}
+                    name={`answers.${question.id}.nestedAnswers.${nestedQ.id}.answer`}
+                    render={({ field }) => (
+                      <YesNoInline
+                        name={`nested-${nestedQ.id}`}
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={disabled}
+                      />
+                    )}
+                  />
+                ) : (
+                  <Controller
+                    control={form.control}
+                    name={`answers.${question.id}.nestedAnswers.${nestedQ.id}.value`}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        disabled={disabled}
+                        placeholder="Enter details..."
+                        className={cn(inputCls, disabled && "opacity-50 cursor-not-allowed bg-gray-50")}
+                      />
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -603,12 +687,9 @@ export function StepHealthDetails({
     data: familyHistoryResponse,
     isLoading: isLoadingFamilyHistory,
     isFetching: isFetchingFamilyHistory,
-  } = useGetFamilyHealthHistoryByQuestionQuery(
-    {
-      applicationId: applicationId ?? "",
-      questionId: cancerQuestion?.id ?? "",
-    },
-    { skip: !applicationId || !cancerQuestion?.id },
+  } = useGetFamilyHealthHistoryByApplicationQuery(
+    applicationId ?? "",
+    { skip: !applicationId },
   );
 
   const nestedQuestionAnswer = normalizeData<SavedAnswerRecord>(nestedAnswerResponse);
@@ -618,7 +699,19 @@ export function StepHealthDetails({
     : familyHistoryData
       ? [familyHistoryData]
       : [];
-  const latestFamilyHistory = familyHistoryRecords[0];
+
+  const familyHistoryDeps = useMemo(() => {
+    return JSON.stringify(
+      familyHistoryRecords.map((r) => ({
+        id: r.questionId,
+        relation: r.relation,
+        diagnosis: r.diagnosis,
+        onset: r.approxAgeOfOnset,
+        death: r.ageAtDeath,
+        updated: r.updatedAt,
+      }))
+    );
+  }, [familyHistoryRecords]);
 
   // ── Stable initial values ──────────────────────────────────────────────────
   // We compute defaultValues ONCE from the first non-empty load of BOTH the
@@ -636,7 +729,7 @@ export function StepHealthDetails({
     0
   ) ?? 0;
   const answerDataKey = questionnaire?.id
-    ? `${questionnaire.id}:${totalAnswerCount}:${nestedQuestionAnswer?.updatedAt ?? ""}:${latestFamilyHistory?.updatedAt ?? ""}`
+    ? `${questionnaire.id}:${totalAnswerCount}:${nestedQuestionAnswer?.updatedAt ?? ""}:${familyHistoryDeps}`
     : null;
   const canHydrateDefaults = !!questionnaire
     && (!nestedQuestionId || (!isLoadingNestedAnswer && !isFetchingNestedAnswer))
@@ -650,7 +743,7 @@ export function StepHealthDetails({
         data.healthDetails,
         answeredQuestionnaire,
         nestedQuestionAnswer,
-        latestFamilyHistory,
+        familyHistoryRecords,
       );
       if (defaults.hipaaAcknowledged === undefined && hipaaAccepted !== undefined) {
         defaults.hipaaAcknowledged = hipaaAccepted as any;
@@ -660,7 +753,7 @@ export function StepHealthDetails({
       return defaults;
     }
     // Return already-frozen defaults (won't change on subsequent refetches)
-    return stableDefaultsRef.current ?? buildDefaultAnswers(questionnaire, data.healthDetails, undefined, nestedQuestionAnswer, latestFamilyHistory);
+    return stableDefaultsRef.current ?? buildDefaultAnswers(questionnaire, data.healthDetails, undefined, nestedQuestionAnswer, familyHistoryRecords);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerDataKey, canHydrateDefaults]); // Re-derive only when the latest saved answer records change
 
@@ -682,55 +775,63 @@ export function StepHealthDetails({
   }, [questionnaire, form, defaultValues, canHydrateDefaults]);
 
   useEffect(() => {
-    if (!questionnaire?.questions?.length || !cancerQuestion?.id || !latestFamilyHistory) return;
+    if (!questionnaire?.questions?.length || !familyHistoryRecords.length) return;
 
-    console.log("[StepHealthDetails] family history answer loaded", {
+    console.log("[StepHealthDetails] family histories loaded/updated", {
       applicationId,
-      questionId: cancerQuestion.id,
-      familyHistory: latestFamilyHistory,
+      recordsCount: familyHistoryRecords.length,
     });
 
-    const currentAnswer = form.getValues(`answers.${cancerQuestion.id}`) as QuestionAnswer | undefined;
-    const currentRelation = currentAnswer?.cancerRelation ?? "";
-    const currentDiagnosis = currentAnswer?.cancerDiagnosis ?? "";
-    const currentAgeOnset = currentAnswer?.cancerAgeOnset ?? "";
-    const currentAgeAtDeath = currentAnswer?.cancerAgeAtDeath ?? "";
-
-    const nextRelation = latestFamilyHistory.relation ?? "";
-    const nextDiagnosis = latestFamilyHistory.diagnosis ?? "";
-    const nextAgeOnset = latestFamilyHistory.approxAgeOfOnset !== undefined && latestFamilyHistory.approxAgeOfOnset !== null
-      ? String(latestFamilyHistory.approxAgeOfOnset)
-      : "";
-    const nextAgeAtDeath = latestFamilyHistory.ageAtDeath !== undefined && latestFamilyHistory.ageAtDeath !== null
-      ? String(latestFamilyHistory.ageAtDeath)
-      : "";
-
-    if (
-      currentRelation === nextRelation &&
-      currentDiagnosis === nextDiagnosis &&
-      currentAgeOnset === nextAgeOnset &&
-      currentAgeAtDeath === nextAgeAtDeath
-    ) {
-      return;
-    }
-
-    form.setValue(`answers.${cancerQuestion.id}.cancerRelation`, nextRelation, { shouldDirty: false, shouldValidate: false });
-    form.setValue(`answers.${cancerQuestion.id}.cancerDiagnosis`, nextDiagnosis, { shouldDirty: false, shouldValidate: false });
-    form.setValue(`answers.${cancerQuestion.id}.cancerAgeOnset`, nextAgeOnset, { shouldDirty: false, shouldValidate: false });
-    form.setValue(`answers.${cancerQuestion.id}.cancerAgeAtDeath`, nextAgeAtDeath, { shouldDirty: false, shouldValidate: false });
-
+    const cancerQuestions = questionnaire.questions.filter((q) => q.category === "CANCER");
+    let hasChanges = false;
     const prevAnswers = previousAnswersRef.current ?? {};
-    previousAnswersRef.current = {
-      ...prevAnswers,
-      [cancerQuestion.id]: {
-        ...(prevAnswers[cancerQuestion.id] || {}),
-        cancerRelation: nextRelation,
-        cancerDiagnosis: nextDiagnosis,
-        cancerAgeOnset: nextAgeOnset,
-        cancerAgeAtDeath: nextAgeAtDeath,
-      },
-    };
-  }, [questionnaire, cancerQuestion?.id, familyHistoryRecords.length, latestFamilyHistory?.updatedAt]);
+    const updatedPrevAnswers = { ...prevAnswers };
+
+    cancerQuestions.forEach((cancerQ) => {
+      const qFamilyHistory = familyHistoryRecords.find((fh) => fh.questionId === cancerQ.id);
+      if (!qFamilyHistory) return;
+
+      const currentAnswer = form.getValues(`answers.${cancerQ.id}`) as QuestionAnswer | undefined;
+      const currentRelation = currentAnswer?.cancerRelation ?? "";
+      const currentDiagnosis = currentAnswer?.cancerDiagnosis ?? "";
+      const currentAgeOnset = currentAnswer?.cancerAgeOnset ?? "";
+      const currentAgeAtDeath = currentAnswer?.cancerAgeAtDeath ?? "";
+
+      const nextRelation = qFamilyHistory.relation ?? "";
+      const nextDiagnosis = qFamilyHistory.diagnosis ?? "";
+      const nextAgeOnset = qFamilyHistory.approxAgeOfOnset !== undefined && qFamilyHistory.approxAgeOfOnset !== null
+        ? String(qFamilyHistory.approxAgeOfOnset)
+        : "";
+      const nextAgeAtDeath = qFamilyHistory.ageAtDeath !== undefined && qFamilyHistory.ageAtDeath !== null
+        ? String(qFamilyHistory.ageAtDeath)
+        : "";
+
+      if (
+        currentRelation !== nextRelation ||
+        currentDiagnosis !== nextDiagnosis ||
+        currentAgeOnset !== nextAgeOnset ||
+        currentAgeAtDeath !== nextAgeAtDeath
+      ) {
+        form.setValue(`answers.${cancerQ.id}.cancerRelation`, nextRelation, { shouldDirty: false, shouldValidate: false });
+        form.setValue(`answers.${cancerQ.id}.cancerDiagnosis`, nextDiagnosis, { shouldDirty: false, shouldValidate: false });
+        form.setValue(`answers.${cancerQ.id}.cancerAgeOnset`, nextAgeOnset, { shouldDirty: false, shouldValidate: false });
+        form.setValue(`answers.${cancerQ.id}.cancerAgeAtDeath`, nextAgeAtDeath, { shouldDirty: false, shouldValidate: false });
+
+        updatedPrevAnswers[cancerQ.id] = {
+          ...(updatedPrevAnswers[cancerQ.id] || {}),
+          cancerRelation: nextRelation,
+          cancerDiagnosis: nextDiagnosis,
+          cancerAgeOnset: nextAgeOnset,
+          cancerAgeAtDeath: nextAgeAtDeath,
+        };
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      previousAnswersRef.current = updatedPrevAnswers;
+    }
+  }, [questionnaire, familyHistoryDeps]);
 
 
   const watchedAnswers = useWatch({ control: form.control, name: "answers" });
@@ -739,6 +840,25 @@ export function StepHealthDetails({
     name: "hipaaAcknowledged",
   });
   const isDisabled = isAcknowledged !== true;
+
+  // Log all frontend data to console
+  useEffect(() => {
+    console.log("[StepHealthDetails] Data State in Frontend:", {
+      applicationId,
+      questionnaire,
+      MyGivenAnswareQuestionnaire,
+      familyHistoryRecords,
+      nestedAnswerResponse,
+      watchedAnswers,
+    });
+  }, [
+    applicationId,
+    questionnaire,
+    MyGivenAnswareQuestionnaire,
+    familyHistoryRecords,
+    nestedAnswerResponse,
+    watchedAnswers,
+  ]);
 
   const [giveAnswer] = useGiveAnswerMutation();
   const [familyHealthHistory] = useFamilyHealthHistoryMutation();
@@ -808,10 +928,11 @@ export function StepHealthDetails({
           questionId,
           saved: res,
         });
-        form.setValue(`answers.${questionId}.cancerRelation`, res.relation ?? "");
-        form.setValue(`answers.${questionId}.cancerDiagnosis`, res.diagnosis ?? "");
-        form.setValue(`answers.${questionId}.cancerAgeOnset`, res.approxAgeOfOnset !== undefined && res.approxAgeOfOnset !== null ? String(res.approxAgeOfOnset) : "");
-        form.setValue(`answers.${questionId}.cancerAgeAtDeath`, res.ageAtDeath !== undefined && res.ageAtDeath !== null ? String(res.ageAtDeath) : "");
+        const savedData = res.data || res;
+        form.setValue(`answers.${questionId}.cancerRelation`, savedData.relation ?? "");
+        form.setValue(`answers.${questionId}.cancerDiagnosis`, savedData.diagnosis ?? "");
+        form.setValue(`answers.${questionId}.cancerAgeOnset`, savedData.approxAgeOfOnset !== undefined && savedData.approxAgeOfOnset !== null ? String(savedData.approxAgeOfOnset) : "");
+        form.setValue(`answers.${questionId}.cancerAgeAtDeath`, savedData.ageAtDeath !== undefined && savedData.ageAtDeath !== null ? String(savedData.ageAtDeath) : "");
         // Update autosave baseline so the saved values are considered the previous state
         try {
           const prevAnswers = previousAnswersRef.current ?? {};
@@ -820,10 +941,10 @@ export function StepHealthDetails({
             ...prevAnswers,
             [questionId]: {
               ...(prevQuestionAnswer || {}),
-              cancerRelation: res.relation ?? "",
-              cancerDiagnosis: res.diagnosis ?? "",
-              cancerAgeOnset: res.approxAgeOfOnset !== undefined && res.approxAgeOfOnset !== null ? String(res.approxAgeOfOnset) : "",
-              cancerAgeAtDeath: res.ageAtDeath !== undefined && res.ageAtDeath !== null ? String(res.ageAtDeath) : "",
+              cancerRelation: savedData.relation ?? "",
+              cancerDiagnosis: savedData.diagnosis ?? "",
+              cancerAgeOnset: savedData.approxAgeOfOnset !== undefined && savedData.approxAgeOfOnset !== null ? String(savedData.approxAgeOfOnset) : "",
+              cancerAgeAtDeath: savedData.ageAtDeath !== undefined && savedData.ageAtDeath !== null ? String(savedData.ageAtDeath) : "",
             },
           };
         } catch (err) {
@@ -854,11 +975,13 @@ export function StepHealthDetails({
 
     const prevAnswers = previousAnswersRef.current ?? {};
     const changedQuestionIds: string[] = [];
+    const changedNestedQuestionIds: { parentId: string; nestedId: string }[] = [];
 
     for (const [questionId, currentAnswer] of Object.entries(answers)) {
       const prevAnswer = prevAnswers[questionId];
 
-      if (
+      // 1. Check if the parent question or its specific fields changed
+      let hasParentChanged = 
         prevAnswer?.answer !== currentAnswer?.answer ||
         prevAnswer?.nested?.explanation !== currentAnswer?.nested?.explanation ||
         prevAnswer?.cancerDiagnosis !== currentAnswer?.cancerDiagnosis ||
@@ -866,13 +989,33 @@ export function StepHealthDetails({
         prevAnswer?.cancerAgeOnset !== currentAnswer?.cancerAgeOnset ||
         prevAnswer?.cancerAgeAtDeath !== currentAnswer?.cancerAgeAtDeath ||
         prevAnswer?.tobaccoCurrentUser !== currentAnswer?.tobaccoCurrentUser ||
-        prevAnswer?.tobaccoLastUsed !== currentAnswer?.tobaccoLastUsed
-      ) {
+        prevAnswer?.tobaccoLastUsed !== currentAnswer?.tobaccoLastUsed;
+
+      if (hasParentChanged) {
+        changedQuestionIds.push(questionId);
+      }
+
+      // 2. Check if generic nested answers changed
+      let hasGenericNestedChanged = false;
+      if (currentAnswer?.nestedAnswers) {
+        for (const [nestedId, currNested] of Object.entries(currentAnswer.nestedAnswers)) {
+          const prevNested = prevAnswer?.nestedAnswers?.[nestedId];
+          if (
+            prevNested?.answer !== currNested?.answer ||
+            prevNested?.value !== currNested?.value
+          ) {
+            changedNestedQuestionIds.push({ parentId: questionId, nestedId });
+            hasGenericNestedChanged = true;
+          }
+        }
+      }
+
+      if (hasGenericNestedChanged && !changedQuestionIds.includes(questionId)) {
         changedQuestionIds.push(questionId);
       }
     }
 
-    if (changedQuestionIds.length === 0) return true;
+    if (changedQuestionIds.length === 0 && changedNestedQuestionIds.length === 0) return true;
 
     setSaveStates((prev) => {
       const next = { ...prev };
@@ -907,7 +1050,9 @@ export function StepHealthDetails({
         }
       }
 
-      if (q.nestedQuestions?.[0] && answer?.tobaccoCurrentUser !== undefined) {
+      // Save tobacco nested if applicable
+      const isTobaccoQuestion = (q.questionText.toLowerCase().includes("tobacco") || q.questionText.toLowerCase().includes("nicotine")) && (q.nestedQuestions?.length ?? 0) > 0;
+      if (isTobaccoQuestion && q.nestedQuestions?.[0] && answer?.tobaccoCurrentUser !== undefined) {
         try {
           await giveAnswer({
             applicationId,
@@ -935,6 +1080,28 @@ export function StepHealthDetails({
         } catch (error) {
           console.error("familyHealthHistory error", error);
           errors.push(questionId);
+        }
+      }
+    }
+
+    // Save generic nested questions
+    for (const { parentId, nestedId } of changedNestedQuestionIds) {
+      const parentAnswer = answers[parentId];
+      const nestedQAnswer = parentAnswer?.nestedAnswers?.[nestedId];
+      if (nestedQAnswer) {
+        try {
+          await giveAnswer({
+            applicationId,
+            questionnaireId: questionnaire.id,
+            nestedQuestionId: nestedId,
+            answerBoolean: nestedQAnswer.answer === "Yes",
+            inputValue: nestedQAnswer.value || undefined,
+          }).unwrap();
+        } catch (error) {
+          console.error("giveAnswer generic nested error", error);
+          if (!errors.includes(parentId)) {
+            errors.push(parentId);
+          }
         }
       }
     }
@@ -1011,7 +1178,7 @@ export function StepHealthDetails({
     familyHealthHistory,
   ]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingNestedAnswer || isLoadingFamilyHistory) {
     return (
       <div className="flex items-center justify-center min-h-100">
         <Loading />

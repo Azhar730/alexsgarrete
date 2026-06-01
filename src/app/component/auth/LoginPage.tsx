@@ -60,9 +60,9 @@ export default function LoginPage() {
       const response = await login(values).unwrap();
       console.log("Login response:", response);
       if (response?.success) {
-        dispatch(setUser({ 
-          user: response.data.user, 
-          token: response.data.token 
+        dispatch(setUser({
+          user: response.data.user,
+          token: response.data.token
         }));
         toast.success("Login successful");
         await new Promise((r) => setTimeout(r, 1200));
@@ -81,7 +81,15 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       setIsLoading(false);
-      toast.error(error?.message || "Login failed! Please try again.");
+      const errMsg = error?.data?.error?.message || error?.data?.message || "Login failed! Please try again.";
+      toast.error(errMsg);
+      if (errMsg === "Please verify your email first") {
+        const expires = Date.now() + 60 * 1000;
+        try {
+          sessionStorage.setItem(`otp_expiry:email_verification:${values.email}`, String(expires));
+        } catch (e) {}
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+      }
     }
   };
 
@@ -155,10 +163,10 @@ export default function LoginPage() {
       <p className="mt-4 text-center text-xs text-gray-400 leading-relaxed">
         By logging in, you agree to our{" "}
         <Link
-          href="/terms"
+          href="/terms-conditions"
           className="text-[#5C7FC4] hover:underline font-medium"
         >
-          Terms
+          Terms & Conditions
         </Link>{" "}
         and{" "}
         <Link

@@ -36,13 +36,30 @@ export default function VerifyEmailPage() {
   // In a real app, get this from router state / context
   const userEmail = searchParams.get("email");
   const purpose = (searchParams.get("purpose") as "email_verification" | "password_reset") || "email_verification";
-  const storageKey = userEmail ? `otp_expiry:${purpose}:${userEmail}` : null;
 
   const form = useForm<VerifyValues>({
     resolver: zodResolver(verifySchema),
     defaultValues: { code: "" },
     mode: "onChange",
   });
+
+  // Calculate/load timer on mount or when searchParams change
+  useEffect(() => {
+    if (!userEmail) return;
+    const storageKey = `otp_expiry:${purpose}:${userEmail}`;
+    try {
+      const stored = sessionStorage.getItem(storageKey);
+      if (stored) {
+        const expires = Number(stored);
+        const diff = Math.ceil((expires - Date.now()) / 1000);
+        setSecondsLeft(diff > 0 ? diff : 0);
+      } else {
+        setSecondsLeft(0);
+      }
+    } catch (e) {
+      setSecondsLeft(0);
+    }
+  }, [userEmail, purpose]);
 
   const onSubmit = async (values: VerifyValues) => {
     setIsLoading(true);
@@ -58,7 +75,9 @@ export default function VerifyEmailPage() {
       console.log("verify-email", res);
       if (res.success) {
         toast.success("OTP verified successfully! You can now log in.");
-        if (storageKey) localStorage.removeItem(storageKey);
+        try {
+          sessionStorage.removeItem(`otp_expiry:${purpose}:${userEmail}`);
+        } catch (e) {}
         router.push("/login");
         setIsLoading(false);
       }
@@ -81,9 +100,13 @@ export default function VerifyEmailPage() {
       // reset OTP input and start countdown
       form.reset();
       setResent(true);
-      const expires = Date.now() + 30 * 1000;
-      if (storageKey) localStorage.setItem(storageKey, String(expires));
-      setSecondsLeft(30);
+
+      const expires = Date.now() + 60 * 1000;
+      try {
+        sessionStorage.setItem(`otp_expiry:${purpose}:${userEmail}`, String(expires));
+      } catch (e) {}
+
+      setSecondsLeft(60);
       setTimeout(() => setResent(false), 3000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -92,34 +115,6 @@ export default function VerifyEmailPage() {
       setIsResending(false);
     }
   };
-
-  useEffect(() => {
-    if (!userEmail || !storageKey) return;
-    const stored = localStorage.getItem(storageKey);
-    const now = Date.now();
-    if (stored) {
-      const expires = Number(stored);
-      const diff = Math.ceil((expires - now) / 1000);
-      setSecondsLeft(diff > 0 ? diff : 0);
-    } else {
-      setSecondsLeft(0);
-    }
-
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key !== storageKey) return;
-      if (!e.newValue) {
-        setSecondsLeft(0);
-        return;
-      }
-      const expires = Number(e.newValue);
-      const diff = Math.ceil((expires - Date.now()) / 1000);
-      setSecondsLeft(diff > 0 ? diff : 0);
-    };
-
-    window.addEventListener("storage", handleStorage);
-
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [userEmail, storageKey]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;

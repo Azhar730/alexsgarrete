@@ -13,7 +13,7 @@ export default function ContactUsPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const formData = new FormData(e.currentTarget);
     const data = {
       firstName: formData.get("firstName"),
@@ -28,7 +28,7 @@ export default function ContactUsPage() {
         process.env.NEXT_PUBLIC_BASE_API_URL?.trim() ||
         process.env.NEXT_PUBLIC_BASE_API?.trim() ||
         "http://localhost:3030";
-      
+
       const response = await fetch(`${baseApiUrl}/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,12 +55,10 @@ export default function ContactUsPage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50/50 py-16 lg:py-24">
+      <div className="min-h-screen  py-16 lg:py-24">
         {/* Header */}
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-[#5B6BBF]/10 rounded-2xl mb-6">
-            <MessageSquare className="w-8 h-8 text-[#5B6BBF]" />
-          </div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center">
+
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
             Get in Touch
           </h1>
@@ -69,10 +67,10 @@ export default function ContactUsPage() {
           </p>
         </div>
 
-        <div className=" mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white  rounded-xl overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-5">
-              
+
               {/* Contact Information Sidebar */}
               <div className="lg:col-span-2 bg-[#5B6BBF] p-8 md:p-12 text-white flex flex-col justify-between">
                 <div>
@@ -89,7 +87,7 @@ export default function ContactUsPage() {
                         <p className="text-[#E0E7FF]">+1 (555) 123-4567</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start gap-4">
                       <Mail className="w-6 h-6 text-[#93C5FD] shrink-0 mt-1" />
                       <div>
@@ -201,13 +199,12 @@ export default function ContactUsPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className={`w-full md:w-auto px-8 py-3.5 rounded-xl font-bold text-white transition-all duration-300 flex items-center justify-center gap-2 ${
-                        isSubmitting 
-                          ? "bg-[#5B6BBF]/70 cursor-not-allowed" 
-                          : submitted 
-                            ? "bg-emerald-500" 
+                      className={`w-full md:w-auto px-8 py-3.5 rounded-xl font-bold text-white transition-all duration-300 flex items-center justify-center gap-2 ${isSubmitting
+                          ? "bg-[#5B6BBF]/70 cursor-not-allowed"
+                          : submitted
+                            ? "bg-emerald-500"
                             : "bg-[#5B6BBF] hover:bg-[#4a58a6] hover:shadow-lg hover:shadow-[#5B6BBF]/25 hover:-translate-y-0.5"
-                      }`}
+                        }`}
                     >
                       {isSubmitting ? (
                         <>

@@ -60,11 +60,10 @@ export default function SignupPage() {
       const response = await register(values).unwrap();
       console.log("API response:", response);
       if (response?.success) {
-        // persist expiry so verify page resumes timer after reload
-        const expires = Date.now() + 30 * 1000;
+        const expires = Date.now() + 60 * 1000;
         try {
-          localStorage.setItem(`otp_expiry:email_verification:${values.email}`, String(expires));
-        } catch (e) {}
+          sessionStorage.setItem(`otp_expiry:email_verification:${values.email}`, String(expires));
+        } catch (e) { }
         // navigate immediately to the verify page
         router.push("/verify-email?email=" + encodeURIComponent(values.email));
         // show success toast (navigation happens immediately)
@@ -149,10 +148,10 @@ export default function SignupPage() {
       <p className="mt-4 text-center text-xs text-gray-400 leading-relaxed">
         By signing up, you agree to our{" "}
         <Link
-          href="/terms"
+          href="/terms-conditions"
           className="text-[#5C7FC4] hover:underline font-medium"
         >
-          Terms
+          Terms & Conditions
         </Link>{" "}
         and{" "}
         <Link

@@ -65,6 +65,13 @@ const onboardingApi = baseApi.injectEndpoints({
       invalidatesTags: ["users"],
     }),
 
+    getFamilyHealthHistoryByApplication: builder.query({
+      query: (applicationId: string) => ({
+        url: `/family-health-history/application/${applicationId}`,
+        method: "GET",
+      }),
+      providesTags: ["users"],
+    }),
     getFamilyHealthHistoryByQuestion: builder.query({
       query: ({ applicationId, questionId }: { applicationId: string; questionId: string }) => ({
         url: `/family-health-history/application/${applicationId}/question/${questionId}`,
@@ -210,6 +217,7 @@ export const {
   useAddPetMutation,
   useDeleteFamilyHealthHistoryMutation,
   useGetFamilyHealthHistoryByQuestionQuery,
+  useGetFamilyHealthHistoryByApplicationQuery,
   useUpdateFamilyHealthHistoryMutation,
   useGetAgreementDocumentsQuery
 } = onboardingApi;

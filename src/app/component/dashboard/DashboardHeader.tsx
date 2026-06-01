@@ -79,7 +79,8 @@ export default function DashboardHeader() {
   const [clearAll] = useClearAllActivitiesMutation();
   const [deleteActivity] = useDeleteActivityMutation();
 
-  const activities = dedupeActivities(activitiesResponse?.data || []);
+  const activities = dedupeActivities(activitiesResponse?.data || [])
+    .filter((a: any) => !a.isDismissed);
   const unreadActivities = activities.filter((a: any) => !a.isRead);
   const hasUnread = unreadActivities.length > 0;
 
@@ -281,8 +282,8 @@ export default function DashboardHeader() {
               </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
-              {userData?.profilePicture || userData?.image ? (
-                <Image src={userData.profilePicture || userData.image} alt={displayName} width={40} height={40} className="object-cover" />
+              {userData?.avatarUrl || userData?.profilePicture || userData?.image ? (
+                <Image src={userData.avatarUrl || userData.profilePicture || userData.image} alt={displayName} width={40} height={40} className="object-cover" />
               ) : (
                 <span className="text-sm font-bold text-primary">{initials}</span>
               )}
@@ -303,12 +304,14 @@ export default function DashboardHeader() {
           {/* Sidebar content */}
           <aside className="absolute inset-y-0 left-0 w-70 bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
-               <Image
-                 src={'/dashboard-head.png'}
-                 alt="Dashboard Logo"
-                 width={140}
-                 height={38}
-               />
+               <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center">
+                 <Image
+                   src={'/dashboard-head.png'}
+                   alt="Dashboard Logo"
+                   width={140}
+                   height={38}
+                 />
+               </Link>
                <button 
                  onClick={() => setIsMobileMenuOpen(false)}
                  className="p-2 text-slate-500 hover:text-primary transition-colors"
@@ -343,8 +346,8 @@ export default function DashboardHeader() {
             <div className="p-4 border-t border-slate-100">
                <div className="flex items-center gap-3">
                  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden border border-amber-200">
-                    {userData?.profilePicture || userData?.image ? (
-                      <Image src={userData.profilePicture || userData.image} alt={displayName} width={40} height={40} />
+                    {userData?.avatarUrl || userData?.profilePicture || userData?.image ? (
+                      <Image src={userData.avatarUrl || userData.profilePicture || userData.image} alt={displayName} width={40} height={40} className="object-cover" />
                     ) : (
                       <span className="text-sm font-bold text-amber-700">{initials}</span>
                     )}

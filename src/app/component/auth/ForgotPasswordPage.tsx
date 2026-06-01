@@ -40,13 +40,10 @@ export default function ForgotPasswordPage() {
       const payload = { email: values.email, purpose: "password_reset" };
       await sendOtp(payload).unwrap();
       setSubmitted(true);
-      // persist expiry so verify page resumes timer after reload
-      const expires = Date.now() + 30 * 1000;
+      const expires = Date.now() + 60 * 1000;
       try {
-        localStorage.setItem(`otp_expiry:password_reset:${values.email}`, String(expires));
-      } catch (e) {
-        // ignore storage errors
-      }
+        sessionStorage.setItem(`otp_expiry:password_reset:${values.email}`, String(expires));
+      } catch (e) {}
       // Navigate to verify page and include purpose so verify uses password_reset flow
       router.push(`/verify-email?email=${encodeURIComponent(values.email)}&purpose=password_reset`);
     } finally {

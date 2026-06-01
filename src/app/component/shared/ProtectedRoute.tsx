@@ -16,7 +16,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   });
 
   const currentUser = authUser || userRes?.data || userRes;
-  const isChecking = !mounted || (!authUser && (isLoading || isFetching));
+  const isChecking = !mounted || (!authUser && isLoading);
 
   useEffect(() => {
     setMounted(true);
