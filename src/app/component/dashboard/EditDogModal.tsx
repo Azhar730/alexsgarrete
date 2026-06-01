@@ -133,11 +133,13 @@ export function EditDogModal({
     const prev = document.body.style.overflow;
     if (open) {
       document.body.style.overflow = "hidden";
+      form.reset({ ...defaultValues });
+      setImagePreview(currentImageUrl ?? null);
     }
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, defaultValues, currentImageUrl, form]);
 
   const handleDialogWheel = useCallback((e: React.WheelEvent) => {
     const el = contentRef.current;

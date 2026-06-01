@@ -36,6 +36,26 @@ export const ChatApi = baseApi.injectEndpoints({
     getSupportAdmin: builder.query({
       query: () => "/chat/support-admin",
     }),
+    uploadFiles: builder.mutation({
+      query: (formData) => ({
+        url: "/upload/documents",
+        method: "POST",
+        body: formData,
+      }),
+    }),
+    updateMessage: builder.mutation({
+      query: ({ messageId, content, attachments }) => ({
+        url: `/chat/message/${messageId}`,
+        method: "PATCH",
+        body: { content, attachments },
+      }),
+    }),
+    deleteMessage: builder.mutation({
+      query: (messageId) => ({
+        url: `/chat/message/${messageId}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
@@ -45,5 +65,8 @@ export const {
   useSendMessageMutation,
   useCreateConversationMutation,
   useMarkAsReadMutation,
-  useGetSupportAdminQuery
+  useGetSupportAdminQuery,
+  useUploadFilesMutation,
+  useUpdateMessageMutation,
+  useDeleteMessageMutation
 } = ChatApi;

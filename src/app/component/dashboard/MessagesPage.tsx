@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Paperclip, Send, MoreVertical, User, MessageSquare, Info, ArrowLeft, Loader2 } from "lucide-react";
+import { Search, Paperclip, Send, MoreVertical, User, MessageSquare, Info, ArrowLeft, Loader2, X, FileText, Edit2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,10 @@ import {
   useSendMessageMutation,
   useMarkAsReadMutation,
   useGetSupportAdminQuery,
-  useCreateConversationMutation
+  useCreateConversationMutation,
+  useUploadFilesMutation,
+  useUpdateMessageMutation,
+  useDeleteMessageMutation
 } from "@/redux/api/chatApi";
 import { useSocket } from "@/hooks/useSocket";
 import { useSelector, useDispatch } from "react-redux";
@@ -23,7 +26,15 @@ import { setUser } from "@/redux/features/authSlice";
 export default function MessagesPage() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [editingAttachments, setEditingAttachments] = useState<string[]>([]);
+  const [editingNewFiles, setEditingNewFiles] = useState<File[]>([]);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
@@ -62,6 +73,9 @@ export default function MessagesPage() {
 
   const messages = messagesRes || [];
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
+  const [uploadFiles, { isLoading: isUploading }] = useUploadFilesMutation();
+  const [updateMessage, { isLoading: isUpdating }] = useUpdateMessageMutation();
+  const [deleteMessage, { isLoading: isDeleting }] = useDeleteMessageMutation();
   const [markAsRead] = useMarkAsReadMutation();
   const [createConversation] = useCreateConversationMutation();
 
@@ -103,6 +117,18 @@ export default function MessagesPage() {
       }
     });
 
+    socket.on("message_updated", (message: any) => {
+      if (message.conversationId === activeChat) {
+        refetchMessages?.();
+      }
+    });
+
+    socket.on("message_deleted", (message: any) => {
+      if (message.conversationId === activeChat) {
+        refetchMessages?.();
+      }
+    });
+
     socket.on("display_typing", (data: { senderId: string; conversationId: string; isTyping: boolean }) => {
       if (data.conversationId === activeChat) {
         setOtherUserTyping(data.isTyping ? data.senderId : null);
@@ -115,6 +141,8 @@ export default function MessagesPage() {
 
     return () => {
       socket.off("new_message");
+      socket.off("message_updated");
+      socket.off("message_deleted");
       socket.off("display_typing");
       socket.off("user_status");
     };
@@ -151,18 +179,68 @@ export default function MessagesPage() {
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!messageText.trim() || !activeChat) return;
+    if ((!messageText.trim() && selectedFiles.length === 0) || !activeChat) return;
 
     try {
+      let attachmentUrls: string[] = [];
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+          formData.append("files", file);
+        });
+        const uploadRes = await uploadFiles(formData).unwrap();
+        attachmentUrls = uploadRes.data?.urls || uploadRes.urls || [];
+      }
+
       await sendMessage({
         conversationId: activeChat,
-        content: messageText.trim()
+        content: messageText.trim() || " ", // if empty text but has attachments
+        attachments: attachmentUrls
       }).unwrap();
       setMessageText("");
+      setSelectedFiles([]);
       refetchMessages();
       refetchConvs();
     } catch (err) {
       console.error("Failed to send", err);
+    }
+  };
+
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editingContent.trim() && editingAttachments.length === 0 && editingNewFiles.length === 0) return;
+    try {
+      let uploadedUrls: string[] = [];
+      if (editingNewFiles.length > 0) {
+        const formData = new FormData();
+        editingNewFiles.forEach((file) => formData.append("files", file));
+        const uploadRes = await uploadFiles(formData).unwrap();
+        uploadedUrls = uploadRes.data?.urls || uploadRes.urls || [];
+      }
+      
+      const finalAttachments = [...editingAttachments, ...uploadedUrls];
+
+      await updateMessage({ messageId, content: editingContent.trim() || " ", attachments: finalAttachments }).unwrap();
+      setEditingMessageId(null);
+      setEditingContent("");
+      setEditingAttachments([]);
+      setEditingNewFiles([]);
+      refetchMessages();
+    } catch (err) {
+      console.error("Failed to edit", err);
+    }
+  };
+
+  const handleDelete = async (messageId: string) => {
+    if (confirm("Are you sure you want to delete this message?")) {
+      setDeletingMessageId(messageId);
+      try {
+        await deleteMessage(messageId).unwrap();
+        refetchMessages();
+      } catch (err) {
+        console.error("Failed to delete", err);
+      } finally {
+        setDeletingMessageId(null);
+      }
     }
   };
 
@@ -338,23 +416,135 @@ export default function MessagesPage() {
                   return (
                     <div
                       key={msg.id}
-                      className={cn("flex gap-3", isMine ? "flex-row-reverse" : "flex-row")}
+                      className={cn("flex gap-3 group", isMine ? "flex-row-reverse" : "flex-row")}
                     >
                       <div className={cn("max-w-md", isMine ? "items-end flex flex-col" : "flex flex-col")}>
-                        <div
-                          className={cn(
-                            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
-                            isMine
-                              ? "bg-primary text-white rounded-tr-sm"
-                              : "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
-                          )}
-                        >
-                          {msg.content}
-                        </div>
-                        <span className="text-[10px] text-muted-foreground mt-1.5 font-medium px-1">
+                        {msg.isDeleted ? (
+                          <div
+                            className={cn(
+                              "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm italic text-slate-400",
+                              isMine
+                                ? "bg-slate-100 rounded-tr-sm"
+                                : "bg-white border border-slate-100 rounded-tl-sm"
+                            )}
+                          >
+                            This message was deleted
+                          </div>
+                        ) : editingMessageId === msg.id ? (
+                          <div className="flex flex-col gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm w-full min-w-[250px]">
+                            {(editingAttachments.length > 0 || editingNewFiles.length > 0) && (
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {editingAttachments.map((url: string, idx: number) => {
+                                  const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
+                                  return (
+                                    <div key={`old-${idx}`} className="relative block max-w-[150px] rounded-lg border border-slate-200 pr-6">
+                                      {isImage ? (
+                                        <img src={url} alt="attachment" className="h-12 w-auto object-cover rounded-md" />
+                                      ) : (
+                                        <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-xs font-semibold">
+                                          <FileText className="w-4 h-4" />
+                                          <span>File {idx + 1}</span>
+                                        </div>
+                                      )}
+                                      <button type="button" onClick={() => setEditingAttachments(prev => prev.filter((_, i) => i !== idx))} className="absolute right-1 top-1 bg-white/80 rounded-full p-0.5 hover:bg-slate-200 transition-colors">
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                                {editingNewFiles.map((file, idx) => (
+                                    <div key={`new-${idx}`} className="relative flex items-center gap-2 bg-slate-100 p-2 rounded-lg pr-6">
+                                      <FileText className="w-4 h-4 text-slate-500" />
+                                      <span className="text-xs font-semibold max-w-[100px] truncate">{file.name}</span>
+                                      <button type="button" onClick={() => setEditingNewFiles(prev => prev.filter((_, i) => i !== idx))} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full transition-colors">
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                ))}
+                              </div>
+                            )}
+                            <Input 
+                              value={editingContent} 
+                              onChange={(e) => setEditingContent(e.target.value)} 
+                              className="text-sm bg-slate-50 border-slate-100"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit(msg.id);
+                                if (e.key === "Escape") setEditingMessageId(null);
+                              }}
+                            />
+                            <div className="flex justify-between items-center gap-2 mt-1">
+                              <div>
+                                <input type="file" multiple ref={editFileInputRef} className="hidden" onChange={(e) => {
+                                  if (e.target.files) {
+                                    setEditingNewFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                  }
+                                }} />
+                                <Button size="sm" variant="ghost" onClick={() => editFileInputRef.current?.click()} className="h-7 text-xs text-slate-500 px-2">
+                                  <Paperclip className="w-3.5 h-3.5 mr-1" /> Add Files
+                                </Button>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)} className="h-7 text-xs">Cancel</Button>
+                                <Button size="sm" onClick={() => handleSaveEdit(msg.id)} disabled={isUploading || isUpdating} className="h-7 text-xs">
+                                  {(isUploading || isUpdating) && editingMessageId === msg.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                                  Save
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm",
+                              isMine
+                                ? "bg-primary text-white rounded-tr-sm"
+                                : "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
+                            )}
+                          >
+                            {msg.content !== " " && msg.content}
+                            
+                            {/* Attachments rendering */}
+                            {msg.attachments && msg.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {msg.attachments.map((url: string, idx: number) => {
+                                  const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
+                                  if (isImage) {
+                                    return (
+                                      <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="block max-w-[200px] overflow-hidden rounded-lg">
+                                        <img src={url} alt="attachment" className="w-full h-auto object-cover" />
+                                      </a>
+                                    );
+                                  }
+                                  return (
+                                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg text-xs font-semibold hover:bg-black/10 transition-colors">
+                                      <FileText className="w-4 h-4" />
+                                      <span>Attachment {idx + 1}</span>
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <span className="text-[10px] text-muted-foreground mt-1.5 font-medium px-1 flex gap-1">
                           {format(new Date(msg.createdAt), "HH:mm")}
+                          {msg.isEdited && !msg.isDeleted && <span className="italic opacity-70">(edited)</span>}
                         </span>
                       </div>
+                      
+                      {isMine && !msg.isDeleted && editingMessageId !== msg.id && (
+                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity self-center">
+                          <button onClick={() => { 
+                            setEditingMessageId(msg.id); 
+                            setEditingContent(msg.content === " " ? "" : msg.content); 
+                            setEditingAttachments(msg.attachments || []);
+                            setEditingNewFiles([]);
+                          }} className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 bg-white shadow-sm border border-slate-100 transition-colors" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleDelete(msg.id)} disabled={isDeleting && deletingMessageId === msg.id} className="p-1.5 hover:bg-red-50 rounded-md text-slate-400 hover:text-red-500 bg-white shadow-sm border border-slate-100 transition-colors" title="Delete">
+                            {isDeleting && deletingMessageId === msg.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -375,30 +565,67 @@ export default function MessagesPage() {
             )}
 
             {/* Input Area */}
-            <form onSubmit={handleSend} className="p-4 border-t border-slate-50 flex items-center gap-2 bg-white shrink-0">
-              <Button variant="ghost" type="button" size="icon" className="h-10 w-10 text-slate-400 shrink-0 hover:bg-slate-50 rounded-xl">
-                <Paperclip size={18} />
-              </Button>
-              <Input
-                value={messageText}
-                onChange={handleTyping}
-                disabled={isSending}
-                placeholder={isSending ? "Sending..." : "Type your message..."}
-                className="flex-1 h-11 text-sm bg-slate-50/50 border-slate-100 placeholder:text-muted-foreground focus-visible:ring-primary/20 rounded-xl"
-              />
-              <Button
-                type="submit"
-                disabled={!messageText.trim() || isSending}
-                size="icon"
-                className="h-11 w-11 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 shrink-0 rounded-xl flex items-center justify-center"
-              >
-                {isSending ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
-                ) : (
-                  <Send size={18} className="text-white" />
-                )}
-              </Button>
-            </form>
+            <div className="flex flex-col bg-white border-t border-slate-50 shrink-0">
+              {/* Preview Area */}
+              {selectedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-4 pb-0 border-b border-slate-50">
+                  {selectedFiles.map((file, idx) => (
+                    <div key={idx} className="relative flex items-center gap-2 bg-slate-100 p-2 rounded-lg pr-8">
+                      <FileText className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-semibold max-w-[150px] truncate">{file.name}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <form onSubmit={handleSend} className="p-4 flex items-center gap-2">
+                <input 
+                  type="file" 
+                  multiple 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="ghost" 
+                  type="button" 
+                  size="icon" 
+                  className="h-10 w-10 text-slate-400 shrink-0 hover:bg-slate-50 rounded-xl"
+                >
+                  <Paperclip size={18} />
+                </Button>
+                <Input
+                  value={messageText}
+                  onChange={handleTyping}
+                  disabled={isSending || isUploading}
+                  placeholder={isSending || isUploading ? "Sending..." : "Type your message..."}
+                  className="flex-1 h-11 text-sm bg-slate-50/50 border-slate-100 placeholder:text-muted-foreground focus-visible:ring-primary/20 rounded-xl"
+                />
+                <Button
+                  type="submit"
+                  disabled={(!messageText.trim() && selectedFiles.length === 0) || isSending || isUploading}
+                  size="icon"
+                  className="h-11 w-11 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 shrink-0 rounded-xl flex items-center justify-center"
+                >
+                  {isSending || isUploading ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Send size={18} className="text-white" />
+                  )}
+                </Button>
+              </form>
+            </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-40">

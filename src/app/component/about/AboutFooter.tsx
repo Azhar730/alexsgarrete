@@ -5,12 +5,12 @@ const MENU_LINKS = [
   { label: "How it Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "FAQ", href: "#faq" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "Contact Us", href: "/contact-us" },
 ];
 
 const LEGAL_LINKS = [
-  { label: "Terms & Conditions", href: "/terms" },
-  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms & Conditions", href: "/terms-conditions" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Accessibility Statement", href: "/accessibility" },
 ];
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { ProtectedRoute } from "@/app/component/shared/ProtectedRoute";
+
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGetMeQuery } from "@/redux/api/userApi";
@@ -86,8 +88,10 @@ export default function ApplicationPage() {
             : 5;
 
   return (
-    <ApplicationProvider initialData={initialData} initialStep={initialStep}>
-      <ApplicationFlow application={currentApplication} />
-    </ApplicationProvider>
+    <ProtectedRoute>
+      <ApplicationProvider initialData={initialData} initialStep={initialStep}>
+        <ApplicationFlow application={currentApplication} />
+      </ApplicationProvider>
+    </ProtectedRoute>
   );
 }

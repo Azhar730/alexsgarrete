@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ProtectedRoute } from "@/app/component/shared/ProtectedRoute";
 
 export const metadata: Metadata = {
   title: "Encore - Pet Insurance Dashboard",
@@ -11,8 +12,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <ProtectedRoute>
       {children}
-    </>
+    </ProtectedRoute>
   );
 }

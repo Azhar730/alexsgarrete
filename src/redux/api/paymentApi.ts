@@ -57,10 +57,11 @@ export interface StripeOverviewResponse {
 
 export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    connectStripe: builder.mutation<ConnectStripeResponse, void>({
-      query: () => ({
+    connectStripe: builder.mutation<ConnectStripeResponse, { quoteGroupId?: string } | void>({
+      query: (body) => ({
         url: "/payment/connect",
         method: "POST",
+        body: body || {},
       }),
       invalidatesTags: ["Payment"],
     }),
@@ -93,6 +94,27 @@ export const paymentApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Payment"],
     }),
+    getPendingRequests: builder.query({
+      query: () => ({
+        url: "/payment/requests/pending",
+        method: "GET",
+      }),
+      providesTags: ["Payment"],
+    }),
+    approveRequest: builder.mutation({
+      query: (requestId: string) => ({
+        url: `/payment/requests/${requestId}/approve`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Payment"],
+    }),
+    rejectRequest: builder.mutation({
+      query: (requestId: string) => ({
+        url: `/payment/requests/${requestId}/reject`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Payment"],
+    }),
   }),
 });
 
@@ -102,4 +124,7 @@ export const {
   useGetConnectAccountQuery,
   useGetMyPaymentsQuery,
   useGetStripeOverviewQuery,
+  useGetPendingRequestsQuery,
+  useApproveRequestMutation,
+  useRejectRequestMutation,
 } = paymentApi;

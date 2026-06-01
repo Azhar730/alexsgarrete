@@ -3,16 +3,38 @@
 import { useMemo, useState } from "react";
 import AppLayout from "@/app/component/dashboard/AppLayout";
 import { BillingHistory, PaymentMethod, PaymentSummaryCards } from "@/app/component/dashboard/PaymentComponents";
-import { useGetStripeOverviewQuery } from "@/redux/api/paymentApi";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { useGetStripeOverviewQuery, useGetPendingRequestsQuery, useApproveRequestMutation, useRejectRequestMutation } from "@/redux/api/paymentApi";
+import { Loader2, ArrowLeft, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type PaymentFilter = "ALL" | "INITIAL" | "MONTHLY";
 
 export default function PaymentsPage() {
   const [filter, setFilter] = useState<PaymentFilter>("ALL");
   const { data: overviewResponse, isLoading } = useGetStripeOverviewQuery();
+  const { data: pendingRequestsResponse, isLoading: isLoadingRequests } = useGetPendingRequestsQuery(undefined);
+  const [approveRequest, { isLoading: isApproving }] = useApproveRequestMutation();
+  const [rejectRequest, { isLoading: isRejecting }] = useRejectRequestMutation();
+
+  const handleApprove = async (requestId: string) => {
+    try {
+      await approveRequest(requestId).unwrap();
+      toast.success("Subscription updated successfully!");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to approve update");
+    }
+  };
+
+  const handleReject = async (requestId: string) => {
+    try {
+      await rejectRequest(requestId).unwrap();
+      toast.success("Subscription update request declined");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to decline update");
+    }
+  };
 
   const overviewData = overviewResponse?.data;
   const payments = overviewData?.local?.allPayments || [];
@@ -68,6 +90,48 @@ export default function PaymentsPage() {
             Review your transaction history and manage your payment methods.
           </p>
         </div>
+
+        {pendingRequestsResponse?.data && pendingRequestsResponse.data.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-amber-100 p-2 mt-1">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-amber-900">Action Required: Price Update</h3>
+                <p className="text-sm text-amber-800 mt-1">
+                  {pendingRequestsResponse.data[0].isPetSpecific ? (
+                    <>
+                      An administrator has proposed updating the monthly premium for your pet <strong>{pendingRequestsResponse.data[0].petName}</strong> from <strong>${Number(pendingRequestsResponse.data[0].oldPetCharge).toLocaleString()}/mo</strong> to <strong>${Number(pendingRequestsResponse.data[0].newPetCharge).toLocaleString()}/mo</strong>. This will bring your total subscription premium to <strong>${Number(pendingRequestsResponse.data[0].newTotalCharge).toLocaleString()}/mo</strong>. Please review and approve this change to continue coverage.
+                    </>
+                  ) : (
+                    <>
+                      An administrator has proposed updating your total subscription premium from <strong>${Number(pendingRequestsResponse.data[0].oldTotalCharge).toLocaleString()}/mo</strong> to <strong>${Number(pendingRequestsResponse.data[0].newTotalCharge).toLocaleString()}/mo</strong>. Please review and approve this change to continue coverage.
+                    </>
+                  )}
+                </p>
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    onClick={() => handleApprove(pendingRequestsResponse.data[0].id)}
+                    disabled={isApproving || isRejecting}
+                    className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    {isApproving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Approve Update
+                  </button>
+                  <button
+                    onClick={() => handleReject(pendingRequestsResponse.data[0].id)}
+                    disabled={isApproving || isRejecting}
+                    className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-100 px-4 py-2 text-sm font-bold text-amber-700 transition-all hover:bg-amber-200 disabled:opacity-50"
+                  >
+                    {isRejecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                    Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <PaymentSummaryCards payments={payments} />
         <PaymentMethod payments={payments} stripePaymentMethods={stripePaymentMethods} />

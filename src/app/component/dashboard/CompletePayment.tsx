@@ -24,8 +24,8 @@ export default function CompletePayment() {
   const [triggerConnect, { isLoading: isConnecting }] = useConnectStripeMutation();
   const [createCheckout, { isLoading: isCreatingSession }] = useCreateCheckoutSessionMutation();
 
-  const stripeStatus = statusData?.data?.isStripeConnected ? "connected" : "not-connected";
   const stripeDetails = statusData?.data;
+  const stripeStatus = stripeDetails?.hasSavedPaymentMethod ? "connected" : "not-connected";
   const activeQuote = quotesData?.data?.find((quoteGroup: any) => quoteGroup.quoteGroupId === selectedQuoteGroupId)
     || quotesData?.data?.find((quoteGroup: any) => quoteGroup.isAccepted)
     || quotesData?.data?.[0];
@@ -52,7 +52,8 @@ export default function CompletePayment() {
 
   const connectStripe = async () => {
     try {
-      const response = await triggerConnect().unwrap();
+      const payloadQuoteGroupId = selectedQuoteGroupId || activeQuote?.quoteGroupId;
+      const response = await triggerConnect({ quoteGroupId: payloadQuoteGroupId }).unwrap();
       if (response.data?.url) {
         window.location.href = response.data.url;
       }

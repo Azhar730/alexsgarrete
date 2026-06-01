@@ -375,18 +375,18 @@ export default function PetDetailsPage() {
         onClose={() => setEditOpen(false)}
         onSubmit={handleSave}
         defaultValues={{
-          name: dog.name,
-          gender: dog.gender,
-          spayedNeutered: dog.spayedNeutered,
-          birthday: dog.birthday,
-          primaryBreed: dog.primaryBreed,
-          additionalBreed: dog.additionalBreed,
-          colorCoat: dog.colorCoat,
-          microchipped: dog.microchipped,
-          microchipNumber: dog.microchipNumber,
-          microchipId: dog.microchipId,
+          name: currentDog.name,
+          gender: currentDog.gender,
+          spayedNeutered: currentDog.spayedNeutered,
+          birthday: currentDog.birthday,
+          primaryBreed: currentDog.primaryBreed,
+          additionalBreed: currentDog.additionalBreed,
+          colorCoat: currentDog.colorCoat,
+          microchipped: currentDog.microchipped,
+          microchipNumber: currentDog.microchipNumber,
+          microchipId: currentDog.microchipId,
         }}
-        currentImageUrl={dog.imageUrl}
+        currentImageUrl={currentDog.imageUrl}
       />
     </AppLayout>
   );

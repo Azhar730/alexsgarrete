@@ -15,13 +15,13 @@ const menuLinks = [
   { label: "How it Works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "FAQ", href: "#faq" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "Contact Us", href: "/contact-us" },
 ];
 
 const bottomLinks = [
-  { label: "Terms & Conditions", href: "#" },
-  { label: "Privacy Policy", href: "#" },
-  { label: "Accessibility Statement", href: "#" },
+  { label: "Terms & Conditions", href: "/terms-conditions" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
+  { label: "Accessibility Statement", href: "/accessibility" },
 ];
 
 export default function Footer() {
