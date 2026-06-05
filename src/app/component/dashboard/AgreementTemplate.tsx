@@ -30,6 +30,7 @@ interface AgreementTemplateProps {
   isSigned: boolean;
   signatureDocUrl?: string | null;
   representativeSignatureUrl?: string | null;
+  signedDate?: string | Date | null;
 
   // Detailed fields from onboarding form (Appendix A)
   clientFirstName?: string;
@@ -72,6 +73,7 @@ export const AgreementTemplate = ({
   isSigned,
   signatureDocUrl,
   representativeSignatureUrl,
+  signedDate,
 
   clientFirstName,
   clientLastName,
@@ -100,6 +102,23 @@ export const AgreementTemplate = ({
     day: "numeric",
   });
 
+  const formatSignedDate = (dateStr?: string | Date | null) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return "";
+    }
+  };
+
+  const displayDate = signedDate ? formatSignedDate(signedDate) : currentDate;
+
   // Derived Client info helper
   const finalClientFirstName = clientFirstName || clientName.split(" ")[0] || "";
   const finalClientLastName = clientLastName || clientName.split(" ").slice(1).join(" ") || "";
@@ -109,6 +128,10 @@ export const AgreementTemplate = ({
   const finalReprFirstName = representativeFirstName || representativeName.split(" ")[0] || "";
   const finalReprLastName = representativeLastName || representativeName.split(" ").slice(1).join(" ") || "";
   const finalReprFullName = `${finalReprFirstName} ${representativeMiddleInitial ? representativeMiddleInitial + " " : ""}${finalReprLastName}`.trim() || representativeName;
+
+  const finalAdminName = representativeSignatureUrl?.startsWith("TYPED:")
+    ? representativeSignatureUrl.substring(6)
+    : (adminName || "Alex Garrett");
 
   return (
     <div 
@@ -126,7 +149,7 @@ export const AgreementTemplate = ({
       </h2>
 
       <p className="mb-3 text-justify">
-        This Pet Guardianship Agreement (the <strong>&quot;Agreement&quot;</strong>) is entered into on <strong><u>{currentDate}</u></strong> (the <strong>&quot;Effective Date&quot;</strong>) by <strong><u>{finalClientFullName || "[Pet Owner Name]"}</u></strong> (the <strong>&quot;Client&quot;</strong>) and <strong>K9 Encore LLC</strong>, a Texas limited liability company (<strong>&quot;Encore&quot;</strong>).
+        This Pet Guardianship Agreement (the <strong>&quot;Agreement&quot;</strong>) is entered into on <strong><u>{displayDate}</u></strong> (the <strong>&quot;Effective Date&quot;</strong>) by <strong><u>{finalClientFullName || "[Pet Owner Name]"}</u></strong> (the <strong>&quot;Client&quot;</strong>) and <strong>K9 Encore LLC</strong>, a Texas limited liability company (<strong>&quot;Encore&quot;</strong>).
       </p>
 
       {/* Purpose */}
@@ -427,23 +450,23 @@ export const AgreementTemplate = ({
           <div>
             <div className="flex items-end w-full">
               <span className="font-bold text-[10px] text-slate-800 mr-2 w-16 shrink-0 mb-1">Signature:</span>
-              <div className="flex-grow border-b border-slate-400 relative h-10 flex items-center justify-start pb-0.5">
+              <div className="flex-grow border-b border-slate-400 relative h-16 flex items-center justify-start pb-0.5">
                 {isSigned && signatureDocUrl ? (
                   signatureDocUrl.startsWith("TYPED:") ? (
-                    <span style={{ fontFamily: "'Caveat', cursive" }} className="text-3xl text-slate-800 absolute bottom-0.5 left-2">
+                    <span style={{ fontFamily: "'Caveat', cursive" }} className="text-4xl text-slate-800 absolute bottom-2 left-2">
                       {signatureDocUrl.substring(6)}
                     </span>
                   ) : signatureDocUrl.endsWith(".pdf") || signatureDocUrl.endsWith(".doc") || signatureDocUrl.endsWith(".docx") ? (
-                    <span className="text-[10px] text-emerald-600 font-bold absolute bottom-1 left-2">Document Signed</span>
+                    <span className="text-[10px] text-emerald-600 font-bold absolute bottom-2 left-2">Document Signed</span>
                   ) : (
                     <img
                       src={signatureDocUrl}
                       alt="Client Signature"
-                      className="max-h-8 object-contain absolute bottom-1 left-2"
+                      className="max-h-14 object-contain absolute bottom-2 left-2"
                     />
                   )
                 ) : (
-                  <span className="text-[10px] text-slate-300 italic absolute bottom-1 left-2">Signature Pending</span>
+                  <span className="text-[10px] text-slate-300 italic absolute bottom-2 left-2">Signature Pending</span>
                 )}
               </div>
             </div>
@@ -467,7 +490,7 @@ export const AgreementTemplate = ({
               <span className="font-bold text-[10px] text-slate-800 mr-2 w-16 shrink-0 mb-1">Date:</span>
               <div className="flex-grow border-b border-slate-400 relative h-8 flex items-end justify-start pb-0.5">
                 <span className="text-[11px] text-slate-800 pl-2 font-medium">
-                  {isSigned ? currentDate : ""}
+                  {isSigned ? displayDate : ""}
                 </span>
               </div>
             </div>
@@ -482,22 +505,22 @@ export const AgreementTemplate = ({
           <div>
             <div className="flex items-end w-full">
               <span className="font-bold text-[10px] text-slate-800 mr-2 w-16 shrink-0 mb-1">Signature:</span>
-              <div className="flex-grow border-b border-slate-400 relative h-10 flex items-center justify-start pb-0.5">
+              <div className="flex-grow border-b border-slate-400 relative h-16 flex items-center justify-start pb-0.5">
                 {representativeSignatureUrl ? (
                   representativeSignatureUrl.startsWith("TYPED:") ? (
-                    <span style={{ fontFamily: "'Caveat', cursive" }} className="text-3xl text-slate-800 absolute bottom-0.5 left-2">
+                    <span style={{ fontFamily: "'Caveat', cursive" }} className="text-4xl text-slate-800 absolute bottom-2 left-2">
                       {representativeSignatureUrl.substring(6)}
                     </span>
                   ) : (
                     <img
                       src={representativeSignatureUrl}
                       alt="Representative Signature"
-                      className="max-h-8 object-contain absolute bottom-1 left-2"
+                      className="max-h-14 object-contain absolute bottom-2 left-2"
                     />
                   )
                 ) : (
-                  <span style={{ fontFamily: "'Caveat', cursive" }} className="text-3xl text-slate-600 absolute bottom-0.5 left-2">
-                    {adminName || "Alex Garrett"}
+                  <span style={{ fontFamily: "'Caveat', cursive" }} className="text-4xl text-slate-600 absolute bottom-2 left-2">
+                    {finalAdminName}
                   </span>
                 )}
               </div>
@@ -510,7 +533,7 @@ export const AgreementTemplate = ({
               <span className="font-bold text-[10px] text-slate-800 mr-2 w-16 shrink-0 mb-1">Full Name:</span>
               <div className="flex-grow border-b border-slate-400 relative h-8 flex items-end justify-start pb-0.5">
                 <span className="text-[11px] text-slate-800 pl-2 font-medium">
-                  {adminName || "Alex Garrett"}
+                  {finalAdminName}
                 </span>
               </div>
             </div>
@@ -522,7 +545,7 @@ export const AgreementTemplate = ({
               <span className="font-bold text-[10px] text-slate-800 mr-2 w-16 shrink-0 mb-1">Date:</span>
               <div className="flex-grow border-b border-slate-400 relative h-8 flex items-end justify-start pb-0.5">
                 <span className="text-[11px] text-slate-800 pl-2 font-medium">
-                  {currentDate}
+                  {isSigned ? displayDate : currentDate}
                 </span>
               </div>
             </div>

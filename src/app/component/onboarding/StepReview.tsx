@@ -179,7 +179,20 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
           stepId={3}
         >
           <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-            <ReviewRow label="Full Name" value={representative?.fullName} />
+            <ReviewRow
+              label="Full Name"
+              value={
+                representative
+                  ? [
+                      representative.firstName,
+                      representative.middleInitial,
+                      representative.lastName,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  : undefined
+              }
+            />
             <ReviewRow
               label="Relationship"
               value={representative?.relationship}

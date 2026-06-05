@@ -1,11 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
-
-const SignatureCanvas = dynamic(() => import("react-signature-canvas"), {
-  ssr: false,
-}) as any;
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
 const dataURLtoFile = (dataurl: string, filename: string): File => {
   const arr = dataurl.split(",");
@@ -17,6 +12,61 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
     u8arr[n] = bstr.charCodeAt(n);
   }
   return new File([u8arr], filename, { type: mime });
+};
+
+const cropSignatureCanvas = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+
+  let minX = w, maxX = 0, minY = h, maxY = 0;
+  let found = false;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 4;
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      const a = data[idx + 3];
+
+      const isWhite = r > 240 && g > 240 && b > 240;
+      if (a > 0 && !isWhite) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        found = true;
+      }
+    }
+  }
+
+  if (!found) return canvas;
+
+  const padding = 12;
+  minX = Math.max(0, minX - padding);
+  minY = Math.max(0, minY - padding);
+  maxX = Math.min(w - 1, maxX + padding);
+  maxY = Math.min(h - 1, maxY + padding);
+
+  const cropWidth = maxX - minX + 1;
+  const cropHeight = maxY - minY + 1;
+
+  const cropCanvas = document.createElement("canvas");
+  cropCanvas.width = cropWidth;
+  cropCanvas.height = cropHeight;
+  const cropCtx = cropCanvas.getContext("2d");
+  if (!cropCtx) return canvas;
+
+  cropCtx.fillStyle = "#ffffff";
+  cropCtx.fillRect(0, 0, cropWidth, cropHeight);
+  cropCtx.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+  return cropCanvas;
 };
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,11 +120,6 @@ export default function SignAgreement() {
   const activeApplication = myApplications?.data?.[0];
   
   const { data: allUsersResponse } = useGetAllUserQuery(undefined);
-  const adminName = useMemo(() => {
-    if (!allUsersResponse?.data) return "";
-    const admin = allUsersResponse.data.find((u: any) => u.role === "ADMIN");
-    return admin?.fullName || "";
-  }, [allUsersResponse]);
 
   const { data: familyHistoryResponse } = useGetFamilyHealthHistoryByApplicationQuery(
     activeApplication?.id ?? "",
@@ -166,6 +211,13 @@ export default function SignAgreement() {
   const dueDay = Number(queryParams.get("dueDay") || 1);
   const lateFee = Number(queryParams.get("lateFee") || 25);
   const representativeSignatureUrl = queryParams.get("representativeSignatureUrl") || null;
+  const queryAdminName = queryParams.get("adminName") || null;
+  const adminName = useMemo(() => {
+    if (queryAdminName) return queryAdminName;
+    if (!allUsersResponse?.data) return "";
+    const admin = allUsersResponse.data.find((u: any) => u.role === "ADMIN");
+    return admin?.fullName || "";
+  }, [allUsersResponse, queryAdminName]);
   const isLoadingDocs = quotesData === undefined;
 
   const currentAgreement = useMemo(() => {
@@ -198,6 +250,116 @@ export default function SignAgreement() {
     }
   }, [signatureMode]);
 
+  const isDrawingRef = useRef(false);
+  const lastPos = useRef<{ x: number; y: number } | null>(null);
+
+  const getPos = (e: any, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const clientX = e.clientX ?? (e.touches?.[0]?.clientX ?? e.changedTouches?.[0]?.clientX ?? 0);
+    const clientY = e.clientY ?? (e.touches?.[0]?.clientY ?? e.changedTouches?.[0]?.clientY ?? 0);
+    
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
+
+  const startDraw = useCallback((e: any) => {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    isDrawingRef.current = true;
+    setHasSigned(true);
+    lastPos.current = getPos(e, canvas);
+  }, []);
+
+  const draw = useCallback((e: any) => {
+    if (!isDrawingRef.current) return;
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPos(e, canvas);
+    if (lastPos.current) {
+      ctx.strokeStyle = "#1e3a8a";
+      ctx.lineWidth = 3.0; // Moderate boldness matching admin side
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(lastPos.current.x, lastPos.current.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+    lastPos.current = pos;
+  }, []);
+
+  const endDraw = useCallback(() => {
+    isDrawingRef.current = false;
+    lastPos.current = null;
+    const canvas = sigCanvasRef.current;
+    if (canvas) {
+      const croppedCanvas = cropSignatureCanvas(canvas);
+      setDrawnSignatureUrl(croppedCanvas.toDataURL("image/png"));
+    }
+  }, []);
+
+  const clearCanvas = () => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setHasSigned(false);
+    setDrawnSignatureUrl(null);
+  };
+
+  // Init canvas with white background
+  useEffect(() => {
+    if (signatureMode !== "draw") return;
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, [signatureMode, canvasWidth, canvasHeight]);
+
+  // Handle touch interactions directly to ensure they are smooth and prevent scrolling
+  useEffect(() => {
+    if (signatureMode !== "draw") return;
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startDraw(e);
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      draw(e);
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      endDraw();
+    };
+
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+    canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("touchstart", handleTouchStart);
+      canvas.removeEventListener("touchmove", handleTouchMove);
+      canvas.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [signatureMode, startDraw, draw, endDraw]);
+
   const form = useForm<AgreementFormValues>({
     resolver: zodResolver(agreementSchema),
     defaultValues: { agreed: false },
@@ -227,16 +389,15 @@ export default function SignAgreement() {
       }
 
       if (signatureMode === "draw") {
-        if (!hasSigned || !sigCanvasRef.current || sigCanvasRef.current.isEmpty()) {
+        if (!hasSigned || !sigCanvasRef.current) {
           toast.error("Please draw your signature before continuing");
           return;
         }
 
         toast.info("Uploading your signature...");
-        const canvas = sigCanvasRef.current.getTrimmedCanvas 
-          ? sigCanvasRef.current.getTrimmedCanvas() 
-          : sigCanvasRef.current.getCanvas();
-        const signatureDataUrl = canvas.toDataURL("image/png");
+        const canvas = sigCanvasRef.current;
+        const croppedCanvas = cropSignatureCanvas(canvas);
+        const signatureDataUrl = croppedCanvas.toDataURL("image/png");
         const signatureFile = dataURLtoFile(signatureDataUrl, "signature.png");
 
         const sigFormData = new FormData();
@@ -541,6 +702,7 @@ export default function SignAgreement() {
                           ? drawnSignatureUrl
                           : null
                       }
+                      signedDate={currentAgreement?.signedAt || null}
                       healthAnswers={healthAnswers}
                       familyHealthHistories={familyHealthHistories}
                       representativeSignatureUrl={representativeSignatureUrl}
@@ -727,28 +889,16 @@ export default function SignAgreement() {
                           )}
                           
                           {/* Signature canvas */}
-                          <SignatureCanvas
+                          <canvas
                             ref={sigCanvasRef}
-                            penColor="#1e3a8a"
-                            canvasProps={{
-                              width: canvasWidth,
-                              height: canvasHeight,
-                              className: "w-full h-full block rounded-xl touch-none",
-                              style: { width: "100%", height: "100%", touchAction: "none" }
-                            }}
-                            onBegin={() => setHasSigned(true)}
-                            onEnd={() => {
-                              if (sigCanvasRef.current) {
-                                try {
-                                  const canvas = sigCanvasRef.current.getTrimmedCanvas 
-                                    ? sigCanvasRef.current.getTrimmedCanvas() 
-                                    : sigCanvasRef.current.getCanvas();
-                                  setDrawnSignatureUrl(canvas.toDataURL("image/png"));
-                                } catch (e) {
-                                  console.error("Error setting signature image preview:", e);
-                                }
-                              }
-                            }}
+                            width={canvasWidth}
+                            height={canvasHeight}
+                            className="w-full h-full block rounded-xl touch-none"
+                            style={{ width: "100%", height: "100%", touchAction: "none", cursor: "crosshair" }}
+                            onMouseDown={startDraw}
+                            onMouseMove={draw}
+                            onMouseUp={endDraw}
+                            onMouseLeave={endDraw}
                           />
                         </div>
                         
@@ -761,13 +911,7 @@ export default function SignAgreement() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                if (sigCanvasRef.current) {
-                                  sigCanvasRef.current.clear();
-                                  setHasSigned(false);
-                                  setDrawnSignatureUrl(null);
-                                }
-                              }}
+                              onClick={clearCanvas}
                               className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-2 gap-1 rounded"
                             >
                               <X size={14} />

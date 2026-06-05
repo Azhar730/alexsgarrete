@@ -74,7 +74,9 @@ export default function DashboardHeader() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const pathname = usePathname();
 
-  const { data: activitiesResponse, isLoading: isLoadingActivities } = useGetMyActivitiesQuery(undefined);
+  const { data: activitiesResponse, isLoading: isLoadingActivities } = useGetMyActivitiesQuery(undefined, {
+    pollingInterval: 15000,
+  });
   const [markAsRead] = useMarkActivityAsReadMutation();
   const [clearAll] = useClearAllActivitiesMutation();
   const [deleteActivity] = useDeleteActivityMutation();

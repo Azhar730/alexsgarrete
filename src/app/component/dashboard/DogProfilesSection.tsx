@@ -2,13 +2,16 @@
 import { Button } from "@/components/ui/button";
 import DogProfileCard from "./DogProfileCard";
 import { DogProfile } from ".";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddDogModal } from "./AddDogModal";
 import { useGetMeQuery } from "@/redux/api/userApi";
 import { useGetMyApplicationsQuery, useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
 import { toast } from "sonner";
 import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 import { useGetMyAgreementsQuery } from "@/redux/api/agreementApi";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
+import { AgreementTemplate } from "./AgreementTemplate";
 
 type ApiPet = {
   id: string;
@@ -60,6 +63,7 @@ export default function DogProfilesSection({
   applicationId?: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [activeQuoteGroupId, setActiveQuoteGroupId] = useState<string | null>(null);
   const { data: userData } = useGetMeQuery({});
   const { data: applicationsResponse } = useGetMyApplicationsQuery(undefined);
   const { data: quotesResponse } = useGetMyQuotesQuery(undefined);
@@ -71,6 +75,17 @@ export default function DogProfilesSection({
   console.log("agreementsResponse", agreementsResponse)
   console.log("myPayments", myPayments)
   const pets: ApiPet[] = userData?.data?.pets || [];
+
+  useEffect(() => {
+    if (activeQuoteGroupId) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [activeQuoteGroupId]);
 
   const currentApplication = applicationsResponse?.data?.find((a: any) => a.id === applicationId) || applicationsResponse?.data?.[0];
   const quoteGroups = quotesResponse?.data || [];
@@ -143,6 +158,28 @@ export default function DogProfilesSection({
     };
   });
 
+  const selectedQuoteGroup = quoteGroups.find((qg: any) => qg.quoteGroupId === activeQuoteGroupId);
+  const currentAgreement = agreements.find((a: any) =>
+    selectedQuoteGroup?.quotes?.some((q: any) => q.id === a.quoteId)
+  );
+  const activeApplication = currentApplication || applicationsResponse?.data?.[0];
+
+  const getAgreementParams = (quoteGroup: any) => {
+    const quote = quoteGroup?.quotes?.[0];
+    const agrementUrl = quote?.agrementUrl || "";
+    const queryStr = agrementUrl.includes("?") ? agrementUrl.split("?")[1] : "";
+    const params = new URLSearchParams(queryStr);
+    return {
+      transportFee: Number(params.get("transportFee") || 50),
+      spayNeuterFee: Number(params.get("spayNeuterFee") || 150),
+      dueDay: Number(params.get("dueDay") || 1),
+      lateFee: Number(params.get("lateFee") || 25),
+      representativeSignatureUrl: params.get("representativeSignatureUrl") || null,
+      adminName: params.get("adminName") || null,
+      setupFee: Number(quoteGroup?.setupFee || 10),
+    };
+  };
+
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -177,6 +214,7 @@ export default function DogProfilesSection({
               key={dog.id}
               dog={dog}
               acceptedQuoteSigned={isQuoteSigned(dog.quoteGroupId)}
+              onViewAgreement={setActiveQuoteGroupId}
             />
           ))
         ) : (
@@ -191,6 +229,130 @@ export default function DogProfilesSection({
         onClose={() => setModalOpen(false)}
         applicationId={currentApplication?.status === "APPROVED" ? currentApplication?.id : undefined}
       />
+
+      {/* View Agreement Modal */}
+      <AnimatePresence>
+        {activeQuoteGroupId && selectedQuoteGroup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
+            onClick={() => setActiveQuoteGroupId(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white z-10 shrink-0">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Pet Guardianship Agreement</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {selectedQuoteGroup?.quotes?.map((q: any) => q.pet?.name).join(", ")} • Active
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveQuoteGroupId(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-6 select-none custom-scrollbar overscroll-contain" data-lenis-prevent>
+                {(() => {
+                  const params = getAgreementParams(selectedQuoteGroup);
+                  const personInfo = activeApplication?.personInfo;
+                  const rep = activeApplication?.representative;
+
+                  return (
+                    <AgreementTemplate
+                      clientName={
+                        personInfo
+                          ? `${personInfo.firstName} ${personInfo.middleInitial ? personInfo.middleInitial + " " : ""}${personInfo.lastName}`
+                          : userData?.data?.fullName || ""
+                      }
+                      clientAddress={
+                        personInfo
+                          ? `${personInfo.streetAddress || ""}, ${personInfo.city || ""}, ${personInfo.state || ""} ${personInfo.zipCode || ""}`
+                          : ""
+                      }
+                      clientPhone={
+                        personInfo?.cellPhone ||
+                        personInfo?.homePhone ||
+                        personInfo?.workPhone ||
+                        ""
+                      }
+                      clientEmail={userData?.data?.email || ""}
+                      representativeName={rep?.fullName || ""}
+                      representativeEmail={rep?.email || ""}
+                      representativePhone={
+                        rep?.phoneNumber ||
+                        rep?.cellPhone ||
+                        rep?.homePhone ||
+                        ""
+                      }
+                      adminName={params.adminName || ""}
+
+                      clientFirstName={personInfo?.firstName || ""}
+                      clientLastName={personInfo?.lastName || ""}
+                      clientMiddleInitial={personInfo?.middleInitial || ""}
+                      clientSsnLast4={personInfo?.ssnLast4 || ""}
+                      clientHomePhone={personInfo?.homePhone || ""}
+                      clientWorkPhone={personInfo?.workPhone || ""}
+
+                      representativeFirstName={rep?.fullName?.split(" ")[0] || ""}
+                      representativeLastName={rep?.fullName?.split(" ").slice(1).join(" ") || ""}
+                      representativeMiddleInitial={rep?.middleInitial || ""}
+                      representativeAddress={rep?.streetAddress || ""}
+                      representativeCityStateZip={
+                        rep 
+                          ? `${rep.city || ""}${rep.state ? ", " + rep.state : ""}${rep.zipCode ? " " + rep.zipCode : ""}` 
+                          : ""
+                      }
+                      representativeRelation={rep?.relationship || ""}
+                      representativeHomePhone={rep?.homePhone || ""}
+                      representativeWorkPhone={rep?.workPhone || ""}
+
+                      transportFeePerDog={params.transportFee}
+                      spayNeuterFeePerDog={params.spayNeuterFee}
+                      dueDay={params.dueDay}
+                      lateFee={params.lateFee}
+
+                      pets={
+                        (selectedQuoteGroup?.quotes || []).map((q: any) => ({
+                          name: q.pet?.name || "N/A",
+                          species: q.pet?.species || "Dog",
+                          gender: q.pet?.gender || "MALE",
+                          spayedNeutered: q.pet?.isSpayedNeutered ? "Yes" : "No",
+                          primaryBreed: q.pet?.primaryBreed || "Unknown",
+                          additionalBreed: q.pet?.additionalBreed || "None",
+                          colorsAndCoat: q.pet?.colorsAndCoat || "N/A",
+                          birthday: q.pet?.birthday,
+                          isMicrochipped: q.pet?.isMicrochipped ? "Yes" : "No",
+                          microchipNumber: q.pet?.microchipNumber,
+                          petCharge: Number(q.pet?.petCharge || q.petCharge || 0),
+                        }))
+                      }
+                      setupFee={params.setupFee}
+                      totalMonthlyCharge={Number(selectedQuoteGroup?.totalMonthlyCharge || 0)}
+                      isSigned={!!currentAgreement?.isSigned}
+                      signatureDocUrl={currentAgreement?.signatureDocUrl || null}
+                      signedDate={currentAgreement?.signedAt || null}
+                      representativeSignatureUrl={params.representativeSignatureUrl}
+                    />
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

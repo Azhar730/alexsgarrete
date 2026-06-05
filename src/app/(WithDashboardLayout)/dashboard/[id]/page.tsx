@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { DogFormData, EditDogModal } from "@/app/component/dashboard/EditDogModal";
 import { useParams } from "next/navigation";
-import { useGetPetDetailsQuery } from "@/redux/api/onboardingApi";
+import { useGetPetDetailsQuery, useUpdatePetByIdMutation } from "@/redux/api/onboardingApi";
+import { useUploadFileMutation } from "@/redux/api/storageApi";
 import AppLayout from "@/app/component/dashboard/AppLayout";
 
 // ─── Types ────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ function toYYYYMMDD(dateStr: string) {
   }
 }
 
-function calcAge(dateStr: string): number | null {
+function calcAge(dateStr?: string): number | null {
   if (!dateStr) return null;
   try {
     const d = new Date(dateStr);
@@ -117,7 +118,7 @@ export default function PetDetailsPage() {
 
   const params = useParams();
   const petId = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const { data: petDetailsResponse, isLoading } = useGetPetDetailsQuery(
+  const { data: petDetailsResponse, isLoading, refetch: refetchPetDetails } = useGetPetDetailsQuery(
     petId || "",
     { skip: !petId }
   );
@@ -136,7 +137,7 @@ export default function PetDetailsPage() {
       microchipped: pet.isMicrochipped ? "yes" : "no",
       microchipNumber: pet.microchipNumber || "",
       microchipId: pet.microchipId || "",
-      imageUrl: pet.photoUrl || "/dog.png",
+      imageUrl: pet.photoUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop",
     };
   }, [petDetailsResponse]);
 
@@ -144,30 +145,55 @@ export default function PetDetailsPage() {
    const age = calcAge(currentDog.birthday);
   const ageLabel = age !== null ? `${age} years old` : currentDog.birthday;
 
+  const sendQuotes = petDetailsResponse?.data?.sendQuotes || [];
+  const activeQuote = sendQuotes[0];
+  const quoteGroupId = activeQuote?.quoteGroupId || activeQuote?.id;
+  const hasSignedAgreement = sendQuotes.some((q: any) =>
+    q.agreements?.some((a: any) => a.isSigned || a.signatureDocUrl)
+  );
+
+  const [uploadFile] = useUploadFileMutation();
+  const [updatePetById] = useUpdatePetByIdMutation();
+
   const handleSave = async (data: DogFormData) => {
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      let photoUrl = petDetailsResponse?.data?.photoUrl || undefined;
 
-    let imageUrl = dog.imageUrl;
-    if (data.imageFile) {
-      imageUrl = URL.createObjectURL(data.imageFile);
+      if (data.imageFile) {
+        toast.info("Uploading profile picture...");
+        const formData = new FormData();
+        formData.append("files", data.imageFile);
+        const uploadRes = await uploadFile(formData).unwrap();
+        photoUrl = uploadRes.url || (uploadRes as any)?.data?.urls?.[0];
+
+        if (!photoUrl) {
+          toast.error("Failed to upload profile picture");
+          return;
+        }
+      }
+
+      toast.info("Updating profile...");
+      await updatePetById({
+        petId: petId || "",
+        name: data.name,
+        gender: data.gender.toUpperCase() as any,
+        isSpayedNeutered: data.spayedNeutered === "yes",
+        birthday: data.birthday ? new Date(data.birthday).toISOString() : undefined,
+        primaryBreed: data.primaryBreed,
+        additionalBreed: data.additionalBreed?.trim() || null,
+        colorsAndCoat: data.colorCoat,
+        isMicrochipped: data.microchipped === "yes",
+        microchipNumber: data.microchipped === "yes" && data.microchipNumber?.trim() ? data.microchipNumber.trim() : null,
+        microchipId: data.microchipped === "yes" && data.microchipId?.trim() ? data.microchipId.trim() : null,
+        photoUrl: photoUrl || null,
+      } as any).unwrap();
+
+      toast.success("Profile updated successfully!");
+      refetchPetDetails();
+    } catch (error: any) {
+      console.error("Failed to update pet details:", error);
+      toast.error(error?.data?.message || "Failed to update profile. Please try again.");
     }
-
-    setDog({
-      name: data.name,
-      gender: data.gender,
-      spayedNeutered: data.spayedNeutered,
-      birthday: data.birthday,
-      primaryBreed: data.primaryBreed,
-      additionalBreed: data.additionalBreed ?? "",
-      colorCoat: data.colorCoat,
-      microchipped: data.microchipped,
-      microchipNumber: data.microchipNumber ?? "",
-      microchipId: data.microchipId ?? "",
-      imageUrl,
-    });
-
-    toast.success("Profile updated successfully!");
   };
 
   if (isLoading) {
@@ -198,7 +224,7 @@ export default function PetDetailsPage() {
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-gray-100 shrink-0">
               <Image
-                src={currentDog.imageUrl || "/dog.png"}
+                src={currentDog.imageUrl || "https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&h=200&fit=crop"}
                 alt={currentDog.name}
                 fill
                 className="object-cover"
@@ -263,24 +289,45 @@ export default function PetDetailsPage() {
         )}
 
         {petDetailsResponse?.data?.status === "QUOTE_ACCEPTED" && (
-          <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-teal-600 animate-ping shrink-0" />
-                Quote Accepted! Next Step: Sign Agreement
-              </h2>
-              <p className="text-sm text-slate-600">
-                You've successfully accepted the quote for <span className="font-semibold">{currentDog.name}</span>. Please sign the final agreement to proceed.
-              </p>
+          hasSignedAgreement ? (
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-600 animate-ping shrink-0" />
+                  Agreement Signed! Next Step: Complete Payment
+                </h2>
+                <p className="text-sm text-slate-600">
+                  You've successfully signed the agreement for <span className="font-semibold">{currentDog.name}</span>. Please complete the final payment step to activate your coverage.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end">
+                <Link href={`/dashboard/quote/payment${quoteGroupId ? `?quoteGroupId=${quoteGroupId}` : ""}`} className="w-full md:w-auto">
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm w-full cursor-pointer transition-colors">
+                    Pay Now
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end">
-              <Link href="/dashboard/quote/agreement" className="w-full md:w-auto">
-                <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm w-full cursor-pointer transition-colors">
-                  Sign Agreement
-                </Button>
-              </Link>
+          ) : (
+            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 shadow-sm p-4 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-teal-600 animate-ping shrink-0" />
+                  Quote Accepted! Next Step: Sign Agreement
+                </h2>
+                <p className="text-sm text-slate-600">
+                  You've successfully accepted the quote for <span className="font-semibold">{currentDog.name}</span>. Please sign the final agreement to proceed.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0 w-full md:w-auto justify-end">
+                <Link href={`/dashboard/quote/agreement${quoteGroupId ? `?quoteGroupId=${quoteGroupId}` : ""}`} className="w-full md:w-auto">
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl px-5 py-2.5 text-sm w-full cursor-pointer transition-colors">
+                    Sign Agreement
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* ── Pet Details Card ── */}
@@ -374,7 +421,13 @@ export default function PetDetailsPage() {
                 const status = petDetailsResponse?.data?.status || "ACTIVE";
                 if (status === "ACTIVE") return <span className="text-emerald-600 font-bold">Policy Active</span>;
                 if (status === "QUOTE_READY") return <span className="text-blue-600 font-bold">Awaiting Quote Acceptance</span>;
-                if (status === "QUOTE_ACCEPTED") return <span className="text-teal-600 font-bold">Awaiting Signed Agreement & Payment</span>;
+                if (status === "QUOTE_ACCEPTED") {
+                  return hasSignedAgreement ? (
+                    <span className="text-emerald-600 font-bold">Awaiting Payment</span>
+                  ) : (
+                    <span className="text-teal-600 font-bold">Awaiting Signed Agreement & Payment</span>
+                  );
+                }
                 if (status === "IN_PROGRESS") return <span className="text-amber-600 font-bold">Under Review</span>;
                 return <span className="text-slate-500 font-bold">Pending Setup</span>;
               })()} 

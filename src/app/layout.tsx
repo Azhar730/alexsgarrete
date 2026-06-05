@@ -8,7 +8,7 @@ import { Header } from "@/components/header";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Encore",
+  title: "k9 Encore",
   description: "Loving Care When You're No Longer There",
 };
 // test its added

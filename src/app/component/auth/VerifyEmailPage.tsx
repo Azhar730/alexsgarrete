@@ -33,9 +33,14 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const [verifyOtp] = useVerifyOtpMutation();
   const [resendOtp] = useResendOtpMutation();
-  // In a real app, get this from router state / context
   const userEmail = searchParams.get("email");
   const purpose = (searchParams.get("purpose") as "email_verification" | "password_reset") || "email_verification";
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
 
   const form = useForm<VerifyValues>({
     resolver: zodResolver(verifySchema),
@@ -101,13 +106,14 @@ export default function VerifyEmailPage() {
       form.reset();
       setResent(true);
 
-      const expires = Date.now() + 60 * 1000;
+      const expires = Date.now() + 5 * 60 * 1000;
       try {
         sessionStorage.setItem(`otp_expiry:${purpose}:${userEmail}`, String(expires));
       } catch (e) {}
 
-      setSecondsLeft(60);
+      setSecondsLeft(5 * 60);
       setTimeout(() => setResent(false), 3000);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to resend verification code.");
@@ -154,7 +160,7 @@ export default function VerifyEmailPage() {
                 <div className="flex items-center justify-center gap-3">
                   <FormMessage className="text-xs text-red-500 text-center" />
                   {secondsLeft > 0 ? (
-                    <span className="text-xs text-gray-500">Code expires in {secondsLeft}s</span>
+                    <span className="text-xs text-gray-500">Code expires in {formatTime(secondsLeft)}</span>
                   ) : (
                     <span className="text-xs text-gray-500">Code expired</span>
                   )}
@@ -184,7 +190,7 @@ export default function VerifyEmailPage() {
             disabled={isResending || secondsLeft > 0}
             className="text-[#5C7FC4] cursor-pointer font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
-            {isResending ? "Sending…" : secondsLeft > 0 ? `Resend in ${secondsLeft}s` : "Resend"}
+            {isResending ? "Sending…" : secondsLeft > 0 ? `Resend in ${formatTime(secondsLeft)}` : "Resend"}
           </button>
         )}
       </p>

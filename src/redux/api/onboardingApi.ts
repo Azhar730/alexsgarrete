@@ -123,6 +123,14 @@ const onboardingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["users"],
     }),
+    updatePetById: builder.mutation({
+      query: ({ petId, ...payload }: PetPayload & { petId: string }) => ({
+        url: `/application/pet/${petId}`,
+        method: "PATCH",
+        body: payload,
+      }),
+      invalidatesTags: ["users"],
+    }),
     deletePet: builder.mutation({
       query: (petId: string) => ({
         url: `/application/pet/${petId}`,
@@ -206,6 +214,7 @@ export const {
   useGetAnswerByNestedQuestionQuery,
   useGetMyApplicationsQuery,
   useUpdatePetMutation,
+  useUpdatePetByIdMutation,
   useDeletePetMutation,
   useUpdateProfileMutation,
   useUpdateRepresentativeMutation,

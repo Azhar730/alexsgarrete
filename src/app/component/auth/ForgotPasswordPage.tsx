@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
       const payload = { email: values.email, purpose: "password_reset" };
       await sendOtp(payload).unwrap();
       setSubmitted(true);
-      const expires = Date.now() + 60 * 1000;
+      const expires = Date.now() + 5 * 60 * 1000;
       try {
         sessionStorage.setItem(`otp_expiry:password_reset:${values.email}`, String(expires));
       } catch (e) {}

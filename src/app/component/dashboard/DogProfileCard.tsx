@@ -38,9 +38,11 @@ const statusConfig: Record<
 export default function DogProfileCard({
   dog,
   acceptedQuoteSigned = false,
+  onViewAgreement,
 }: {
   dog: DogProfile;
   acceptedQuoteSigned?: boolean;
+  onViewAgreement?: (quoteGroupId: string) => void;
 }) {
   console.log("Dog Profile", dog)
   const status = statusConfig[dog.status];
@@ -83,7 +85,7 @@ export default function DogProfileCard({
           {status.label}
         </Badge>
       </div>
-
+ 
       {/* Billing info */}
       <div className="grid grid-cols-2 gap-3 rounded bg-primary/10 px-8 py-4 border border-slate-100">
         <div>
@@ -103,26 +105,53 @@ export default function DogProfileCard({
           </p>
         </div>
       </div>
-
-      <div className="flex gap-2 mt-auto">
-        <Link href={`/dashboard/${dog.id}`} className="flex-1">
-          <Button
-            variant="ghost"
-            size="lg"
-            className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer border border-slate-200 rounded-xl text-sm font-semibold py-2 h-auto"
-          >
-            See Details
-          </Button>
-        </Link>
-        {(dog.status === "quote-ready" || dog.status === "quote-accepted") && (
-          <Link
-            href={actionHref}
-            className="flex-1"
-          >
+ 
+      <div className="flex flex-col gap-2 mt-auto">
+        <div className="flex gap-2">
+          <Link href={`/dashboard/${dog.id}`} className="flex-1">
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer border border-slate-200 rounded-xl text-sm font-semibold py-2 h-auto"
+            >
+              See Details
+            </Button>
+          </Link>
+          {(dog.status === "active" || showPayNow) && dog.quoteGroupId && (
+            <div className="flex-1">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => onViewAgreement?.(dog.quoteGroupId!)}
+                className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer border border-slate-200 rounded-xl text-sm font-semibold py-2 h-auto"
+              >
+                See Agreement
+              </Button>
+            </div>
+          )}
+          {(dog.status === "quote-ready" || (dog.status === "quote-accepted" && !acceptedQuoteSigned)) && (
+            <Link
+              href={actionHref}
+              className="flex-1"
+            >
+              <Button
+                size="lg"
+                className={cn(
+                  "w-full cursor-pointer rounded-xl text-sm font-semibold py-2 h-auto text-white transition-colors shadow-sm",
+                  actionClassName
+                )}
+              >
+                {actionLabel}
+              </Button>
+            </Link>
+          )}
+        </div>
+        {showPayNow && (
+          <Link href={actionHref} className="w-full">
             <Button
               size="lg"
               className={cn(
-                "w-full cursor-pointer rounded-xl text-sm font-semibold py-2 h-auto text-white transition-colors shadow-sm",
+                "w-full cursor-pointer rounded-xl text-sm font-semibold py-2.5 h-auto text-white transition-colors shadow-sm",
                 actionClassName
               )}
             >

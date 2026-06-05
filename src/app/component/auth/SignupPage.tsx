@@ -60,10 +60,10 @@ export default function SignupPage() {
       const response = await register(values).unwrap();
       console.log("API response:", response);
       if (response?.success) {
-        const expires = Date.now() + 60 * 1000;
+        const expires = Date.now() + 5 * 60 * 1000;
         try {
           sessionStorage.setItem(`otp_expiry:email_verification:${values.email}`, String(expires));
-        } catch (e) { }
+        } catch (e) {}
         // navigate immediately to the verify page
         router.push("/verify-email?email=" + encodeURIComponent(values.email));
         // show success toast (navigation happens immediately)

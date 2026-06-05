@@ -84,7 +84,7 @@ export default function LoginPage() {
       const errMsg = error?.data?.error?.message || error?.data?.message || "Login failed! Please try again.";
       toast.error(errMsg);
       if (errMsg === "Please verify your email first") {
-        const expires = Date.now() + 60 * 1000;
+        const expires = Date.now() + 5 * 60 * 1000;
         try {
           sessionStorage.setItem(`otp_expiry:email_verification:${values.email}`, String(expires));
         } catch (e) {}
