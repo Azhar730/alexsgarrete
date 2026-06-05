@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "./button";
 import { Fraunces } from "next/font/google";
@@ -41,7 +42,7 @@ export default function HeroSection() {
               <span>There</span>
 
               {/* CTA buttons */}
-              <span className="flex items-center gap-2 sm:gap-4 mt-1 sm:mt-0">
+              <Link href="/signup" className="flex items-center gap-2 sm:gap-4 mt-1 sm:mt-0">
                 <Button
                   className="bg-[#85A1D1] hover:bg-[#85A1D1] text-white cursor-pointer transition-all duration-300
                              rounded-full font-semibold border-none
@@ -59,7 +60,7 @@ export default function HeroSection() {
                                  hover:scale-105 transition-transform shadow-lg">
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
                 </span>
-              </span>
+              </Link>
             </span>
           </h1>
         </div>

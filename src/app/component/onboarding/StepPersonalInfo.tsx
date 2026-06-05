@@ -120,21 +120,21 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             control={form.control}
             name="firstName"
             label="First Name"
-            placeholder="Sarah"
+            placeholder="e.g. John"
             autoComplete="given-name"
           />
           <FormInput
             control={form.control}
             name="middleInitial"
             label="Middle Initial"
-            placeholder="J"
+            placeholder="e.g. A"
             autoComplete="additional-name"
           />
           <FormInput
             control={form.control}
             name="lastName"
             label="Last Name"
-            placeholder="Jenkins"
+            placeholder="e.g. Doe"
             autoComplete="family-name"
           />
         </div>
@@ -145,7 +145,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             control={form.control}
             name="email"
             label="Email Address"
-            placeholder="sarah.jenkins@example.com"
+            placeholder="e.g. john.doe@example.com"
             type="email"
             autoComplete="email"
             disabled
@@ -154,7 +154,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             control={form.control}
             name="ssnLast4"
             label="Last 4 of SSN"
-            placeholder="4829"
+            placeholder="e.g. 1234"
             autoComplete="off"
             numericType="digits"
           />
@@ -168,7 +168,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             control={form.control}
             name="streetAddress"
             label="Street Address"
-            placeholder="123 Meadow Lane, Apt 4B"
+            placeholder="e.g. 123 Main St, Apt 4B"
             autoComplete="street-address"
           />
         </div>
@@ -179,21 +179,21 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             control={form.control}
             name="city"
             label="City"
-            placeholder="Austin"
+            placeholder="e.g. New York"
             autoComplete="address-level2"
           />
           <FormInput
             control={form.control}
             name="state"
             label="State"
-            placeholder="TX"
+            placeholder="e.g. NY"
             autoComplete="address-level1"
           />
           <FormInput
             control={form.control}
             name="zipCode"
             label="ZIP Code"
-            placeholder="78701"
+            placeholder="e.g. 10001"
             autoComplete="postal-code"
             numericType="zip"
           />
@@ -207,7 +207,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             control={form.control}
             name="cellPhone"
             label="Cell Phone"
-            placeholder="(555) 123-4567"
+            placeholder="e.g. (555) 123-4567"
             type="tel"
             autoComplete="tel"
             numericType="phone"

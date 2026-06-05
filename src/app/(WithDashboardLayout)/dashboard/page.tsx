@@ -122,8 +122,10 @@ export default function DashboardPage() {
       const isAccepted = quoteGroup.isAccepted;
 
       const hasSignedThisQuote = agreements.some((a: any) =>
-        a.quoteId === quoteGroup.quoteGroupId ||
-        quoteGroup.quotes?.some((pq: any) => pq.id === a.quoteId)
+        a.isSigned === true && (
+          a.quoteId === quoteGroup.quoteGroupId ||
+          quoteGroup.quotes?.some((pq: any) => pq.id === a.quoteId)
+        )
       );
 
       let ctaLabel = "Check Quote";

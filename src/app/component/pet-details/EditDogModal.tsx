@@ -35,10 +35,7 @@ const dogSchema = z.object({
   name: z.string().min(1, "Dog name is required"),
   gender: z.string().min(1, "Please select a gender"),
   spayedNeutered: z.string().min(1, "Please select an option"),
-  birthday: z
-    .string()
-    .min(1, "Birthday is required")
-    .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Format must be MM/DD/YYYY"),
+  birthday: z.string().min(1, "Birthday is required"),
   primaryBreed: z.string().min(1, "Primary breed is required"),
   additionalBreed: z.string().optional(),
   colorCoat: z.string().min(1, "Color & coat description is required"),
@@ -360,6 +357,7 @@ export function EditDogModal({
                       </FormLabel>
                       <FormControl>
                         <Input
+                          type="date"
                           placeholder="MM/DD/YYYY"
                           {...field}
                           className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"

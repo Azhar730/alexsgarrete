@@ -1309,10 +1309,10 @@ export function StepHealthDetails({
 
         <StepNav
           onBack={prevStep}
-          backLabel="← Back to Personal Info"
+          backLabel="← Back to Representative"
           onSaveExit={handleSaveExit}
           onNext={nextStep}
-          nextLabel="Dog Information →"
+          nextLabel="See Review →"
           isSubmitting={form.formState.isSubmitting}
         />
       </form>

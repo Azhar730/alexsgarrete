@@ -37,17 +37,25 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
   const [updateRepresentative] = useUpdateRepresentativeMutation();
 
   const defaultValues = useMemo(
-    () => representativeInfo ?? data.representative ?? {
-      fullName: "",
-      relationship: "",
-      phoneNumber: "",
-      email: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      cellPhone: "",
-      homePhone: "",
-      workPhone: "",
+    () => {
+      const rep = representativeInfo ?? data.representative;
+      const fName = (rep as any)?.fullName?.split(" ")[0] || "";
+      const lName = (rep as any)?.fullName?.split(" ").slice(1).join(" ") || "";
+      return {
+        firstName: rep?.firstName || fName,
+        lastName: rep?.lastName || lName,
+        middleInitial: rep?.middleInitial || "",
+        relationship: rep?.relationship || "",
+        phoneNumber: rep?.phoneNumber || "",
+        email: rep?.email || "",
+        city: rep?.city || "",
+        state: rep?.state || "",
+        zipCode: rep?.zipCode || "",
+        cellPhone: rep?.cellPhone || "",
+        homePhone: rep?.homePhone || "",
+        workPhone: rep?.workPhone || "",
+        streetAddress: rep?.streetAddress || "",
+      };
     },
     [data.representative, representativeInfo],
   );
@@ -61,7 +69,8 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
     try {
       const reprasentativeData = {
         applicationId,
-        fullName: values.fullName?.trim() || "",
+        fullName: `${values.firstName?.trim() || ""} ${values.lastName?.trim() || ""}`.trim(),
+        middleInitial: values.middleInitial?.trim() || "",
         relationship: values.relationship?.trim() || "",
         email: values.email?.trim() || "",
         phoneNumber: values.phoneNumber?.trim() || "",
@@ -71,6 +80,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         homePhone: values.homePhone?.trim() || "",
         workPhone: values.workPhone?.trim() || "",
         cellPhone: values.cellPhone?.trim() || "",
+        streetAddress: values.streetAddress?.trim() || "",
       };
       await updateRepresentative(reprasentativeData).unwrap();
 
@@ -90,7 +100,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
 
   const handleSaveExit = async () => {
     const values = form.getValues();
-    if (values.fullName?.trim() || values.email?.trim()) {
+    if (values.firstName?.trim() || values.lastName?.trim() || values.email?.trim()) {
       await saveRepresentativeProfile(values as RepresentativeValues);
     }
     router.push("/dashboard");
@@ -120,14 +130,28 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
           </div>
         </div>
 
-        {/* Full name */}
-        <div className="mb-4">
+        {/* Name row */}
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <FormInput
             control={form.control}
-            name="fullName"
-            label="Full Name"
-            placeholder="Eleanor Rigby"
-            autoComplete="name"
+            name="firstName"
+            label="First Name"
+            placeholder="e.g. John"
+            autoComplete="given-name"
+          />
+          <FormInput
+            control={form.control}
+            name="middleInitial"
+            label="Middle Initial"
+            placeholder="e.g. A"
+            autoComplete="additional-name"
+          />
+          <FormInput
+            control={form.control}
+            name="lastName"
+            label="Last Name"
+            placeholder="e.g. Doe"
+            autoComplete="family-name"
           />
         </div>
 
@@ -163,6 +187,17 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         </div>
 
         <SectionDivider />
+
+        {/* Street address */}
+        <div className="mb-4">
+          <FormInput
+            control={form.control}
+            name="streetAddress"
+            label="Street Address"
+            placeholder="123 Main St"
+            autoComplete="street-address"
+          />
+        </div>
 
         {/* City / State / ZIP */}
         <div className="grid grid-cols-3 gap-4 mb-4">

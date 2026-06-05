@@ -367,6 +367,7 @@ export function AddDogModal({ open, onClose, applicationId }: AddDogModalProps) 
                       <FormLabel className="text-sm font-semibold text-gray-700">Birthday / Age of Pet</FormLabel>
                       <FormControl>
                         <Input
+                          type="date"
                           placeholder="MM/DD/YYYY"
                           {...field}
                           className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"

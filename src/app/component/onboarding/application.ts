@@ -49,10 +49,13 @@ export const dogsStepSchema = z.object({
 });
 
 export const representativeSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
+  firstName: z.string().min(1, "First name is required"),
+  middleInitial: z.string().trim().max(1, "Only one character allowed").optional(),
+  lastName: z.string().min(1, "Last name is required"),
   relationship: z.string().min(1, "Relationship is required"),
   phoneNumber: z.string().min(10, "Enter a valid phone number"),
   email: z.string().email("Enter a valid email"),
+  streetAddress: z.string().min(1, "Street address is required"),
   city: z.string().min(1, "City is required"),
   state: z.string().min(2, "State is required"),
   zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Enter a valid ZIP code"),

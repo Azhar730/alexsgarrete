@@ -29,12 +29,26 @@ interface DogProfile {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
+function toYYYYMMDD(dateStr: string) {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toISOString().split("T")[0];
+  } catch {
+    return dateStr;
+  }
+}
+
 function calcAge(dateStr: string): number | null {
-  const parts = dateStr.split("/");
-  if (parts.length !== 3) return null;
-  const d = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
-  if (isNaN(d.getTime())) return null;
-  return Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000));
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    return Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000));
+  } catch {
+    return null;
+  }
 }
 
 function capitalize(s?: string) {
@@ -115,7 +129,7 @@ export default function PetDetailsPage() {
       name: pet.name || "",
       gender: pet.gender || "",
       spayedNeutered: pet.isSpayedNeutered ? "yes" : "no",
-      birthday: pet.birthday || "",
+      birthday: pet.birthday ? toYYYYMMDD(pet.birthday) : "",
       primaryBreed: pet.primaryBreed || "",
       additionalBreed: pet.additionalBreed || "",
       colorCoat: pet.colorsAndCoat || "",

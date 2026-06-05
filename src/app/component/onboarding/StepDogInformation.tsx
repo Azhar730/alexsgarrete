@@ -228,7 +228,7 @@ export function StepDogInformation({
 
         <StepNav
           onBack={prevStep}
-          backLabel="← Back to Health Details"
+          backLabel="← Back to Personal Info"
           onSaveExit={handleSaveExit}
           onNext={nextStep}
           nextLabel="Representative →"
