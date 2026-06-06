@@ -25,6 +25,7 @@ const DEFAULT_DOG = {
   microchipped: "No" as const,
   microchipNumber: "",
   microchipId: "",
+  weight: "",
 };
 
 type BackendPet = {
@@ -41,6 +42,7 @@ type BackendPet = {
   microchipNumber?: string | null;
   microchipId?: string | null;
   photoUrl?: string | null;
+  weight?: string | null;
 };
 
 function mapBackendPet(pet: Partial<BackendPet>): DogValues {
@@ -66,6 +68,7 @@ function mapBackendPet(pet: Partial<BackendPet>): DogValues {
     microchipped: pet.isMicrochipped ? "Yes" : "No",
     microchipNumber: pet.microchipNumber ?? undefined,
     microchipId: pet.microchipId ?? undefined,
+    weight: pet.weight ?? undefined,
   };
 }
 
@@ -85,6 +88,7 @@ function buildPetPayload(applicationId: string, dog: DogValues, id?: string) {
     microchipNumber: dog.microchipNumber || undefined,
     microchipId: dog.microchipId || undefined,
     photoUrl: dog.photoUrl || undefined,
+    weight: dog.weight || undefined,
   };
 }
 

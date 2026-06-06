@@ -32,6 +32,7 @@ interface FormInputProps<T extends FieldValues> {
   min?: string;
   max?: string;
   numericType?: "digits" | "zip" | "phone";
+  description?: string;
 }
 
 export function FormInput<T extends FieldValues>({
@@ -46,6 +47,7 @@ export function FormInput<T extends FieldValues>({
   min,
   max,
   numericType,
+  description,
 }: FormInputProps<T>) {
   return (
     <FormField
@@ -54,8 +56,9 @@ export function FormInput<T extends FieldValues>({
       render={({ field }) => (
         <FormItem className={cn("space-y-1", className)}>
           {label && (
-            <FormLabel className="text-sm font-medium text-gray-700">
-              {label}
+            <FormLabel className="text-sm font-medium text-gray-700 flex flex-col items-start text-left gap-0.5">
+              <span>{label}</span>
+              {description && <span className="text-[11px] text-gray-400 font-normal leading-tight">{description}</span>}
             </FormLabel>
           )}
           <FormControl>

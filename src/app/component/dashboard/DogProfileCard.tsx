@@ -39,12 +39,15 @@ export default function DogProfileCard({
   dog,
   acceptedQuoteSigned = false,
   onViewAgreement,
+  hasValidQuoteGroup = false,
+  hasValidAgreement = false,
 }: {
   dog: DogProfile;
   acceptedQuoteSigned?: boolean;
   onViewAgreement?: (quoteGroupId: string) => void;
+  hasValidQuoteGroup?: boolean;
+  hasValidAgreement?: boolean;
 }) {
-  console.log("Dog Profile", dog)
   const status = statusConfig[dog.status];
   const showPayNow = dog.status === "quote-accepted" && acceptedQuoteSigned;
   const actionHref = dog.status === "quote-ready"
@@ -117,7 +120,7 @@ export default function DogProfileCard({
               See Details
             </Button>
           </Link>
-          {(dog.status === "active" || showPayNow) && dog.quoteGroupId && (
+          {hasValidAgreement && dog.quoteGroupId && (
             <div className="flex-1">
               <Button
                 variant="ghost"
@@ -129,7 +132,7 @@ export default function DogProfileCard({
               </Button>
             </div>
           )}
-          {(dog.status === "quote-ready" || (dog.status === "quote-accepted" && !acceptedQuoteSigned)) && (
+          {hasValidQuoteGroup && (dog.status === "quote-ready" || (dog.status === "quote-accepted" && !acceptedQuoteSigned)) && (
             <Link
               href={actionHref}
               className="flex-1"

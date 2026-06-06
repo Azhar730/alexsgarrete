@@ -166,8 +166,8 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
           />
           <FormInput
             control={form.control}
-            name="phoneNumber"
-            label="Phone Number"
+            name="cellPhone"
+            label="Cell Phone"
             placeholder="(555) 987-6543"
             type="tel"
             numericType="phone"
@@ -224,15 +224,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         </div>
 
         {/* Phone numbers */}
-        <div className="grid grid-cols-3 gap-4 mb-2">
-          <FormInput
-            control={form.control}
-            name="cellPhone"
-            label="Cell Phone"
-            placeholder="(555) 987-6543"
-            type="tel"
-            numericType="phone"
-          />
+        <div className="grid grid-cols-2 gap-4 mb-2">
           <FormInput
             control={form.control}
             name="homePhone"

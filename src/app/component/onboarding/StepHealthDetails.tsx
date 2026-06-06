@@ -753,9 +753,13 @@ export function StepHealthDetails({
       return defaults;
     }
     // Return already-frozen defaults (won't change on subsequent refetches)
-    return stableDefaultsRef.current ?? buildDefaultAnswers(questionnaire, data.healthDetails, undefined, nestedQuestionAnswer, familyHistoryRecords);
+    const fallback = stableDefaultsRef.current ?? buildDefaultAnswers(questionnaire, data.healthDetails, undefined, nestedQuestionAnswer, familyHistoryRecords);
+    if (fallback.hipaaAcknowledged === undefined && hipaaAccepted !== undefined) {
+      fallback.hipaaAcknowledged = hipaaAccepted as any;
+    }
+    return fallback;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerDataKey, canHydrateDefaults]); // Re-derive only when the latest saved answer records change
+  }, [answerDataKey, canHydrateDefaults, hipaaAccepted]); // Re-derive only when the latest saved answer records change
 
   const form = useForm<HealthStepFormValues>({
     resolver: zodResolver(healthStepSchema),

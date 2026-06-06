@@ -64,16 +64,12 @@ export default function DogProfilesSection({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeQuoteGroupId, setActiveQuoteGroupId] = useState<string | null>(null);
-  const { data: userData } = useGetMeQuery({});
-  const { data: applicationsResponse } = useGetMyApplicationsQuery(undefined);
-  const { data: quotesResponse } = useGetMyQuotesQuery(undefined);
-  const { data: agreementsResponse } = useGetMyAgreementsQuery(undefined);
-  const { data: myPayments } = useGetMyPaymentsQuery(undefined);
-  console.log("userData", userData)
-  console.log("applicationsResponse", applicationsResponse)
-  console.log("quotesResponse", quotesResponse)
-  console.log("agreementsResponse", agreementsResponse)
-  console.log("myPayments", myPayments)
+  const POLL_INTERVAL = 10000;
+  const { data: userData } = useGetMeQuery({}, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: applicationsResponse } = useGetMyApplicationsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: quotesResponse } = useGetMyQuotesQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: agreementsResponse } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: myPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
   const pets: ApiPet[] = userData?.data?.pets || [];
 
   useEffect(() => {
@@ -209,14 +205,25 @@ export default function DogProfilesSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {dogs.length > 0 ? (
-          dogs.map((dog) => (
-            <DogProfileCard
-              key={dog.id}
-              dog={dog}
-              acceptedQuoteSigned={isQuoteSigned(dog.quoteGroupId)}
-              onViewAgreement={setActiveQuoteGroupId}
-            />
-          ))
+          dogs.map((dog) => {
+            const dogQuoteGroup = quoteGroups.find((qg: any) => 
+              qg.quotes?.some((q: any) => q.petId === dog.id || q.pet?.id === dog.id)
+            );
+            const hasValidQuoteGroup = !!dogQuoteGroup && !dogQuoteGroup.isRejected;
+            const hasValidAgreement = hasValidQuoteGroup && agreements.some((a: any) =>
+              a.isSigned && dogQuoteGroup.quotes?.some((q: any) => q.id === a.quoteId)
+            );
+            return (
+              <DogProfileCard
+                key={dog.id}
+                dog={dog}
+                acceptedQuoteSigned={isQuoteSigned(dog.quoteGroupId)}
+                onViewAgreement={setActiveQuoteGroupId}
+                hasValidQuoteGroup={hasValidQuoteGroup}
+                hasValidAgreement={hasValidAgreement}
+              />
+            );
+          })
         ) : (
           <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
             No pets found.

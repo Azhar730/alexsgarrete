@@ -1,8 +1,18 @@
+"use client";
+
 import AppLayout from "@/app/component/dashboard/AppLayout";
 import PasswordForm from "@/app/component/dashboard/PasswordForm";
 import ProfileForm from "@/app/component/dashboard/ProfileForm";
+import RepresentativeSection from "@/app/component/dashboard/RepresentativeSection";
+import { useGetMyApplicationsQuery } from "@/redux/api/onboardingApi";
 
 export default function SettingsPage() {
+  const { data: applicationsResponse, refetch: refetchApplications } = useGetMyApplicationsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const currentApplication = applicationsResponse?.data?.[0];
+
   return (
     <AppLayout>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,6 +26,14 @@ export default function SettingsPage() {
         <div className="space-y-5">
           <ProfileForm />
           <PasswordForm />
+
+          {currentApplication?.representative && (
+            <RepresentativeSection
+              applicationId={currentApplication.id}
+              representative={currentApplication.representative}
+              refetchApplications={refetchApplications}
+            />
+          )}
         </div>
       </div>
     </AppLayout>

@@ -22,6 +22,6 @@ export const baseApi = createApi({
     baseUrl: baseApiUrl,
     credentials: "include"
   }),
-  tagTypes: ["users", "Agreement", "Storage", "Payment", "Activity", "Conversations", "Messages"],
+  tagTypes: ["users", "Agreement", "Storage", "Payment", "Activity", "Conversations", "Messages","applications"],
   endpoints: () => ({}),
 });

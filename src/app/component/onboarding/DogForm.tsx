@@ -38,6 +38,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
   const form = useFormContext<DogsStepValues>();
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [ageMode, setAgeMode] = useState(false);
   const today = new Date().toISOString().split("T")[0];
 
   const prefix = `dogs.${index}` as const;
@@ -187,13 +188,55 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
           placeholder="Select"
           options={YES_NO_OPTIONS}
         />
-        <FormInput
-          control={form.control}
-          name={`${prefix}.birthday` as any}
-          label="Birthday / Age of Pet"
-          type="date"
-          max={today}
-        />
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-gray-700">Birthday / Age of Pet</label>
+            <button
+              type="button"
+              onClick={() => setAgeMode(!ageMode)}
+              className="text-xs text-[#5C7FC4] hover:underline font-medium"
+            >
+              {ageMode ? "Enter Date" : "Don't know date?"}
+            </button>
+          </div>
+          {ageMode ? (
+            <div>
+              <input
+                type="number"
+                min="0"
+                placeholder="Approximate age in years"
+                onChange={(e) => {
+                  const age = parseInt(e.target.value);
+                  if (!isNaN(age) && age >= 0) {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() - age);
+                    d.setMonth(0);
+                    d.setDate(1);
+                    form.setValue(`${prefix}.birthday` as any, d.toISOString().split("T")[0], { shouldValidate: true });
+                  } else {
+                    form.setValue(`${prefix}.birthday` as any, "", { shouldValidate: true });
+                  }
+                }}
+                className="h-10 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-[#5C7FC4]/30 focus:border-[#5C7FC4] outline-none transition-all"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">Select an approximate date based on presumed age</p>
+              <div className="hidden">
+                <FormInput
+                  control={form.control}
+                  name={`${prefix}.birthday` as any}
+                  type="date"
+                />
+              </div>
+            </div>
+          ) : (
+            <FormInput
+              control={form.control}
+              name={`${prefix}.birthday` as any}
+              type="date"
+              max={today}
+            />
+          )}
+        </div>
       </div>
 
       {/* Breed */}
@@ -212,7 +255,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
         />
       </div>
 
-      {/* Color + Microchipped */}
+      {/* Color + Weight */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <FormInput
           control={form.control}
@@ -220,6 +263,16 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
           label="Color(s) & Coat description"
           placeholder="Light golden, medium coat"
         />
+        <FormInput
+          control={form.control}
+          name={`${prefix}.weight` as any}
+          label="Weight"
+          placeholder="e.g. 15 lbs"
+        />
+      </div>
+
+      {/* Microchipped */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <FormSelect
           control={form.control}
           name={`${prefix}.microchipped` as any}

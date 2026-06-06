@@ -1,13 +1,23 @@
 "use client";
 
 import { useGetMeQuery } from "@/redux/api/userApi";
-import { Bell, Menu, Search, X, LayoutDashboard, CreditCard, MessageSquare, Settings, Shield, Send, Loader2, Check, Trash2 } from "lucide-react";
+import { Bell, Menu, Search, X, LayoutDashboard, CreditCard, MessageSquare, Settings, Shield, Send, Loader2, Check, Trash2, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useGetMyActivitiesQuery, useMarkActivityAsReadMutation, useClearAllActivitiesMutation, useDeleteActivityMutation } from "@/redux/api/activityApi";
+import { useDispatch } from "react-redux";
+import { logout as clearAuth } from "@/redux/features/authSlice";
+import { useLogoutMutation } from "@/redux/api/authApi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -73,6 +83,21 @@ export default function DashboardHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const [logout] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logout({}).unwrap();
+      dispatch(clearAuth());
+      router.push("/");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      dispatch(clearAuth());
+      router.push("/");
+    }
+  };
 
   const { data: activitiesResponse, isLoading: isLoadingActivities } = useGetMyActivitiesQuery(undefined, {
     pollingInterval: 15000,
@@ -283,13 +308,28 @@ export default function DashboardHeader() {
                 {userData?.email}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
-              {userData?.avatarUrl || userData?.profilePicture || userData?.image ? (
-                <Image src={userData.avatarUrl || userData.profilePicture || userData.image} alt={displayName} width={40} height={40} className="object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-primary">{initials}</span>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="focus:outline-none">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20 cursor-pointer transition-opacity hover:opacity-80">
+                  {userData?.avatarUrl || userData?.profilePicture || userData?.image ? (
+                    <Image src={userData.avatarUrl || userData.profilePicture || userData.image} alt={displayName} width={40} height={40} className="object-cover" />
+                  ) : (
+                    <span className="text-sm font-bold text-primary">{initials}</span>
+                  )}
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-2 py-1.5 md:hidden">
+                  <p className="text-sm font-medium text-slate-900 truncate">{displayName}</p>
+                  <p className="text-xs text-slate-500 truncate">{userData?.email}</p>
+                </div>
+                <DropdownMenuSeparator className="md:hidden" />
+                <DropdownMenuItem onClick={handleLogout} className="text-rose-600 focus:bg-rose-50 focus:text-rose-700 cursor-pointer">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

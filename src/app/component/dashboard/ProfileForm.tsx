@@ -23,12 +23,17 @@ import { cn } from "@/lib/utils";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
+  middleInitial: z.string().max(1, "Max 1 character").optional(),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   streetAddress: z.string().min(1, "Street address is required"),
   city: z.string().min(1, "City is required"),
   stateProvince: z.string().min(1, "State/Province is required"),
   postalCode: z.string().min(1, "Postal code is required"),
+  homePhone: z.string().optional(),
+  workPhone: z.string().optional(),
+  cellPhone: z.string().optional(),
+  ssnLast4: z.string().max(4, "Max 4 characters").optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -67,12 +72,17 @@ export default function ProfileForm() {
     const [splitFirst = "", ...splitRest] = (me?.fullName || "").split(" ");
     return {
       firstName: currentPersonInfo?.firstName || splitFirst || "",
+      middleInitial: currentPersonInfo?.middleInitial || "",
       lastName: currentPersonInfo?.lastName || splitRest.join(" ") || "",
       email: me?.email || "",
       streetAddress: currentPersonInfo?.streetAddress || "",
       city: currentPersonInfo?.city || "",
       stateProvince: currentPersonInfo?.state || "",
       postalCode: currentPersonInfo?.zipCode || "",
+      homePhone: currentPersonInfo?.homePhone || "",
+      workPhone: currentPersonInfo?.workPhone || "",
+      cellPhone: currentPersonInfo?.cellPhone || "",
+      ssnLast4: currentPersonInfo?.ssnLast4 || "",
     };
   }, [currentPersonInfo, me?.email, me?.fullName]);
 
@@ -144,11 +154,16 @@ export default function ProfileForm() {
         ? updateProfile({
             applicationId,
             firstName: data.firstName.trim(),
+            middleInitial: data.middleInitial?.trim(),
             lastName: data.lastName.trim(),
             streetAddress: data.streetAddress.trim(),
             city: data.city.trim(),
             state: data.stateProvince.trim(),
             zipCode: data.postalCode.trim(),
+            homePhone: data.homePhone?.trim(),
+            workPhone: data.workPhone?.trim(),
+            cellPhone: data.cellPhone?.trim(),
+            ssnLast4: data.ssnLast4?.trim(),
           }).unwrap()
         : Promise.resolve();
 
@@ -255,7 +270,7 @@ export default function ProfileForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="firstName"
@@ -267,6 +282,30 @@ export default function ProfileForm() {
                   <FormControl>
                     <Input
                       {...field}
+                      disabled={!isEditing}
+                      className={
+                        isEditing
+                          ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                          : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="middleInitial"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-muted-foreground">
+                    M.I.
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      maxLength={1}
                       disabled={!isEditing}
                       className={
                         isEditing
@@ -304,26 +343,127 @@ export default function ProfileForm() {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium text-muted-foreground">
-                  Email Address
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="email"
-                    disabled={true}
-                    className="border-dashed border-slate-200 bg-gray-50/50 cursor-not-allowed text-secondary text-base opacity-70"
-                  />
-                </FormControl>
-                <FormMessage className="text-xs" />
-              </FormItem>
-            )}
-          />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-muted-foreground">
+                      Email Address
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                        disabled={true}
+                        className="border-dashed border-slate-200 bg-gray-50/50 cursor-not-allowed text-secondary text-base opacity-70"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ssnLast4"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-muted-foreground">
+                      SSN (Last 4)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        maxLength={4}
+                        disabled={!isEditing}
+                        className={
+                          isEditing
+                            ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                            : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="pt-4 border-t border-slate-100">
+              <h4 className="text-sm font-semibold text-secondary mb-3">Phone Numbers</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cellPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-muted-foreground">
+                        Cell Phone
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          disabled={!isEditing}
+                          className={
+                            isEditing
+                              ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                              : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="homePhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-muted-foreground">
+                        Home Phone
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          disabled={!isEditing}
+                          className={
+                            isEditing
+                              ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                              : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="workPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-muted-foreground">
+                        Work Phone
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          disabled={!isEditing}
+                          className={
+                            isEditing
+                              ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                              : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
           <div className="pt-2">
             <div className="mb-3">

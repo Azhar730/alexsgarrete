@@ -40,6 +40,7 @@ const dogSchema = z.object({
   primaryBreed: z.string().min(1, "Primary breed is required"),
   additionalBreed: z.string().optional(),
   colorCoat: z.string().min(1, "Color & coat description is required"),
+  weight: z.string().optional(),
   microchipped: z.string().min(1, "Please select an option"),
   microchipNumber: z.string().optional(),
   microchipId: z.string().optional(),
@@ -73,6 +74,7 @@ export function EditDogModal({
   const [imageError, setImageError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ageMode, setAgeMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -87,6 +89,7 @@ export function EditDogModal({
       primaryBreed: "",
       additionalBreed: "",
       colorCoat: "",
+      weight: "",
       microchipped: "",
       microchipNumber: "",
       microchipId: "",
@@ -180,6 +183,7 @@ export function EditDogModal({
         ref={contentRef}
         onWheel={handleDialogWheel}
         tabIndex={0}
+        showCloseButton={false}
         className="hide-scrollbar sm:max-w-[720px] max-h-[92vh] p-0 gap-0 rounded-3xl border-none shadow-2xl flex flex-col overflow-y-auto overscroll-contain"
       >
         {/* Header */}
@@ -365,26 +369,66 @@ export function EditDogModal({
                 />
 
                 {/* Birthday */}
-                <FormField
-                  control={form.control}
-                  name="birthday"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700">
-                        Birthday / Age of Pet
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          placeholder="MM/DD/YYYY"
-                          {...field}
-                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <FormLabel className="text-sm font-semibold text-gray-700">Birthday / Age of Pet</FormLabel>
+                    <button
+                      type="button"
+                      onClick={() => setAgeMode(!ageMode)}
+                      className="text-xs text-[#5B6BBF] hover:underline font-medium"
+                    >
+                      {ageMode ? "Enter Date" : "Don't know date?"}
+                    </button>
+                  </div>
+                  {ageMode ? (
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Approximate age in years"
+                        onChange={(e) => {
+                          const age = parseInt(e.target.value);
+                          if (!isNaN(age) && age >= 0) {
+                            const d = new Date();
+                            d.setFullYear(d.getFullYear() - age);
+                            d.setMonth(0);
+                            d.setDate(1);
+                            form.setValue("birthday", d.toISOString().split("T")[0], { shouldValidate: true });
+                          } else {
+                            form.setValue("birthday", "", { shouldValidate: true });
+                          }
+                        }}
+                        className="w-full rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4 outline-none transition-all"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1.5 ml-1 font-normal leading-tight">Select an approximate date based on presumed age</p>
+                      <div className="hidden">
+                        <FormField
+                          control={form.control}
+                          name="birthday"
+                          render={({ field }) => <Input type="date" {...field} />}
                         />
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
+                      </div>
+                    </div>
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="birthday"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              placeholder="MM/DD/YYYY"
+                              {...field}
+                              className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
+                </div>
 
                 {/* Primary Breed */}
                 <FormField
@@ -436,13 +480,34 @@ export function EditDogModal({
                   control={form.control}
                   name="colorCoat"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem className="md:col-span-1">
                       <FormLabel className="text-sm font-semibold text-gray-700">
                         Color(s) &amp; Coat description
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g. Light golden, medium-length wavy coat"
+                          {...field}
+                          className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Weight */}
+                <FormField
+                  control={form.control}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Weight <span className="text-gray-400 font-normal italic">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. 15 lbs"
                           {...field}
                           className="rounded-xl border-gray-200 focus-visible:ring-[#5B6BBF]/20 focus-visible:border-[#5B6BBF] h-12 bg-gray-50/30 px-4"
                         />

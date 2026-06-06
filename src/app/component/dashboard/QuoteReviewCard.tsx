@@ -102,8 +102,25 @@ export default function QuoteReviewCard() {
 
   if (!quoteGroup || !pet) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
         <p className="text-slate-500">No quote found</p>
+      </div>
+    );
+  }
+
+  if (quoteGroup.isRejected) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm text-center border border-slate-100 max-w-sm w-full">
+          <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-rose-500 text-2xl font-bold">✕</span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Quote Rejected</h2>
+          <p className="text-sm text-slate-500 mb-6">This quote has been rejected and can no longer be accessed or accepted.</p>
+          <Button onClick={() => router.push("/dashboard")} className="w-full bg-slate-800 hover:bg-slate-900">
+            Return to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }

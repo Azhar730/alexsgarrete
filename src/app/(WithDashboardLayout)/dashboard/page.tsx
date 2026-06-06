@@ -15,16 +15,13 @@ import { useRouter } from "next/navigation";
 
 
 export default function DashboardPage() {
-  const { data: user, isLoading: isLoadingUser } = useGetMeQuery({}, { refetchOnMountOrArgChange: true });
-  const { data: applicationsResponse, isLoading: isLoadingApps, refetch: refetchApplications } = useGetMyApplicationsQuery(undefined, { refetchOnMountOrArgChange: true });
-  const { data: quotesResponse, isLoading: isLoadingQuotes, refetch: refetchQuotes } = useGetMyQuotesQuery(undefined, { refetchOnMountOrArgChange: true });
-  const { data: paymentsResponse, isLoading: isLoadingPayments, refetch: refetchPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true });
-  const { data: agreementsResponse, isLoading: isLoadingAgreements, refetch: refetchAgreements } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const POLL_INTERVAL = 10000; // 10 seconds
+  const { data: user, isLoading: isLoadingUser, refetch: refetchUser } = useGetMeQuery({}, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: applicationsResponse, isLoading: isLoadingApps, refetch: refetchApplications } = useGetMyApplicationsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: quotesResponse, isLoading: isLoadingQuotes, refetch: refetchQuotes } = useGetMyQuotesQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: paymentsResponse, isLoading: isLoadingPayments, refetch: refetchPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const { data: agreementsResponse, isLoading: isLoadingAgreements, refetch: refetchAgreements } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
   const router = useRouter();
-  console.log("my applications", applicationsResponse);
-  console.log("my quotes", quotesResponse);
-  console.log("my payments", paymentsResponse);
-  console.log("my agreements", agreementsResponse);
   const isLoading = isLoadingUser || isLoadingApps || isLoadingQuotes || isLoadingPayments || isLoadingAgreements;
   const firstName = user?.data?.fullName?.split(" ")[0] || user?.data?.name?.split(" ")[0] || "User";
 
@@ -74,6 +71,7 @@ export default function DashboardPage() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         console.log("Page became visible, refetching data...");
+        refetchUser();
         refetchApplications();
         refetchQuotes();
         refetchPayments();
@@ -83,7 +81,7 @@ export default function DashboardPage() {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [refetchApplications, refetchQuotes, refetchPayments, refetchAgreements]);
+  }, [refetchUser, refetchApplications, refetchQuotes, refetchPayments, refetchAgreements]);
 
   // Build banners array
   const banners: TPlanBanner[] = [];
@@ -118,6 +116,8 @@ export default function DashboardPage() {
   // 2. Add "Quote Ready" banners ONLY if submitted and not rejected
   if (isSubmitted && currentApplication?.status !== "REJECTED") {
     unpaidQuotes?.forEach((quoteGroup: any) => {
+      if (quoteGroup.isRejected) return; // Skip showing banner if quote is rejected
+      
       const firstDog = quoteGroup.quotes?.[0]?.pet;
       const isAccepted = quoteGroup.isAccepted;
 

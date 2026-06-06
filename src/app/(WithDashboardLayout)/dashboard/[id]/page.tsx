@@ -23,6 +23,7 @@ interface DogProfile {
   primaryBreed?: string;
   additionalBreed?: string;
   colorCoat?: string;
+  weight?: string;
   microchipped?: string;
   microchipNumber?: string;
   microchipId?: string;
@@ -110,6 +111,7 @@ export default function PetDetailsPage() {
     primaryBreed: "",
     additionalBreed: "",
     colorCoat: "",
+    weight: "",
     microchipped: "",
     microchipNumber: "",
     microchipId: "",
@@ -134,6 +136,7 @@ export default function PetDetailsPage() {
       primaryBreed: pet.primaryBreed || "",
       additionalBreed: pet.additionalBreed || "",
       colorCoat: pet.colorsAndCoat || "",
+      weight: pet.weight || "",
       microchipped: pet.isMicrochipped ? "yes" : "no",
       microchipNumber: pet.microchipNumber || "",
       microchipId: pet.microchipId || "",
@@ -182,6 +185,7 @@ export default function PetDetailsPage() {
         primaryBreed: data.primaryBreed,
         additionalBreed: data.additionalBreed?.trim() || null,
         colorsAndCoat: data.colorCoat,
+        weight: data.weight?.trim() || null,
         isMicrochipped: data.microchipped === "yes",
         microchipNumber: data.microchipped === "yes" && data.microchipNumber?.trim() ? data.microchipNumber.trim() : null,
         microchipId: data.microchipped === "yes" && data.microchipId?.trim() ? data.microchipId.trim() : null,
@@ -356,6 +360,10 @@ export default function PetDetailsPage() {
               value={currentDog.colorCoat}
             />
             <DetailRow
+              label="Weight"
+              value={currentDog.weight || "N/A"}
+            />
+            <DetailRow
               label="Microchipped"
               value={capitalize(currentDog.microchipped)}
             />
@@ -449,6 +457,7 @@ export default function PetDetailsPage() {
           primaryBreed: currentDog.primaryBreed,
           additionalBreed: currentDog.additionalBreed,
           colorCoat: currentDog.colorCoat,
+          weight: currentDog.weight,
           microchipped: currentDog.microchipped,
           microchipNumber: currentDog.microchipNumber,
           microchipId: currentDog.microchipId,
