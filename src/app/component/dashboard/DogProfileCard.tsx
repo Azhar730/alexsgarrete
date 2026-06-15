@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { DogProfile } from ".";
 import Image from "next/image";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 
 const statusConfig: Record<
   DogProfile["status"],
@@ -41,12 +42,14 @@ export default function DogProfileCard({
   onViewAgreement,
   hasValidQuoteGroup = false,
   hasValidAgreement = false,
+  onDelete,
 }: {
   dog: DogProfile;
   acceptedQuoteSigned?: boolean;
   onViewAgreement?: (quoteGroupId: string) => void;
   hasValidQuoteGroup?: boolean;
   hasValidAgreement?: boolean;
+  onDelete?: (id: string) => void;
 }) {
   const status = statusConfig[dog.status];
   const showPayNow = dog.status === "quote-accepted" && acceptedQuoteSigned;
@@ -66,10 +69,10 @@ export default function DogProfileCard({
       ? "bg-emerald-600 hover:bg-emerald-700"
       : "bg-teal-600 hover:bg-teal-700";
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow relative">
       {/* Image + Name */}
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary">
+        <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary relative">
           <Image
             src={dog.imageUrl}
             alt={dog.name}
@@ -78,6 +81,18 @@ export default function DogProfileCard({
             className="w-full h-full object-cover"
           />
         </div>
+        
+        {dog.status !== "active" && onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(dog.id)}
+            className="absolute top-3 right-3 h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+            title="Delete Pet Profile"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
         <div>
           <p className="font-semibold text-secondary text-lg">{dog.name}</p>
           <p className="text-sm text-muted-foreground">
@@ -90,38 +105,38 @@ export default function DogProfileCard({
       </div>
  
       {/* Billing info */}
-      <div className="grid grid-cols-2 gap-3 rounded bg-primary/10 px-8 py-4 border border-slate-100">
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 rounded bg-primary/10 px-4 py-4 border border-slate-100">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate" title="Monthly Fee">
             Monthly Fee
           </p>
-          <p className="text-base font-bold text-secondary">
+          <p className="text-sm sm:text-base font-bold text-secondary truncate">
             {dog.monthlyFee ? `$${dog.monthlyFee.toFixed(2)}` : "N/A"}
           </p>
         </div>
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate" title="Next Billing">
             Next Billing
           </p>
-          <p className="text-base font-bold text-secondary">
+          <p className="text-sm sm:text-base font-bold text-secondary truncate">
             {dog.nextBilling ?? "N/A"}
           </p>
         </div>
       </div>
  
       <div className="flex flex-col gap-2 mt-auto">
-        <div className="flex gap-2">
-          <Link href={`/dashboard/${dog.id}`} className="flex-1">
+        <div className="flex flex-col xl:flex-row gap-2">
+          <Link href={`/dashboard/${dog.id}`} className="flex-1 min-w-0">
             <Button
               variant="ghost"
               size="lg"
-              className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer border border-slate-200 rounded-xl text-sm font-semibold py-2 h-auto"
+              className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-50 cursor-pointer border border-slate-200 rounded-xl text-sm font-semibold py-2 h-auto px-2 sm:px-4"
             >
               See Details
             </Button>
           </Link>
           {hasValidAgreement && dog.quoteGroupId && (
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Button
                 variant="ghost"
                 size="lg"

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "./button";
 import { Fraunces } from "next/font/google";
+import { useAppSelector } from "@/redux/hooks";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -14,6 +15,9 @@ const fraunces = Fraunces({
 });
 
 export default function HeroSection() {
+  const { token } = useAppSelector((state) => state.auth);
+  const isAuthenticated = !!token;
+
   return (
     <div id="home" className="px-4 py-2 container mx-auto">
       <div className="relative rounded-3xl overflow-hidden w-full min-h-120 sm:min-h-137.5 md:min-h-150 lg:min-h-175 flex items-end">
@@ -42,7 +46,16 @@ export default function HeroSection() {
               <span>There</span>
 
               {/* CTA buttons */}
-              <Link href="/signup" className="flex items-center gap-2 sm:gap-4 mt-1 sm:mt-0">
+              <Link 
+                href={isAuthenticated ? "#features" : "/signup"} 
+                onClick={(e) => {
+                  if (isAuthenticated) {
+                    e.preventDefault();
+                    document.getElementById("features")?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="flex items-center gap-2 sm:gap-4 mt-1 sm:mt-0"
+              >
                 <Button
                   className="bg-[#85A1D1] hover:bg-[#85A1D1] text-white cursor-pointer transition-all duration-300
                              rounded-full font-semibold border-none

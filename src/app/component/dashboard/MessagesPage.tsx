@@ -77,7 +77,7 @@ export default function MessagesPage() {
   const [updateMessage, { isLoading: isUpdating }] = useUpdateMessageMutation();
   const [deleteMessage, { isLoading: isDeleting }] = useDeleteMessageMutation();
   const [markAsRead] = useMarkAsReadMutation();
-  const [createConversation] = useCreateConversationMutation();
+  const [createConversation, { isLoading: isCreatingChat }] = useCreateConversationMutation();
 
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState<string | null>(null);
@@ -333,8 +333,14 @@ export default function MessagesPage() {
             <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-40">
               <MessageSquare className="w-10 h-10 mb-3" />
               <p className="text-xs font-bold">No conversations</p>
-              <Button onClick={handleStartWithSupport} variant="outline" size="sm" className="mt-4 text-[10px] font-bold uppercase tracking-widest h-8">
-                Chat with Support
+              <Button onClick={handleStartWithSupport} disabled={isCreatingChat} variant="outline" size="sm" className="mt-4 text-[10px] font-bold uppercase tracking-widest h-8">
+                {isCreatingChat ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Creating...
+                  </>
+                ) : (
+                  "Chat with Support"
+                )}
               </Button>
             </div>
           )}

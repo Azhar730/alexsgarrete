@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Fraunces, Inter } from "next/font/google";
+import { useAppSelector } from "@/redux/hooks";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -20,6 +21,9 @@ const inter = Inter({
 });
 
 export default function CTABannerSection() {
+  const { token } = useAppSelector((state) => state.auth);
+  const isAuthenticated = !!token;
+
   return (
     <div id="cta" className="container mx-auto px-4 mt-4 sm:mt-20">
       <section className="relative w-full min-h-112.5 sm:min-h-125 md:min-h-156.5 rounded-3xl flex items-center overflow-hidden">
@@ -41,7 +45,16 @@ export default function CTABannerSection() {
             <h2 className={`${fraunces.className} text-[2.2rem] sm:text-5xl lg:text-[4rem] font-bold text-white leading-[1.1] mb-6 sm:mb-8 drop-shadow-xl`}>
               A Second Chance,<br />A Lasting Legacy
             </h2>
-            <Link href="/signup" className="flex items-center justify-end gap-3 sm:gap-4">
+            <Link 
+              href={isAuthenticated ? "#faq" : "/signup"} 
+              onClick={(e) => {
+                if (isAuthenticated) {
+                  e.preventDefault();
+                  document.getElementById("faq")?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="flex items-center justify-end gap-3 sm:gap-4"
+            >
               <Button
                 className={`${inter.className} bg-primary hover:bg-[#4a5aa8] text-white cursor-pointer transition-all duration-300 rounded-full px-6 py-6 sm:px-8 sm:py-7 text-base sm:text-xl font-semibold shadow-lg hover:scale-105`}
               >

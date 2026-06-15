@@ -30,10 +30,10 @@ export default function HowItWorksSection() {
             className="w-full h-full object-cover"
           />
           <motion.div className="absolute inset-0 flex flex-col items-center justify-center px-3" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.4 }} viewport={{ once: true }}>
-            <h2 className="text-primary font-bold leading-tight mb-1 text-center text-4xl md:text-2xl">
+            <h2 className="text-primary font-bold leading-tight mb-1 text-center text-2xl sm:text-sm md:text-lg lg:text-2xl xl:text-4xl">
               How it works
             </h2>
-            <p className="text-muted-foreground text-center leading-snug text-lg">
+            <p className="text-muted-foreground text-center leading-snug text-base sm:text-[10px] md:text-xs lg:text-base xl:text-lg">
               A simple process designed to<br />secure your dog&apos;s future care
             </p>
           </motion.div>
@@ -52,7 +52,7 @@ export default function HowItWorksSection() {
             <span className="w-6 h-6 rounded-full bg-white text-primary text-sm font-bold flex items-center justify-center">
               1
             </span>
-            <p className="text-white font-bold leading-tight text-4xl">
+            <p className="text-white font-bold leading-tight text-2xl sm:text-sm md:text-base lg:text-2xl xl:text-4xl">
               Submit your<br />information
             </p>
           </motion.div>
@@ -73,7 +73,7 @@ export default function HowItWorksSection() {
                 2
               </span>
             </div>
-            <p className="text-white font-bold leading-tight text-right text-4xl">
+            <p className="text-white font-bold leading-tight text-right text-2xl sm:text-sm md:text-base lg:text-2xl xl:text-4xl">
               Receive your<br />personalized plan
             </p>
           </motion.div>
@@ -108,7 +108,7 @@ export default function HowItWorksSection() {
             <span className="w-6 h-6 rounded-full bg-white text-primary text-sm font-bold flex items-center justify-center">
               3
             </span>
-            <p className="text-white font-bold leading-tight text-4xl">
+            <p className="text-white font-bold leading-tight text-2xl sm:text-sm md:text-base lg:text-2xl xl:text-4xl">
               Review and sign<br />agreement
             </p>
           </motion.div>
@@ -129,7 +129,7 @@ export default function HowItWorksSection() {
                 4
               </span>
             </div>
-            <p className="text-white font-bold leading-tight text-right text-4xl">
+            <p className="text-white font-bold leading-tight text-right text-2xl sm:text-sm md:text-base lg:text-2xl xl:text-4xl">
               Activate your<br />plan
             </p>
           </motion.div>

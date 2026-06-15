@@ -300,25 +300,25 @@ export function StepNav({
   nextDisabled,
 }: StepNavProps) {
   return (
-    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-      <div>
+    <div className="flex flex-col-reverse md:flex-row md:items-center justify-between mt-6 pt-4 border-t border-gray-100 gap-3 md:gap-0">
+      <div className="w-full md:w-auto">
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex justify-center items-center w-full md:w-auto gap-1 px-4 py-3 md:py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
           >
             {backLabel}
           </button>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col-reverse md:flex-row w-full md:w-auto gap-3">
         {onSaveExit && (
           <button
             type="button"
             onClick={onSaveExit}
-            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex justify-center w-full md:w-auto px-4 py-3 md:py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
           >
             Save and Exit
           </button>
@@ -327,7 +327,7 @@ export function StepNav({
           <button
             type="submit"
             disabled={isSubmitting || nextDisabled}
-            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#5C7FC4] rounded-md hover:bg-[#4A6BAF] transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            className="flex justify-center items-center w-full md:w-auto gap-2 px-5 py-3 md:py-2 text-sm font-semibold text-white bg-[#5C7FC4] rounded-md hover:bg-[#4A6BAF] transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             {isSubmitting ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

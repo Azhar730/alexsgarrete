@@ -29,8 +29,7 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
       const res = await updateApplicationStatus(payload).unwrap();
       if (res?.success) {
         toast.success(res.message ?? "Application submitted successfully");
-        // router.push("/dashboard");
-        setSubmitted(true);
+        router.push("/dashboard");
       } else {
         toast.error(res?.message ?? "Failed to submit application");
       }
@@ -77,7 +76,7 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
           title="Personal Information"
           stepId={1}
         >
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
             <ReviewRow
               label="Full Name"
               value={
@@ -122,7 +121,7 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
           title="Health Questionnaire"
           stepId={4}
         >
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
             <ReviewRow
               label="General Health Status"
               value={
@@ -155,7 +154,7 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
             title={dogs.length > 1 ? `Dog Information — ${dog.name}` : "Dog Information"}
             stepId={2}
           >
-            <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
               <ReviewRow label="Dog Name" value={dog.name} />
               <ReviewRow label="Breed" value={dog.primaryBreed} />
               <ReviewRow label="Age" value={dog.birthday} />
@@ -178,7 +177,7 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
           title="Point of Contact (Executor)"
           stepId={3}
         >
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
             <ReviewRow
               label="Full Name"
               value={
@@ -207,20 +206,22 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
       </div>
 
       {/* Bottom nav */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-        <button
-          type="button"
-          onClick={prevStep}
-          className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-        >
-          ← Back
-        </button>
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between mt-6 pt-4 border-t border-gray-100 gap-3 sm:gap-0">
+        <div className="w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={prevStep}
+            className="flex justify-center items-center w-full sm:w-auto gap-1 px-4 py-3 sm:py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            ← Back
+          </button>
+        </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col-reverse sm:flex-row w-full sm:w-auto gap-3">
           <button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex justify-center items-center w-full sm:w-auto px-4 py-3 sm:py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
           >
             Save and Exit
           </button>
@@ -228,7 +229,7 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-[#5C7FC4] rounded-md hover:bg-[#4A6BAF] transition-colors disabled:opacity-60 shadow-sm"
+            className="flex justify-center items-center w-full sm:w-auto gap-2 px-6 py-3 sm:py-2 text-sm font-semibold text-white bg-[#5C7FC4] rounded-md hover:bg-[#4A6BAF] transition-colors disabled:opacity-60 shadow-sm"
           >
             {isSubmitting && (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

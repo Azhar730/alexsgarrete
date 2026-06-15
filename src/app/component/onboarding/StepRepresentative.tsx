@@ -131,7 +131,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         </div>
 
         {/* Name row */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <FormInput
             control={form.control}
             name="firstName"
@@ -155,8 +155,8 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
           />
         </div>
 
-        {/* Relationship + Phone */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Relationship + Email */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <FormSelect
             control={form.control}
             name="relationship"
@@ -164,18 +164,6 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
             placeholder="Select"
             options={RELATIONSHIP_OPTIONS}
           />
-          <FormInput
-            control={form.control}
-            name="cellPhone"
-            label="Cell Phone"
-            placeholder="(555) 987-6543"
-            type="tel"
-            numericType="phone"
-          />
-        </div>
-
-        {/* Email */}
-        <div className="mb-4">
           <FormInput
             control={form.control}
             name="email"
@@ -200,7 +188,7 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         </div>
 
         {/* City / State / ZIP */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <FormInput
             control={form.control}
             name="city"
@@ -224,7 +212,15 @@ export function StepRepresentative({ representativeInfo, applicationId }: { repr
         </div>
 
         {/* Phone numbers */}
-        <div className="grid grid-cols-2 gap-4 mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <FormInput
+            control={form.control}
+            name="cellPhone"
+            label="Cell Phone"
+            placeholder="(555) 987-6543"
+            type="tel"
+            numericType="phone"
+          />
           <FormInput
             control={form.control}
             name="homePhone"

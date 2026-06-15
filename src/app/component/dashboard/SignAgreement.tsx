@@ -576,40 +576,12 @@ export default function SignAgreement() {
           <div className="flex-1 overflow-hidden px-4 py-4 sm:px-6 sm:py-6 relative h-full">
             <div className="grid h-full max-h-full grid-cols-1 gap-4 lg:grid-cols-[1.35fr_0.85fr]">
               <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm h-full">
-                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 shrink-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 px-4 sm:px-5 py-4 shrink-0 gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-secondary">Review Agreement</h2>
-                    <p className="text-sm text-muted-foreground">
+                    <h2 className="text-lg sm:text-xl font-bold text-secondary">Review Agreement</h2>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Read the full document before signing.
                     </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2 text-secondary"
-                      onClick={() => {
-                        const firstDoc = firstSelectedDoc?.agreementDocURL;
-                        if (firstDoc) window.open(firstDoc, "_blank", "noopener,noreferrer");
-                      }}
-                    >
-                      <ExternalLink size={14} />
-                      Open in new tab
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2 text-secondary"
-                      onClick={() => {
-                        const firstDoc = firstSelectedDoc?.agreementDocURL;
-                        if (firstDoc) {
-                          handleDownloadDocument(firstDoc, `${firstSelectedDoc?.title || "agreement"}.pdf`);
-                        }
-                      }}
-                    >
-                      <Download size={14} />
-                      Download doc
-                    </Button>
                   </div>
                 </div>
 
@@ -814,7 +786,7 @@ export default function SignAgreement() {
                   </div>
                 )}
 
-                <div className="border-b border-slate-200 px-5 py-4 shrink-0">
+                <div className="hidden sm:block border-b border-slate-200 px-5 py-4 shrink-0">
                   <h3 className="text-lg font-bold text-secondary">
                     {isAlreadySigned
                       ? "Agreement Signature Completed"
@@ -940,10 +912,10 @@ export default function SignAgreement() {
                           <span className="text-xs font-semibold text-slate-500 block">
                             Signature Preview
                           </span>
-                          <div className="flex flex-col items-center justify-center p-6 border border-slate-200 rounded-xl bg-white min-h-[140px]">
+                          <div className="flex flex-col items-center justify-center p-4 sm:p-6 border border-slate-200 rounded-xl bg-white min-h-[120px] sm:min-h-[140px] overflow-hidden">
                             <p
                               style={{ fontFamily: "'Caveat', 'Pacifico', cursive" }}
-                              className="text-4xl text-blue-900 text-center select-none py-6 pointer-events-none"
+                              className="text-3xl sm:text-4xl text-blue-900 text-center select-none py-4 sm:py-6 pointer-events-none break-words w-full"
                             >
                               {typedName.trim() || "Your Signature"}
                             </p>
@@ -982,25 +954,25 @@ export default function SignAgreement() {
                   </div>
 
                   <div className="border-t border-slate-200 bg-white px-5 py-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <div className="flex flex-row gap-2 sm:gap-3 justify-end w-full">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => router.push("/dashboard")}
-                        className="border-slate-200 text-secondary hover:bg-primary/10 rounded"
+                        className="border-slate-200 text-secondary hover:bg-primary/10 rounded w-1/3 sm:w-auto h-11 sm:h-10 px-2 sm:px-6 text-xs sm:text-sm"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={isPending}
-                        className="min-w-55 rounded bg-primary text-white hover:bg-primary/90"
+                        className="rounded bg-primary text-white hover:bg-primary/90 flex-1 sm:w-auto sm:min-w-[14rem] text-[10px] sm:text-sm h-11 sm:h-10 px-1 sm:px-6 whitespace-normal leading-tight sm:leading-normal"
                       >
                         {isPending ? (
-                          <>
-                            <Loader2 size={16} className="mr-2 animate-spin" />
-                            {isUploading ? "Uploading Document..." : "Processing Agreement..."}
-                          </>
+                          <div className="flex items-center justify-center">
+                            <Loader2 size={16} className="mr-2 animate-spin shrink-0" />
+                            <span>{isUploading ? "Uploading Document..." : "Processing Agreement..."}</span>
+                          </div>
                         ) : (
                           "Agree & Continue to Payment"
                         )}

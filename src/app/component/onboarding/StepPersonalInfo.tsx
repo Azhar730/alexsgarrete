@@ -115,7 +115,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
         />
 
         {/* Name row */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <FormInput
             control={form.control}
             name="firstName"
@@ -140,7 +140,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
         </div>
 
         {/* Email + SSN */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <FormInput
             control={form.control}
             name="email"
@@ -174,7 +174,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
         </div>
 
         {/* City / State / ZIP */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <FormInput
             control={form.control}
             name="city"
@@ -202,7 +202,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
         <SectionDivider />
 
         {/* Phone numbers */}
-        <div className="grid grid-cols-3 gap-4 mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
           <FormInput
             control={form.control}
             name="cellPhone"

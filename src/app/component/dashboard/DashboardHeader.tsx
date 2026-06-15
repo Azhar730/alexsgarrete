@@ -3,7 +3,9 @@
 import { useGetMeQuery } from "@/redux/api/userApi";
 import { Bell, Menu, Search, X, LayoutDashboard, CreditCard, MessageSquare, Settings, Shield, Send, Loader2, Check, Trash2, LogOut } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,6 +13,7 @@ import { useGetMyActivitiesQuery, useMarkActivityAsReadMutation, useClearAllActi
 import { useDispatch } from "react-redux";
 import { logout as clearAuth } from "@/redux/features/authSlice";
 import { useLogoutMutation } from "@/redux/api/authApi";
+import { baseApi } from "@/redux/api/baseApi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +85,40 @@ export default function DashboardHeader() {
   const { data: user, isLoading } = useGetMeQuery({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [showMenuHint, setShowMenuHint] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hasSeenHint = localStorage.getItem("hasSeenMobileMenuHint");
+      if (!hasSeenHint && window.innerWidth < 1024) {
+        const timer = setTimeout(() => {
+          const driverObj = driver({
+            showProgress: false,
+            popoverClass: 'driverjs-theme',
+            steps: [
+              { 
+                element: '#mobile-menu-toggle', 
+                popover: { 
+                  title: 'Navigation Menu', 
+                  description: 'Click here to open the sidebar menu and navigate your dashboard.', 
+                  side: "bottom", 
+                  align: 'start' 
+                } 
+              }
+            ]
+          });
+          driverObj.drive();
+          localStorage.setItem("hasSeenMobileMenuHint", "true");
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
+
+  const handleMenuOpen = () => {
+    setIsMobileMenuOpen(true);
+  };
+
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
@@ -91,10 +128,12 @@ export default function DashboardHeader() {
     try {
       await logout({}).unwrap();
       dispatch(clearAuth());
+      dispatch(baseApi.util.resetApiState());
       router.push("/");
     } catch (err) {
       console.error("Logout failed:", err);
       dispatch(clearAuth());
+      dispatch(baseApi.util.resetApiState());
       router.push("/");
     }
   };
@@ -155,14 +194,17 @@ export default function DashboardHeader() {
 
   return (
     <>
-      <header className="h-16 border-b border-slate-100 bg-white flex items-center justify-between px-4 md:px-8 sticky top-0 z-40 w-full">
+      <header className="h-16 border-b border-slate-100 bg-white flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40 w-full">
         {/* Mobile menu toggle */}
-        <button 
-          className="md:hidden p-2 -ml-2 text-slate-500 hover:text-primary transition-colors"
-          onClick={() => setIsMobileMenuOpen(true)}
-        >
-          <Menu size={24} />
-        </button>
+        <div className="relative lg:hidden">
+          <button 
+            id="mobile-menu-toggle"
+            className="p-2 -ml-2 text-slate-500 hover:text-primary transition-colors focus:outline-none"
+            onClick={handleMenuOpen}
+          >
+            <Menu size={24} />
+          </button>
+        </div>
 
         {/* Search - Hidden on mobile */}
         <div className="flex-1 max-w-md hidden md:block">
@@ -201,33 +243,33 @@ export default function DashboardHeader() {
                   className="fixed inset-0 z-30"
                   onClick={() => setIsNotificationsOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-slate-100 rounded-xl shadow-xl z-40 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-16 sm:top-full mt-2 sm:w-80 md:w-96 bg-white border border-slate-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   {/* Header */}
-                  <div className="flex items-center justify-between p-4 border-b border-slate-50 bg-slate-50/50">
-                    <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between p-4 border-b border-slate-50 bg-slate-50/50 gap-2">
+                    <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 whitespace-nowrap shrink-0">
                       Notifications
                       {hasUnread && (
-                        <span className="bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        <span className="bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
                           {unreadActivities.length} new
                         </span>
                       )}
                     </h3>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 shrink-0 ml-auto">
                       {hasUnread && (
                         <button
                           onClick={handleMarkAllAsRead}
-                          className="text-xs text-primary hover:text-primary-hover font-semibold flex items-center gap-0.5 focus:outline-none"
+                          className="text-xs text-primary hover:text-primary-hover font-semibold flex items-center gap-0.5 focus:outline-none whitespace-nowrap shrink-0"
                         >
-                          <Check size={11} />
+                          <Check size={11} className="shrink-0" />
                           Mark read
                         </button>
                       )}
                       {activities.length > 0 && (
                         <button
                           onClick={handleClearAll}
-                          className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-0.5 focus:outline-none"
+                          className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-0.5 focus:outline-none whitespace-nowrap shrink-0"
                         >
-                          <Trash2 size={11} />
+                          <Trash2 size={11} className="shrink-0" />
                           Clear all
                         </button>
                       )}
@@ -336,7 +378,7 @@ export default function DashboardHeader() {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-60 md:hidden">
+        <div className="fixed inset-0 z-60 lg:hidden">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
@@ -345,7 +387,7 @@ export default function DashboardHeader() {
           
           {/* Sidebar content */}
           <aside className="absolute inset-y-0 left-0 w-70 bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
-            <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
+             <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center">
                  <Image
                    src={'/dashboard-head.png'}
@@ -385,9 +427,9 @@ export default function DashboardHeader() {
               })}
             </nav>
 
-            <div className="p-4 border-t border-slate-100">
+            <div className="p-4 border-t border-slate-100 flex flex-col gap-4">
                <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden border border-amber-200">
+                 <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden border border-amber-200 shrink-0">
                     {userData?.avatarUrl || userData?.profilePicture || userData?.image ? (
                       <Image src={userData.avatarUrl || userData.profilePicture || userData.image} alt={displayName} width={40} height={40} className="object-cover" />
                     ) : (
@@ -399,6 +441,13 @@ export default function DashboardHeader() {
                    <p className="text-xs text-slate-400 truncate">{userData?.email}</p>
                  </div>
                </div>
+               <button
+                 onClick={handleLogout}
+                 className="w-full px-3 py-2.5 flex items-center gap-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all focus:outline-none border border-transparent hover:border-red-100"
+               >
+                 <LogOut size={18} />
+                 Logout
+               </button>
             </div>
           </aside>
         </div>

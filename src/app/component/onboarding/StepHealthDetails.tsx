@@ -345,7 +345,6 @@ const inputCls =
 interface QuestionBlockProps {
   question: Question;
   form: ReturnType<typeof useForm<HealthStepFormValues>>;
-  watchedAnswers: Record<string, QuestionAnswer> | undefined;
   disabled?: boolean;
   saveState?: 'saving' | 'saved' | 'error';
 }
@@ -353,7 +352,6 @@ interface QuestionBlockProps {
 function QuestionBlock({
   question,
   form,
-  watchedAnswers,
   disabled,
   saveState,
 }: QuestionBlockProps) {
@@ -362,9 +360,8 @@ function QuestionBlock({
   const isTOBACCO = (question.questionText.toLowerCase().includes("tobacco") || question.questionText.toLowerCase().includes("nicotine")) && (question.nestedQuestions?.length ?? 0) > 0;
   const isGENERIC_NESTED = (question.nestedQuestions?.length ?? 0) > 0 && !isCANCER && !isTOBACCO;
 
-  const answerVal = watchedAnswers?.[question.id]?.answer;
-
-  const tobaccoCurrentUser = watchedAnswers?.[question.id]?.tobaccoCurrentUser;
+  const answerVal = useWatch({ control: form.control, name: `answers.${question.id}.answer` });
+  const tobaccoCurrentUser = useWatch({ control: form.control, name: `answers.${question.id}.tobaccoCurrentUser` });
 
   // The one nested question from API for tobacco: "If yes, are you a current user?"
   const tobaccoNestedQ = question.nestedQuestions?.[0];
@@ -453,7 +450,7 @@ function QuestionBlock({
       {isCANCER && answerVal === "Yes" && (
         <div className="mt-4 flex flex-col gap-3">
           {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-gray-500 font-normal">
                 Relation (mother, father, brother, sister)
@@ -480,7 +477,7 @@ function QuestionBlock({
             </div>
           </div>
           {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-gray-500 font-normal">
                 Approximate age of disease onset
@@ -838,7 +835,6 @@ export function StepHealthDetails({
   }, [questionnaire, familyHistoryDeps]);
 
 
-  const watchedAnswers = useWatch({ control: form.control, name: "answers" });
   const isAcknowledged = useWatch({
     control: form.control,
     name: "hipaaAcknowledged",
@@ -853,7 +849,6 @@ export function StepHealthDetails({
       MyGivenAnswareQuestionnaire,
       familyHistoryRecords,
       nestedAnswerResponse,
-      watchedAnswers,
     });
   }, [
     applicationId,
@@ -861,7 +856,6 @@ export function StepHealthDetails({
     MyGivenAnswareQuestionnaire,
     familyHistoryRecords,
     nestedAnswerResponse,
-    watchedAnswers,
   ]);
 
   const [giveAnswer] = useGiveAnswerMutation();
@@ -1167,15 +1161,24 @@ export function StepHealthDetails({
 
   // Effect to auto-save only CHANGED answers with debounce + save indicator
   useEffect(() => {
-    if (!applicationId || !questionnaire?.id || !watchedAnswers) return;
+    if (!applicationId || !questionnaire?.id) return;
 
-    const timer = setTimeout(async () => {
-      await persistChangedAnswers(watchedAnswers);
-    }, 900);
+    let timer: NodeJS.Timeout | null = null;
+    const subscription = form.watch((value, { name, type }) => {
+      if (name?.startsWith("answers.")) {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(async () => {
+          const currentAnswers = form.getValues("answers");
+          await persistChangedAnswers(currentAnswers);
+        }, 900);
+      }
+    });
 
-    return () => clearTimeout(timer);
+    return () => {
+      subscription.unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
   }, [
-    watchedAnswers,
     applicationId,
     questionnaire,
     giveAnswer,
@@ -1297,7 +1300,6 @@ export function StepHealthDetails({
               key={question.id}
               question={question}
               form={form}
-              watchedAnswers={watchedAnswers}
               disabled={isDisabled}
               saveState={saveStates[question.id]}
             />

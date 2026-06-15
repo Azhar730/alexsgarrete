@@ -5,7 +5,7 @@ import { DogProfile } from ".";
 import { useState, useEffect } from "react";
 import { AddDogModal } from "./AddDogModal";
 import { useGetMeQuery } from "@/redux/api/userApi";
-import { useGetMyApplicationsQuery, useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
+import { useGetMyApplicationsQuery, useGetMyQuotesQuery, useDeletePetMutation } from "@/redux/api/onboardingApi";
 import { toast } from "sonner";
 import { useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 import { useGetMyAgreementsQuery } from "@/redux/api/agreementApi";
@@ -70,6 +70,7 @@ export default function DogProfilesSection({
   const { data: quotesResponse } = useGetMyQuotesQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
   const { data: agreementsResponse } = useGetMyAgreementsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
   const { data: myPayments } = useGetMyPaymentsQuery(undefined, { refetchOnMountOrArgChange: true, pollingInterval: POLL_INTERVAL });
+  const [deletePet, { isLoading: isDeleting }] = useDeletePetMutation();
   const pets: ApiPet[] = userData?.data?.pets || [];
 
   useEffect(() => {
@@ -133,6 +134,16 @@ export default function DogProfilesSection({
 
     toast.error("Your application is not approved");
   }
+
+  const handleDeletePet = async (petId: string) => {
+    if (!confirm("Are you sure you want to delete this pet profile?")) return;
+    try {
+      await deletePet(petId).unwrap();
+      toast.success("Pet profile deleted successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to delete pet profile");
+    }
+  };
 
   const dogs: DogProfile[] = pets.map((pet) => {
     const dogQuoteGroup = quoteGroups.find((qg: any) => 
@@ -221,6 +232,7 @@ export default function DogProfilesSection({
                 onViewAgreement={setActiveQuoteGroupId}
                 hasValidQuoteGroup={hasValidQuoteGroup}
                 hasValidAgreement={hasValidAgreement}
+                onDelete={handleDeletePet}
               />
             );
           })

@@ -18,7 +18,7 @@ export function AuthShell({ slide, children }: AuthShellProps) {
     // Full-screen gray background
     <div className={`min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 ${inter.className}`}>
 
-      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-[0_8px_40px_rgba(0,0,0,0.06)] flex flex-col md:flex-row min-h-[500px] lg:min-h-[640px] my-auto">
+      <div className="w-full max-w-5xl bg-white rounded-lg  flex flex-col md:flex-row min-h-[500px] lg:min-h-[640px] my-auto">
 
         {/* ── Left: Image panel ──────────────────────────────────────── */}
         <div className="relative md:w-[45%] min-h-[200px] md:min-h-0 shrink-0 m-3 rounded-[20px] overflow-hidden">

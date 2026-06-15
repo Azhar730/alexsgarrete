@@ -55,7 +55,7 @@ export function ApplicationFlow({ application }: { application?: OnboardingAppli
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Page content */}
-      <div className="flex flex-1 max-w-full mx-auto w-full px-4 py-8 gap-8">
+      <div className="flex flex-col md:flex-row flex-1 max-w-full mx-auto w-full px-4 py-8 gap-8">
         {/* Sidebar */}
         <ApplicationSidebar />
 

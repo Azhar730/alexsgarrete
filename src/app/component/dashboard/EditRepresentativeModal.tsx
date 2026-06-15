@@ -90,8 +90,8 @@ export function EditRepresentativeModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[660px] p-0 gap-0 rounded-3xl border-none shadow-2xl overflow-hidden">
-        <DialogHeader className="px-8 pt-8 pb-5 border-b border-gray-50 bg-white">
+      <DialogContent showCloseButton={false} className="w-[95vw] sm:w-full sm:max-w-[660px] p-0 gap-0 rounded-3xl border-none shadow-2xl overflow-hidden mx-auto">
+        <DialogHeader className="px-6 sm:px-8 pt-6 sm:pt-8 pb-5 border-b border-gray-50 bg-white">
           <DialogClose
             className="absolute top-4 right-4 inline-flex items-center justify-center rounded-full p-2 text-gray-600 hover:bg-gray-100 focus:outline-none"
             onClick={handleClose}
@@ -106,7 +106,7 @@ export function EditRepresentativeModal({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col max-h-[80vh]">
-            <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+            <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-5">
 
               {/* Name row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -277,12 +277,12 @@ export function EditRepresentativeModal({
 
             </div>
 
-            <div className="p-6 border-t border-gray-100 bg-gray-50/50 mt-auto flex items-center justify-end gap-3">
+            <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/50 mt-auto flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleClose}
-                className="h-11 px-6 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50"
+                className="h-11 w-full sm:w-auto px-6 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50"
                 disabled={isSubmitting}
               >
                 Cancel
@@ -290,7 +290,7 @@ export function EditRepresentativeModal({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-11 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm"
+                className="h-11 w-full sm:w-auto px-8 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm"
               >
                 {isSubmitting ? (
                   <>

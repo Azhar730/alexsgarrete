@@ -26,7 +26,7 @@ export const navLinks = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Features", href: "#features" },
   { label: "FAQ", href: "#faq" },
-  { label: "About", href: "/about-us" },
+  { label: "About Us", href: "/about-us" },
 ];
 
 export function Header() {
@@ -109,14 +109,14 @@ export function Header() {
                   width={228}
                   className={cn(
                     "w-auto transition-all duration-500 ease-in-out",
-                    scrolled ? "h-11" : "h-12 md:h-16",
+                    scrolled ? "h-11" : "h-12 lg:h-16",
                   )}
                 />
               </Link>
             </div>
 
             {/* Centered Navigation */}
-            <div className="hidden absolute left-1/2 -translate-x-1/2 items-center gap-6 md:flex">
+            <div className="hidden absolute left-1/2 -translate-x-1/2 items-center gap-6 lg:flex">
               {navLinks.map((link) => (
                 <Button
                   key={link.label}
@@ -134,7 +134,7 @@ export function Header() {
             </div>
 
             {/* Right CTA Container */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
               {isAuthLoading ? (
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-24 animate-pulse rounded-full bg-slate-200" />
@@ -163,8 +163,13 @@ export function Header() {
             </div>
 
             {/* Mobile Nav Toggle */}
-            <div className="md:hidden flex-1 flex justify-end">
-              <MobileNav />
+            <div className="lg:hidden flex-1 flex justify-end items-center gap-3">
+              {isAuthLoading ? (
+                <div className="h-9 w-9 animate-pulse rounded-full bg-slate-200" />
+              ) : user && !isLoggedOut && !isLoggingOut ? (
+                <UserDropdown user={user} onLogout={handleLogout} />
+              ) : null}
+              <MobileNav user={user} isAuthLoading={isAuthLoading} onLogout={handleLogout} />
             </div>
           </nav>
         </div>

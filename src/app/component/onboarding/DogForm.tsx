@@ -163,7 +163,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       />
 
       {/* Name + Gender */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <FormInput
           control={form.control}
           name={`${prefix}.name` as any}
@@ -180,7 +180,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       </div>
 
       {/* Spayed + Birthday */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <FormSelect
           control={form.control}
           name={`${prefix}.spayedNeutered` as any}
@@ -240,7 +240,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       </div>
 
       {/* Breed */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <FormInput
           control={form.control}
           name={`${prefix}.primaryBreed` as any}
@@ -256,7 +256,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       </div>
 
       {/* Color + Weight */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <FormInput
           control={form.control}
           name={`${prefix}.colorCoatDescription` as any}
@@ -272,7 +272,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       </div>
 
       {/* Microchipped */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <FormSelect
           control={form.control}
           name={`${prefix}.microchipped` as any}
@@ -283,7 +283,7 @@ export function DogForm({ index, onRemove, canRemove }: DogFormProps) {
       </div>
 
       {/* Microchip details */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormInput
           control={form.control}
           name={`${prefix}.microchipNumber` as any}

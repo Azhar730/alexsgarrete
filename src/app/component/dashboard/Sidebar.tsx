@@ -59,7 +59,7 @@ export default function Sidebar() {
     .slice(0, 2);
 
   return (
-    <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:z-50 md:w-60 bg-white border-r border-slate-100">
+    <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-60 bg-white border-r border-slate-100">
       {/* Logo */}
       <div className="h-16 flex items-center px-4">
         <Link href="/" className="flex items-center gap-1">

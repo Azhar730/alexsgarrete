@@ -235,8 +235,8 @@ export default function PetDetailsPage() {
               />
             </div>
             <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <h1 className="text-xl font-bold text-primary">{currentDog.name}</h1>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
+                <h1 className="text-xl font-bold text-primary leading-tight break-words">{currentDog.name}</h1>
                 {(() => {
                   const statusMap: Record<string, { label: string; className: string }> = {
                     ACTIVE: { label: "Active", className: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" },
@@ -248,7 +248,7 @@ export default function PetDetailsPage() {
                   const currentStatus = petDetailsResponse?.data?.status || "ACTIVE";
                   const cfg = statusMap[currentStatus] || statusMap.ACTIVE;
                   return (
-                    <Badge className={`${cfg.className} text-[11px] font-semibold px-2.5 rounded-full`}>
+                    <Badge className={`${cfg.className} shrink-0 text-[11px] font-semibold px-2.5 rounded-full`}>
                       {cfg.label}
                     </Badge>
                   );
