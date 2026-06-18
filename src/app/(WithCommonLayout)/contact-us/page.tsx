@@ -80,13 +80,7 @@ export default function ContactUsPage() {
                   </p>
 
                   <div className="space-y-8">
-                    <div className="flex items-start gap-4">
-                      <Phone className="w-6 h-6 text-[#93C5FD] shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-semibold text-white mb-1">Phone</h4>
-                        <p className="text-[#E0E7FF]">+1 (555) 123-4567</p>
-                      </div>
-                    </div>
+
 
                     <div className="flex items-start gap-4">
                       <Mail className="w-6 h-6 text-[#93C5FD] shrink-0 mt-1" />
@@ -96,17 +90,7 @@ export default function ContactUsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-4">
-                      <MapPin className="w-6 h-6 text-[#93C5FD] shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-semibold text-white mb-1">Office Location</h4>
-                        <p className="text-[#E0E7FF]">
-                          K9 Encore LLC<br />
-                          Bexar County, Texas<br />
-                          United States
-                        </p>
-                      </div>
-                    </div>
+
                   </div>
                 </div>
 

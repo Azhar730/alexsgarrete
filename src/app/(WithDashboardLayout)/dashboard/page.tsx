@@ -196,7 +196,7 @@ export default function DashboardPage() {
       dogName: currentApplication.pets?.[0]?.name || "Your Pet",
       dogBreed: currentApplication.pets?.[0]?.primaryBreed || "Unknown Breed",
       ctaLabel: "Contact Support",
-      ctaHref: "/contact",
+      ctaHref: "https://k9encore.com/contact-us",
     });
   }
 

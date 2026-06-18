@@ -83,7 +83,7 @@ const STATUS_CONFIG: Record<
     badge: "bg-slate-50 text-slate-600 border border-slate-200",
     label: "Declined",
     ctaLabel: "Contact Support",
-    ctaHref: "/contact",
+    ctaHref: "https://k9encore.com/contact-us",
     showDogName: true,
     showDate: false,
   },

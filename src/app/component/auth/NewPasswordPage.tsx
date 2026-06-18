@@ -11,6 +11,9 @@ import { AuthShell } from "./shared/AuthShell";
 import { AUTH_SLIDES } from "@/app/data/authConfig";
 import { AuthInput } from "./shared/AuthInput";
 import { AuthButton } from "./shared/AuthButton";
+import { useSearchParams } from "next/navigation";
+import { useResetPasswordMutation } from "@/redux/api/authApi";
+import { toast } from "sonner";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 const newPasswordSchema = z
@@ -42,13 +45,28 @@ export default function NewPasswordPage() {
     mode: "onTouched",
   });
 
+  const searchParams = useSearchParams();
+  const resetToken = searchParams.get("token");
+  const [resetPassword] = useResetPasswordMutation();
+
   const onSubmit = async (values: NewPasswordValues) => {
+    if (!resetToken) {
+      toast.error("Reset token is missing. Please try the forgot password process again.");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      console.log("New password:", values.newPassword);
-      await new Promise((r) => setTimeout(r, 1200));
-      setDone(true);
-      // router.push("/login");
+      const res = await resetPassword({
+        resetToken,
+        newPassword: values.newPassword,
+      }).unwrap();
+      
+      if (res.success || res.message) {
+        setDone(true);
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to reset password. Please try again.");
     } finally {
       setIsLoading(false);
     }

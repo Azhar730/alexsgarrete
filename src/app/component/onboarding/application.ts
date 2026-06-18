@@ -22,6 +22,12 @@ export const personalInfoSchema = z.object({
   cellPhone: z.string().trim().min(10, "Enter a valid phone number"),
   homePhone: z.string().trim().optional(),
   workPhone: z.string().trim().optional(),
+  birthday: z
+    .string()
+    .trim()
+    .min(1, "Birthday is required")
+    .refine((value) => !Number.isNaN(Date.parse(value)), "Select a valid date")
+    .refine((value) => new Date(value) <= new Date(), "Birthday cannot be in the future"),
 });
 
 export const dogSchema = z.object({

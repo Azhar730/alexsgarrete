@@ -92,8 +92,12 @@ export function StepReview({ applicationId }: { applicationId?: string }) {
               }
             />
             <ReviewRow
-              label="Date of Birth / Age"
-              value={undefined}
+              label="Date of Birth"
+              value={
+                personalInfo?.birthday
+                  ? new Date(personalInfo.birthday).toLocaleDateString()
+                  : undefined
+              }
             />
             <ReviewRow
               label="Address"

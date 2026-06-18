@@ -79,11 +79,18 @@ export default function VerifyEmailPage() {
       const res = await verifyOtp(payload).unwrap();
       console.log("verify-email", res);
       if (res.success) {
-        toast.success("OTP verified successfully! You can now log in.");
         try {
           sessionStorage.removeItem(`otp_expiry:${purpose}:${userEmail}`);
         } catch (e) {}
-        router.push("/login");
+
+        if (purpose === "password_reset") {
+          toast.success("OTP verified! You can now reset your password.");
+          const resetToken = res.data?.resetToken || res.resetToken;
+          router.push(`/new-password?token=${encodeURIComponent(resetToken)}`);
+        } else {
+          toast.success("OTP verified successfully! You can now log in.");
+          router.push("/login");
+        }
         setIsLoading(false);
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,6 +146,9 @@ export default function VerifyEmailPage() {
           We&apos;ve sent a 6-digit verification code to{" "}
           <span className="font-semibold text-gray-800">{userEmail}</span>.
           Enter the code below to verify your account.
+        </p>
+        <p className="mt-3 text-sm text-gray-500 font-medium leading-relaxed max-w-[280px] mx-auto">
+          If you do not receive an email with your verification code, please check your SPAM folder.
         </p>
       </div>
 

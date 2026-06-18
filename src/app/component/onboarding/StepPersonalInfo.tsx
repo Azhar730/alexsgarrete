@@ -30,6 +30,7 @@ function buildValues(
     cellPhone: personInfo?.cellPhone ?? "",
     homePhone: personInfo?.homePhone ?? "",
     workPhone: personInfo?.workPhone ?? "",
+    birthday: personInfo?.birthday ? new Date(personInfo.birthday).toISOString().split('T')[0] : "",
   };
 }
 
@@ -79,6 +80,7 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
         workPhone: values.workPhone?.trim() || undefined,
         cellPhone: values.cellPhone?.trim() || undefined,
         ssnLast4: values.ssnLast4?.trim() || undefined,
+        birthday: values.birthday || undefined,
       }).unwrap();
 
       savePersonalInfo({
@@ -139,8 +141,8 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
           />
         </div>
 
-        {/* Email + SSN */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Email + SSN + Birthday */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <FormInput
             control={form.control}
             name="email"
@@ -157,6 +159,12 @@ export function StepPersonalInfo({ application }: { application?: OnboardingAppl
             placeholder="e.g. 1234"
             autoComplete="off"
             numericType="digits"
+          />
+          <FormInput
+            control={form.control}
+            name="birthday"
+            label="Date of Birth"
+            type="date"
           />
         </div>
 

@@ -12,9 +12,9 @@ const inter = Inter({
 });
 
 const menuLinks = [
-  { label: "How it Works", href: "#how-it-works" },
-  { label: "Features", href: "#features" },
-  { label: "FAQ", href: "#faq" },
+  { label: "How it Works", href: "/#how-it-works" },
+  { label: "Features", href: "/#features" },
+  { label: "FAQ", href: "/#faq" },
   { label: "Contact Us", href: "/contact-us" },
 ];
 
