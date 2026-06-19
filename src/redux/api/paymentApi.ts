@@ -73,6 +73,14 @@ export const paymentApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Payment"],
     }),
+    createSubscriptionIntent: builder.mutation<{ success: boolean; data: { clientSecret: string; type: string } }, StripeSessionRequest>({
+      query: (body) => ({
+        url: "/payment/create-subscription-intent",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Payment"],
+    }),
     getConnectAccount: builder.query({
       query: () => ({
         url: "/payment/status",
@@ -121,6 +129,7 @@ export const paymentApi = baseApi.injectEndpoints({
 export const {
   useConnectStripeMutation,
   useCreateCheckoutSessionMutation,
+  useCreateSubscriptionIntentMutation,
   useGetConnectAccountQuery,
   useGetMyPaymentsQuery,
   useGetStripeOverviewQuery,

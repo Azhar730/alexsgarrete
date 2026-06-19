@@ -4,15 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Lock, CheckCircle2, Loader2 } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 import PaymentHeader from "./PamentHeader";
-import { useConnectStripeMutation, useCreateCheckoutSessionMutation, useGetConnectAccountQuery, useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
+import { useConnectStripeMutation, useCreateCheckoutSessionMutation, useCreateSubscriptionIntentMutation, useGetConnectAccountQuery, useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 import { useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
+import { useAppSelector } from "@/redux/hooks";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import CustomCheckoutForm from "./CustomCheckoutForm";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_51T46CYIQLfQEllQL4P94ZcfVjLhGzm2Es8wtcyZDpVcwFoshFahAtwmHNy6kBgYhIvfgbZIdGgpB0hNwLKdXCiCC00pzisYzDX");
 
 type StripeStatus = "not-connected" | "connected";
 
 export default function CompletePayment() {
   const router = useRouter();
+  const user = useAppSelector((state: any) => state.auth.user);
   const searchParams = useSearchParams();
   const selectedQuoteGroupId = searchParams.get("quoteGroupId");
   const { data: quotesData, isLoading: isLoadingQuotes } = useGetMyQuotesQuery(undefined);
@@ -22,7 +29,8 @@ export default function CompletePayment() {
   const isPageLoading = isLoadingQuotes || isLoadingPayments || isLoadingStatus;
   console.log(statusData);
   const [triggerConnect, { isLoading: isConnecting }] = useConnectStripeMutation();
-  const [createCheckout, { isLoading: isCreatingSession }] = useCreateCheckoutSessionMutation();
+  const [createSubscriptionIntent, { isLoading: isCreatingSession }] = useCreateSubscriptionIntentMutation();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const stripeDetails = statusData?.data;
   const stripeStatus = stripeDetails?.hasSavedPaymentMethod ? "connected" : "not-connected";
@@ -69,17 +77,17 @@ export default function CompletePayment() {
     }
 
     try {
-      const response = await createCheckout({
+      const response = await createSubscriptionIntent({
         quoteGroupId: activeQuote.quoteGroupId,
         setupFee: activeQuote.setupFee,
         totalMonthlyCharge: activeQuote.totalMonthlyCharge,
       }).unwrap();
 
-      if (response.data?.url) {
-        window.location.href = response.data.url;
+      if (response.data?.clientSecret) {
+        setClientSecret(response.data.clientSecret);
       }
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to create checkout session");
+      toast.error(error?.data?.message || "Failed to initialize payment");
     }
   };
 
@@ -250,20 +258,40 @@ export default function CompletePayment() {
               </span>
             </div>
 
-            <Button
-              className="w-full bg-primary cursor-pointer text-white font-semibold"
-              disabled={stripeStatus !== "connected" || isCreatingSession}
-              onClick={handlePayment}
-            >
-              {isCreatingSession ? (
-                <>
-                  <Loader2 size={16} className="animate-spin mr-2" />
-                  Preparing Payment...
-                </>
-              ) : (
-                `Pay $${activeQuote?.setupFee?.toFixed(2) || "0.00"}`
-              )}
-            </Button>
+            {clientSecret ? (
+              <Elements stripe={stripePromise} options={{ 
+                clientSecret, 
+                appearance: { 
+                  theme: 'stripe',
+                  variables: {
+                    colorPrimary: '#5C7FC4',
+                    borderRadius: '8px',
+                    fontFamily: 'inherit',
+                  }
+                } 
+              }}>
+                <CustomCheckoutForm 
+                  amount={activeQuote?.setupFee || 0} 
+                  userEmail={user?.email || ""}
+                  userName={user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : ""}
+                />
+              </Elements>
+            ) : (
+              <Button
+                className="w-full bg-[#5C7FC4] hover:bg-[#4A6BAF] cursor-pointer text-white font-semibold shadow-md py-6 rounded-xl transition-all"
+                disabled={stripeStatus !== "connected" || isCreatingSession}
+                onClick={handlePayment}
+              >
+                {isCreatingSession ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin mr-2" />
+                    Preparing Payment...
+                  </>
+                ) : (
+                  `Pay $${activeQuote?.setupFee?.toFixed(2) || "0.00"}`
+                )}
+              </Button>
+            )}
 
             <div className="flex items-center justify-center gap-1.5 mt-3">
               <Lock size={11} className="text-slate-400" />

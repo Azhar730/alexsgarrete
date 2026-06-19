@@ -150,3 +150,10 @@
   display: none; /* Chrome, Safari, Opera */
 }
 
+
+/* Hide Stripe Test Mode Developer Badge */
+iframe[src*='developer-badge'], .StripeDeveloperBadge { display: none !important; }
+
+/* Aggressive Stripe Dev Badge Hider */
+[id*='stripe-developer-badge'], [class*='StripeDeveloperBadge'], stripe-developer-badge, div[style*='z-index: 2147483647'] { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; } 
+
