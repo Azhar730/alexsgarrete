@@ -158,12 +158,6 @@ export function EditDogModal({
   const handleFormSubmit = async (values: z.infer<typeof dogSchema>) => {
     setIsSubmitting(true);
     try {
-      console.log(
-        "Submitting form with values:",
-        values,
-        "and imageFile:",
-        imageFile,
-      );
       await onSubmit({ ...values, imageFile });
       handleClose();
     } finally {

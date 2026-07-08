@@ -46,13 +46,8 @@ export default function CTABannerSection() {
               A Second Chance,<br />A Lasting Legacy
             </h2>
             <Link 
-              href={isAuthenticated ? "#faq" : "/signup"} 
-              onClick={(e) => {
-                if (isAuthenticated) {
-                  e.preventDefault();
-                  document.getElementById("faq")?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
+              href={isAuthenticated ? "/dashboard" : "/signup"} 
+
               className="flex items-center justify-end gap-3 sm:gap-4"
             >
               <Button

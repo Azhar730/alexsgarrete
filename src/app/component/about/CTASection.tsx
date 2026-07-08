@@ -1,6 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useAppSelector } from "@/redux/hooks";
 
 export function CTASection() {
+  const { token } = useAppSelector((state) => state.auth);
+  const isAuthenticated = !!token;
+
   return (
     <section className="px-4">
       <div className="container mx-auto bg-muted-foreground/10 rounded-3xl px-4 py-14 md:py-16">
@@ -16,7 +22,7 @@ export function CTASection() {
             what.
           </p>
           <Link
-            href="/signup"
+            href={isAuthenticated ? "/dashboard" : "/signup"}
             className="inline-block bg-[#7B9BD0] hover:bg-[#5C7FC4] text-white font-semibold text-sm px-8 py-3 rounded-full transition-colors shadow-sm"
           >
             Get started

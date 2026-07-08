@@ -99,7 +99,6 @@ export function StepDogInformation({
   applicationId?: string;
   pets?: Partial<BackendPet>[];
 }) {
-  console.log("Rendering StepDogInformation with applicationId:", applicationId, "and pets:", pets);
   const { data, saveDogs, nextStep, prevStep } = useApplication();
   const router = useRouter();
   const [addPet] = useAddPetMutation();
@@ -157,7 +156,6 @@ export function StepDogInformation({
   };
 
   const saveDogProfiles = async (values: DogsStepValues) => {
-    console.log("Saving dog information:", values);
     if (!applicationId) {
       toast.error("Application is not ready yet. Please try again.");
       return false;

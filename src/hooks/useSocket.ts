@@ -28,7 +28,6 @@ export const useSocket = () => {
     setSocket(socketInstance);
 
     socketInstance.on('connect', () => {
-      console.log('User connected to socket server');
     });
 
     socketInstance.on('connect_error', (err) => {

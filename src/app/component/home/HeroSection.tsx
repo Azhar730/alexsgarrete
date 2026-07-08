@@ -47,13 +47,8 @@ export default function HeroSection() {
 
               {/* CTA buttons */}
               <Link 
-                href={isAuthenticated ? "#features" : "/signup"} 
-                onClick={(e) => {
-                  if (isAuthenticated) {
-                    e.preventDefault();
-                    document.getElementById("features")?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
+                href={isAuthenticated ? "/dashboard" : "/signup"} 
+
                 className="flex items-center gap-2 sm:gap-4 mt-1 sm:mt-0"
               >
                 <Button

@@ -70,7 +70,6 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("Page became visible, refetching data...");
         refetchUser();
         refetchApplications();
         refetchQuotes();
@@ -199,14 +198,6 @@ export default function DashboardPage() {
       ctaHref: "https://k9encore.com/contact-us",
     });
   }
-
-  console.log("Final Banners Data:", {
-    bannersCount: banners.length,
-    status: currentApplication?.status,
-    unpaidQuotesCount: unpaidQuotes?.length,
-    banners
-  });
-
   if (isLoading) {
     return (
       <AppLayout>

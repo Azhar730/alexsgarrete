@@ -58,7 +58,6 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const response = await login(values).unwrap();
-      console.log("Login response:", response);
       if (response?.success) {
         dispatch(setUser({
           user: response.data.user,

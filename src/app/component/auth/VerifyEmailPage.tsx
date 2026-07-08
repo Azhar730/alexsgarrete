@@ -77,7 +77,6 @@ export default function VerifyEmailPage() {
     try {
        await new Promise((r) => setTimeout(r, 1200));
       const res = await verifyOtp(payload).unwrap();
-      console.log("verify-email", res);
       if (res.success) {
         try {
           sessionStorage.removeItem(`otp_expiry:${purpose}:${userEmail}`);
@@ -148,7 +147,7 @@ export default function VerifyEmailPage() {
           Enter the code below to verify your account.
         </p>
         <p className="mt-3 text-sm text-gray-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-          If you do not receive an email with your verification code, please check your SPAM folder.
+          If you do not receive the verification code in your inbox, please check your Spam  folder .
         </p>
       </div>
 

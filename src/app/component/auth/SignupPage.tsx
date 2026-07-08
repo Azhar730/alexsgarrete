@@ -56,9 +56,7 @@ export default function SignupPage() {
   const onSubmit = async (values: SignupValues) => {
     setIsLoading(true);
     try {
-      console.log("Signup:", values);
       const response = await register(values).unwrap();
-      console.log("API response:", response);
       if (response?.success) {
         const expires = Date.now() + 5 * 60 * 1000;
         try {

@@ -102,7 +102,6 @@ export default function DogProfilesSection({
   };
 
   function handleAddClick() {
-    console.log("Add new dog clicked - currentApplication:", currentApplication);
     const status = currentApplication?.status;
 
     if (!currentApplication) {

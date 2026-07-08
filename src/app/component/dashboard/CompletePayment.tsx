@@ -4,22 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Lock, CheckCircle2, Loader2 } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 import PaymentHeader from "./PamentHeader";
-import { useConnectStripeMutation, useCreateCheckoutSessionMutation, useCreateSubscriptionIntentMutation, useGetConnectAccountQuery, useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
+import { useConnectStripeMutation, useCreateCheckoutSessionMutation, useGetConnectAccountQuery, useGetMyPaymentsQuery } from "@/redux/api/paymentApi";
 import { useGetMyQuotesQuery } from "@/redux/api/onboardingApi";
-import { useAppSelector } from "@/redux/hooks";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
-import CustomCheckoutForm from "./CustomCheckoutForm";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_51T46CYIQLfQEllQL4P94ZcfVjLhGzm2Es8wtcyZDpVcwFoshFahAtwmHNy6kBgYhIvfgbZIdGgpB0hNwLKdXCiCC00pzisYzDX");
+import { useEffect } from "react";
 
 type StripeStatus = "not-connected" | "connected";
 
 export default function CompletePayment() {
   const router = useRouter();
-  const user = useAppSelector((state: any) => state.auth.user);
   const searchParams = useSearchParams();
   const selectedQuoteGroupId = searchParams.get("quoteGroupId");
   const { data: quotesData, isLoading: isLoadingQuotes } = useGetMyQuotesQuery(undefined);
@@ -27,10 +20,8 @@ export default function CompletePayment() {
   const { data: myPayments, isLoading: isLoadingPayments } = useGetMyPaymentsQuery(undefined);
   
   const isPageLoading = isLoadingQuotes || isLoadingPayments || isLoadingStatus;
-  console.log(statusData);
   const [triggerConnect, { isLoading: isConnecting }] = useConnectStripeMutation();
-  const [createSubscriptionIntent, { isLoading: isCreatingSession }] = useCreateSubscriptionIntentMutation();
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [createCheckout, { isLoading: isCreatingSession }] = useCreateCheckoutSessionMutation();
 
   const stripeDetails = statusData?.data;
   const stripeStatus = stripeDetails?.hasSavedPaymentMethod ? "connected" : "not-connected";
@@ -42,8 +33,6 @@ export default function CompletePayment() {
   useEffect(() => {
     if (myPayments?.data && myPayments.data.length > 0 && quotesData?.data) {
       const activeQuoteGroup = activeQuote;
-      console.log("myPayments", myPayments)
-      console.log("activeQuoteGroup", activeQuoteGroup)
       const hasPaid = myPayments.data.some((p: any) =>
         (p.status === "SUCCESS" || p.status === "PAID") &&
         (p.quoteId === activeQuoteGroup?.quoteGroupId ||
@@ -77,17 +66,17 @@ export default function CompletePayment() {
     }
 
     try {
-      const response = await createSubscriptionIntent({
+      const response = await createCheckout({
         quoteGroupId: activeQuote.quoteGroupId,
         setupFee: activeQuote.setupFee,
         totalMonthlyCharge: activeQuote.totalMonthlyCharge,
       }).unwrap();
 
-      if (response.data?.clientSecret) {
-        setClientSecret(response.data.clientSecret);
+      if (response.data?.url) {
+        window.location.href = response.data.url;
       }
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to initialize payment");
+      toast.error(error?.data?.message || "Failed to create checkout session");
     }
   };
 
@@ -236,62 +225,37 @@ export default function CompletePayment() {
                 </span>
               </div>
               <div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-slate-500">
-                    Monthly Premium
-                  </span>
-                  <span className="text-sm font-semibold text-slate-700">
-                    ${activeQuote?.totalMonthlyCharge?.toFixed(2) || "0.00"}
-                  </span>
+                <div className="flex justify-between items-center text-sm font-semibold text-secondary">
+                  <span>Total Monthly Premium</span>
+                  <div className="text-right">
+                    <span>${activeQuote?.totalMonthlyCharge?.toFixed(2) || "0.00"}</span>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Starting in 14 days
-                </p>
               </div>
             </div>
             <div className="flex justify-between items-center mb-5">
               <span className="text-sm font-bold text-slate-700">
-                Due Today
+                Total Due Today
               </span>
               <span className="text-2xl font-bold text-slate-800">
-                ${activeQuote?.setupFee?.toFixed(2) || "0.00"}
+                ${((activeQuote?.setupFee || 0) + (activeQuote?.totalMonthlyCharge || 0)).toFixed(2)}
               </span>
             </div>
 
-            {clientSecret ? (
-              <Elements stripe={stripePromise} options={{ 
-                clientSecret, 
-                appearance: { 
-                  theme: 'stripe',
-                  variables: {
-                    colorPrimary: '#5C7FC4',
-                    borderRadius: '8px',
-                    fontFamily: 'inherit',
-                  }
-                } 
-              }}>
-                <CustomCheckoutForm 
-                  amount={activeQuote?.setupFee || 0} 
-                  userEmail={user?.email || ""}
-                  userName={user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : ""}
-                />
-              </Elements>
-            ) : (
-              <Button
-                className="w-full bg-[#5C7FC4] hover:bg-[#4A6BAF] cursor-pointer text-white font-semibold shadow-md py-6 rounded-xl transition-all"
-                disabled={stripeStatus !== "connected" || isCreatingSession}
-                onClick={handlePayment}
-              >
-                {isCreatingSession ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin mr-2" />
-                    Preparing Payment...
-                  </>
-                ) : (
-                  `Pay $${activeQuote?.setupFee?.toFixed(2) || "0.00"}`
-                )}
-              </Button>
-            )}
+            <Button
+              className="w-full bg-primary cursor-pointer text-white font-semibold"
+              disabled={stripeStatus !== "connected" || isCreatingSession}
+              onClick={handlePayment}
+            >
+              {isCreatingSession ? (
+                <>
+                  <Loader2 size={16} className="animate-spin mr-2" />
+                  Preparing Payment...
+                </>
+              ) : (
+                "Pay and Start Coverage"
+              )}
+            </Button>
 
             <div className="flex items-center justify-center gap-1.5 mt-3">
               <Lock size={11} className="text-slate-400" />

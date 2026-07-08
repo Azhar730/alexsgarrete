@@ -120,12 +120,9 @@ interface PlanBannerSectionProps {
 }
 
 export function PlanBannerSection({ banner, applicationStatus }: PlanBannerSectionProps) {
-  console.log(banner);
-  console.log(applicationStatus);
   const router = useRouter();
   // Determine status based on applicationStatus or fall back to banner.status
   const status = applicationStatus ? mapApplicationStatusToPlanStatus(applicationStatus) : banner.status;
-  console.log(status);
   const cfg = STATUS_CONFIG[status];
 
   return (

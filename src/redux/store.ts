@@ -9,7 +9,7 @@ import {
   REGISTER,
   REHYDRATE,
 } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import storageSession from "redux-persist/lib/storage/session";
 import { baseApi } from "./api/baseApi";
 import authReducer from "./features/authSlice";
 import callReducer from "./features/callSlice";
@@ -21,8 +21,8 @@ const rootReducer = combineReducers({
 });
 
 const persistConfig = {
-  key: "root",
-  storage,
+  key: "frontend-root",
+  storage: storageSession,
   whitelist: ["auth"],
 };
 

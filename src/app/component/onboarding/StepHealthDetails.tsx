@@ -778,11 +778,6 @@ export function StepHealthDetails({
   useEffect(() => {
     if (!questionnaire?.questions?.length || !familyHistoryRecords.length) return;
 
-    console.log("[StepHealthDetails] family histories loaded/updated", {
-      applicationId,
-      recordsCount: familyHistoryRecords.length,
-    });
-
     const cancerQuestions = questionnaire.questions.filter((q) => q.category === "CANCER");
     let hasChanges = false;
     const prevAnswers = previousAnswersRef.current ?? {};
@@ -843,13 +838,6 @@ export function StepHealthDetails({
 
   // Log all frontend data to console
   useEffect(() => {
-    console.log("[StepHealthDetails] Data State in Frontend:", {
-      applicationId,
-      questionnaire,
-      MyGivenAnswareQuestionnaire,
-      familyHistoryRecords,
-      nestedAnswerResponse,
-    });
   }, [
     applicationId,
     questionnaire,
@@ -895,17 +883,6 @@ export function StepHealthDetails({
     }
 
     try {
-      console.log("[StepHealthDetails] saving family history answer", {
-        applicationId,
-        questionId,
-        payload: {
-          relation: answer.cancerRelation?.trim() || "",
-          diagnosis: answer.cancerDiagnosis?.trim() || undefined,
-          approxAgeOfOnset: answer.cancerAgeOnset ? parseInt(String(answer.cancerAgeOnset), 10) : undefined,
-          ageAtDeath: answer.cancerAgeAtDeath ? parseInt(String(answer.cancerAgeAtDeath), 10) : undefined,
-        },
-      });
-
       const res = await familyHealthHistory({
         applicationId: applicationId as string,
         questionId,
@@ -921,11 +898,6 @@ export function StepHealthDetails({
 
       // Ensure the form reflects the saved values returned from the server
       if (res) {
-        console.log("[StepHealthDetails] family history answer saved", {
-          applicationId,
-          questionId,
-          saved: res,
-        });
         const savedData = res.data || res;
         form.setValue(`answers.${questionId}.cancerRelation`, savedData.relation ?? "");
         form.setValue(`answers.${questionId}.cancerDiagnosis`, savedData.diagnosis ?? "");

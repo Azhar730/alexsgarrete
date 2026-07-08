@@ -34,6 +34,7 @@ const profileSchema = z.object({
   workPhone: z.string().optional(),
   cellPhone: z.string().optional(),
   ssnLast4: z.string().max(4, "Max 4 characters").optional(),
+  birthday: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -83,6 +84,7 @@ export default function ProfileForm() {
       workPhone: currentPersonInfo?.workPhone || "",
       cellPhone: currentPersonInfo?.cellPhone || "",
       ssnLast4: currentPersonInfo?.ssnLast4 || "",
+      birthday: currentPersonInfo?.birthday ? new Date(currentPersonInfo.birthday).toISOString().split("T")[0] : "",
     };
   }, [currentPersonInfo, me?.email, me?.fullName]);
 
@@ -164,6 +166,7 @@ export default function ProfileForm() {
             workPhone: data.workPhone?.trim(),
             cellPhone: data.cellPhone?.trim(),
             ssnLast4: data.ssnLast4?.trim(),
+            birthday: data.birthday ? new Date(data.birthday).toISOString() : undefined,
           }).unwrap()
         : Promise.resolve();
 
@@ -343,7 +346,7 @@ export default function ProfileForm() {
             />
           </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -358,6 +361,30 @@ export default function ProfileForm() {
                         type="email"
                         disabled={true}
                         className="border-dashed border-slate-200 bg-gray-50/50 cursor-not-allowed text-secondary text-base opacity-70"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="birthday"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-muted-foreground">
+                      Date of Birth
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="date"
+                        disabled={!isEditing}
+                        className={
+                          isEditing
+                            ? "border-slate-300 focus-visible:ring-slate-400 text-base"
+                            : "border-dashed border-slate-200 bg-transparent text-secondary text-base"
+                        }
                       />
                     </FormControl>
                     <FormMessage className="text-xs" />
